@@ -1,0 +1,44 @@
+# SEGURIDAD CRÍTICA: Configuración del panel admin
+# Solo permitir acceso autorizado
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: http:; connect-src 'self' https:; frame-src 'self'; object-src 'none'; base-uri 'self';"
+</IfModule>
+
+# Deshabilitar listado de directorios
+Options -Indexes
+
+# Bloquear acceso a archivos de configuración sensibles
+<FilesMatch "(config|security_config|auth|security_check|access_control)\.php$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Proteger directorio de logs
+<Files "logs/*">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Prevenir acceso a archivos de respaldo
+<FilesMatch "(\.bak|\.backup|\.old|\.orig|\.save|\.swp|\.tmp|~)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Métodos HTTP permitidos - GET, POST, PUT, DELETE
+<LimitExcept GET POST PUT DELETE>
+    Order Deny,Allow
+    Deny from all
+</LimitExcept>
+
+# Protección adicional contra robots y crawlers
+<FilesMatch "robots\.txt$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>

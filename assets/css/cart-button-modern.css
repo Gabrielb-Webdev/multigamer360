@@ -1,0 +1,250 @@
+/**
+ * =====================================================
+ * ESTILOS PARA BOTÓN DE CARRITO MODERNO
+ * =====================================================
+ * 
+ * Descripción: Estilos específicos para el botón de agregar al carrito
+ * Estados: Normal, Carga, Éxito
+ * Diseño: Rectangular con bordes poco redondeados
+ */
+
+/* =====================================================
+   BOTÓN PRINCIPAL DE CARRITO
+   ===================================================== */
+
+.btn-add-to-cart-modern {
+    /* Diseño y forma */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 6px; /* Bordes poco redondeados */
+    border: 2px solid transparent;
+    
+    /* Tipografía */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    
+    /* Estado normal - Fondo blanco con texto negro */
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+    
+    /* Efectos */
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    width: 100%; /* Ocupa 100% del contenedor */
+    white-space: nowrap;
+    
+    /* Sombra sutil */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add-to-cart-modern:hover {
+    background-color: #f8f9fa;
+    color: #000000;
+    border-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-add-to-cart-modern:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.15s ease;
+}
+
+/* =====================================================
+   ICONOS DENTRO DEL BOTÓN
+   ===================================================== */
+
+.btn-add-to-cart-modern .cart-icon {
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-add-to-cart-modern .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+.btn-add-to-cart-modern .success-check {
+    font-size: 16px;
+    display: none;
+    color: #ffffff;
+}
+
+/* =====================================================
+   ESTADO DE CARGA (GRIS)
+   ===================================================== */
+
+.btn-add-to-cart-modern.loading {
+    background-color: #6c757d;
+    color: #ffffff;
+    border-color: #6c757d;
+    cursor: not-allowed;
+    pointer-events: none;
+    width: 100%; /* Mantener 100% del ancho durante carga */
+}
+
+.btn-add-to-cart-modern.loading .cart-icon,
+.btn-add-to-cart-modern.loading .btn-text {
+    display: none;
+}
+
+.btn-add-to-cart-modern.loading .loading-spinner {
+    display: inline-block;
+    border-color: #ffffff;
+    border-top-color: transparent;
+}
+
+/* =====================================================
+   ESTADO DE ÉXITO (VERDE)
+   ===================================================== */
+
+.btn-add-to-cart-modern.success {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+    cursor: default;
+    width: 100%; /* Mantener 100% del ancho en estado de éxito */
+}
+
+.btn-add-to-cart-modern.success:hover {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+    transform: none;
+}
+
+.btn-add-to-cart-modern.success .cart-icon,
+.btn-add-to-cart-modern.success .btn-text,
+.btn-add-to-cart-modern.success .loading-spinner {
+    display: none;
+}
+
+.btn-add-to-cart-modern.success .success-check {
+    display: inline-block;
+}
+
+/* =====================================================
+   ANIMACIONES
+   ===================================================== */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes successPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-add-to-cart-modern.success {
+    animation: successPulse 0.6s ease-out;
+}
+
+/* =====================================================
+   ESTADO EN CARRITO (VERDE PERMANENTE)
+   ===================================================== */
+
+.btn-add-to-cart-modern.in-cart {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+    border-color: #28a745 !important;
+    cursor: pointer !important; /* Hacer clickeable */
+    pointer-events: auto !important; /* Permitir eventos de mouse */
+    transition: all 0.3s ease;
+    width: 100% !important; /* Mantener 100% del ancho cuando está en carrito */
+    justify-content: center; /* Centrar contenido */
+}
+
+.btn-add-to-cart-modern.in-cart:hover {
+    background-color: #218838 !important;
+    color: #ffffff !important;
+    border-color: #1e7e34 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-add-to-cart-modern.in-cart .cart-icon {
+    display: inline-block !important;
+    font-size: 16px;
+    margin-right: 4px; /* Espacio entre carrito y check */
+}
+
+.btn-add-to-cart-modern.in-cart .success-check {
+    display: inline-block !important;
+    font-size: 16px;
+}
+
+.btn-add-to-cart-modern.in-cart .btn-text,
+.btn-add-to-cart-modern.in-cart .loading-spinner {
+    display: none !important;
+}
+
+/* =====================================================
+   RESPONSIVIDAD
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .btn-add-to-cart-modern {
+        width: 100%; /* Mantener 100% del ancho en tablets */
+        padding: 10px 16px;
+        font-size: 12px;
+        gap: 6px;
+    }
+    
+    .btn-add-to-cart-modern .cart-icon,
+    .btn-add-to-cart-modern .success-check {
+        font-size: 14px;
+    }
+    
+    .btn-add-to-cart-modern .loading-spinner {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-add-to-cart-modern {
+        width: 100%; /* Mantener 100% del ancho en móviles */
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+}
+
+/* =====================================================
+   ESTADO DISABLED (SIN STOCK)
+   ===================================================== */
+
+.btn-add-to-cart-modern:disabled,
+.btn-add-to-cart-modern.disabled {
+    background-color: #6c757d;
+    color: #ffffff;
+    border-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-add-to-cart-modern:disabled:hover,
+.btn-add-to-cart-modern.disabled:hover {
+    background-color: #6c757d;
+    color: #ffffff;
+    border-color: #6c757d;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
