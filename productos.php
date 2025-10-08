@@ -1450,6 +1450,7 @@ require_once 'includes/header.php';
 
 .products-toolbar {
     display: flex;
+    margin-top: 1.5rem;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
