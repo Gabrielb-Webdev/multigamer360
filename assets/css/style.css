@@ -280,7 +280,8 @@ body.navbar-only {
 .dropdown-menu-compact {
     position: absolute;
     top: 100%;
-    left: 0;
+    left: auto;
+    right: 0;  /* Alineado a la derecha del elemento padre */
     z-index: 1050;
     min-width: 300px;
     width: 300px;
@@ -299,21 +300,25 @@ body.navbar-only {
     text-transform: uppercase;
     border-bottom: 2px solid var(--primary-color);
     padding-bottom: 0.3rem;
+    text-align: left;  /* Alinear texto a la izquierda */
+    padding-left: 0;   /* Sin padding izquierdo extra */
 }
 
 .dropdown-menu-compact .dropdown-item {
     padding: 0.4rem 0;
+    padding-left: 0.5rem;  /* Pequeño padding para las opciones */
     font-size: 0.85rem;
     transition: all 0.2s ease;
     border-radius: 4px;
     margin: 0.1rem 0;
     color: var(--text-color);
+    text-align: left;  /* Alinear texto a la izquierda */
 }
 
 .dropdown-menu-compact .dropdown-item:hover {
     background-color: var(--primary-color);
     color: var(--text-color);
-    padding-left: 0.5rem;
+    padding-left: 1rem;  /* Aumentar padding en hover */
     transform: translateX(5px);
 }
 
