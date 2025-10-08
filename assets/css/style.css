@@ -281,13 +281,14 @@ body.navbar-only {
     position: absolute;
     top: 100%;
     left: auto;
-    right: 0;  /* Alineado a la derecha del elemento padre */
+    right: -150px;  /* Mover el cuadro más a la derecha */
     z-index: 1050;
     min-width: 300px;
     width: 300px;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     padding: 1.5rem;
+    padding-left: 1rem;  /* Reducir padding izquierdo para mover contenido a la izquierda */
     background-color: var(--background-color);
     border: 1px solid var(--border-color);
 }
@@ -302,15 +303,17 @@ body.navbar-only {
     padding-bottom: 0.3rem;
     text-align: left;  /* Alinear texto a la izquierda */
     padding-left: 0;   /* Sin padding izquierdo extra */
+    margin-left: 0;    /* Sin margen izquierdo */
 }
 
 .dropdown-menu-compact .dropdown-item {
     padding: 0.4rem 0;
-    padding-left: 0.5rem;  /* Pequeño padding para las opciones */
+    padding-left: 0;  /* Sin padding izquierdo para pegar más a la izquierda */
     font-size: 0.85rem;
     transition: all 0.2s ease;
     border-radius: 4px;
     margin: 0.1rem 0;
+    margin-left: 0;    /* Sin margen izquierdo */
     color: var(--text-color);
     text-align: left;  /* Alinear texto a la izquierda */
 }
@@ -318,7 +321,7 @@ body.navbar-only {
 .dropdown-menu-compact .dropdown-item:hover {
     background-color: var(--primary-color);
     color: var(--text-color);
-    padding-left: 1rem;  /* Aumentar padding en hover */
+    padding-left: 0.5rem;  /* Padding mínimo en hover */
     transform: translateX(5px);
 }
 
