@@ -149,7 +149,7 @@ require_once 'includes/header.php';
      CONTENIDO PRINCIPAL
      ===================================================== -->
 
-<main class="productos-page" style="">
+<main class="productos-page">
     <div class="container-fluid">
         <div class="row">
 
