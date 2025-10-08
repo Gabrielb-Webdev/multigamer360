@@ -53,16 +53,28 @@ class ProductManager {
                        p.main_image, p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
                 FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.is_active = TRUE";
+                LEFT JOIN brands b ON p.brand_id = b.id";
         
         $params = [];
+        $joins = [];
+        $where_conditions = ["p.is_active = TRUE"];
         
+        // Si hay filtro de categoría, usar INNER JOIN con product_categories
         if (!empty($filters['category'])) {
-            $sql .= " AND c.slug = :category";
+            $joins[] = "INNER JOIN product_categories pc ON p.id = pc.product_id";
+            $joins[] = "INNER JOIN categories c ON pc.category_id = c.id";
+            $where_conditions[] = "c.slug = :category";
             $params['category'] = $filters['category'];
+        } else {
+            // Si no hay filtro de categoría, hacer LEFT JOIN normal
+            $joins[] = "LEFT JOIN categories c ON p.category_id = c.id";
         }
+        
+        // Agregar los JOINs al SQL
+        $sql .= " " . implode(" ", $joins);
+        
+        // Agregar WHERE
+        $sql .= " WHERE " . implode(" AND ", $where_conditions);
         
         if (!empty($filters['brand'])) {
             $sql .= " AND b.slug = :brand";
@@ -89,6 +101,9 @@ class ProductManager {
             $sql .= " AND p.price_pesos <= :max_price";
             $params['max_price'] = $filters['max_price'];
         }
+        
+        // Agrupar por producto para evitar duplicados
+        $sql .= " GROUP BY p.id";
         
         // Orden personalizable - SIEMPRE productos con stock primero
         if (!empty($filters['order_by'])) {
@@ -228,18 +243,30 @@ class ProductManager {
     
     // Contar productos con filtros
     public function countProducts($filters = []) {
-        $sql = "SELECT COUNT(*) as total
+        $sql = "SELECT COUNT(DISTINCT p.id) as total
                 FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.is_active = 1";
+                LEFT JOIN brands b ON p.brand_id = b.id";
         
         $params = [];
+        $joins = [];
+        $where_conditions = ["p.is_active = 1"];
         
+        // Si hay filtro de categoría, usar INNER JOIN con product_categories
         if (!empty($filters['category'])) {
-            $sql .= " AND c.slug = :category";
+            $joins[] = "INNER JOIN product_categories pc ON p.id = pc.product_id";
+            $joins[] = "INNER JOIN categories c ON pc.category_id = c.id";
+            $where_conditions[] = "c.slug = :category";
             $params['category'] = $filters['category'];
+        } else {
+            // Si no hay filtro de categoría, hacer LEFT JOIN normal
+            $joins[] = "LEFT JOIN categories c ON p.category_id = c.id";
         }
+        
+        // Agregar los JOINs al SQL
+        $sql .= " " . implode(" ", $joins);
+        
+        // Agregar WHERE
+        $sql .= " WHERE " . implode(" AND ", $where_conditions);
         
         if (!empty($filters['brand'])) {
             $sql .= " AND b.slug = :brand";
@@ -252,12 +279,12 @@ class ProductManager {
         }
         
         if (!empty($filters['min_price'])) {
-            $sql .= " AND p.price >= :min_price";
+            $sql .= " AND p.price_pesos >= :min_price";
             $params['min_price'] = $filters['min_price'];
         }
         
         if (!empty($filters['max_price'])) {
-            $sql .= " AND p.price <= :max_price";
+            $sql .= " AND p.price_pesos <= :max_price";
             $params['max_price'] = $filters['max_price'];
         }
         
@@ -460,37 +487,48 @@ class ProductManager {
                        p.main_image, p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
                 FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.is_active = TRUE";
+                LEFT JOIN brands b ON p.brand_id = b.id";
         
         $params = [];
-        $where_conditions = [];
+        $joins = [];
+        $where_conditions = ["p.is_active = TRUE"];
         
-        // Filtros tradicionales
+        // Si hay filtro de categoría, usar INNER JOIN con product_categories
         if (!empty($filters['category'])) {
+            $joins[] = "INNER JOIN product_categories pc ON p.id = pc.product_id";
+            $joins[] = "INNER JOIN categories c ON pc.category_id = c.id";
             $where_conditions[] = "c.slug = ?";
             $params[] = $filters['category'];
+        } else {
+            // Si no hay filtro de categoría, hacer LEFT JOIN normal
+            $joins[] = "LEFT JOIN categories c ON p.category_id = c.id";
         }
         
+        // Agregar los JOINs al SQL
+        $sql .= " " . implode(" ", $joins);
+        
+        // Agregar WHERE
+        $sql .= " WHERE " . implode(" AND ", $where_conditions);
+        
+        // Filtros tradicionales
         if (!empty($filters['brand'])) {
-            $where_conditions[] = "b.slug = ?";
+            $sql .= " AND b.slug = ?";
             $params[] = $filters['brand'];
         }
         
         if (!empty($filters['search'])) {
-            $where_conditions[] = "(p.name LIKE ? OR p.description LIKE ?)";
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
             $params[] = '%' . $filters['search'] . '%';
             $params[] = '%' . $filters['search'] . '%';
         }
         
         if (!empty($filters['min_price'])) {
-            $where_conditions[] = "p.price_pesos >= ?";
+            $sql .= " AND p.price_pesos >= ?";
             $params[] = $filters['min_price'];
         }
         
         if (!empty($filters['max_price'])) {
-            $where_conditions[] = "p.price_pesos <= ?";
+            $sql .= " AND p.price_pesos <= ?";
             $params[] = $filters['max_price'];
         }
         
@@ -502,14 +540,12 @@ class ProductManager {
                 $params[] = $tag;
             }
             if (!empty($tag_conditions)) {
-                $where_conditions[] = "(" . implode(" AND ", $tag_conditions) . ")";
+                $sql .= " AND (" . implode(" AND ", $tag_conditions) . ")";
             }
         }
         
-        // Agregar condiciones WHERE
-        if (!empty($where_conditions)) {
-            $sql .= " AND " . implode(" AND ", $where_conditions);
-        }
+        // Agrupar por producto para evitar duplicados
+        $sql .= " GROUP BY p.id";
         
         // Orden personalizable - SIEMPRE productos con stock primero
         if (!empty($filters['order_by'])) {
@@ -532,39 +568,50 @@ class ProductManager {
      * Contar productos con filtros dinámicos
      */
     public function countProductsWithDynamicFilters($filters = []) {
-        $sql = "SELECT COUNT(*) as total
+        $sql = "SELECT COUNT(DISTINCT p.id) as total
                 FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.is_active = TRUE";
+                LEFT JOIN brands b ON p.brand_id = b.id";
         
         $params = [];
-        $where_conditions = [];
+        $joins = [];
+        $where_conditions = ["p.is_active = TRUE"];
         
-        // Filtros tradicionales
+        // Si hay filtro de categoría, usar INNER JOIN con product_categories
         if (!empty($filters['category'])) {
+            $joins[] = "INNER JOIN product_categories pc ON p.id = pc.product_id";
+            $joins[] = "INNER JOIN categories c ON pc.category_id = c.id";
             $where_conditions[] = "c.slug = ?";
             $params[] = $filters['category'];
+        } else {
+            // Si no hay filtro de categoría, hacer LEFT JOIN normal
+            $joins[] = "LEFT JOIN categories c ON p.category_id = c.id";
         }
         
+        // Agregar los JOINs al SQL
+        $sql .= " " . implode(" ", $joins);
+        
+        // Agregar WHERE
+        $sql .= " WHERE " . implode(" AND ", $where_conditions);
+        
+        // Filtros tradicionales
         if (!empty($filters['brand'])) {
-            $where_conditions[] = "b.slug = ?";
+            $sql .= " AND b.slug = ?";
             $params[] = $filters['brand'];
         }
         
         if (!empty($filters['search'])) {
-            $where_conditions[] = "(p.name LIKE ? OR p.description LIKE ?)";
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
             $params[] = '%' . $filters['search'] . '%';
             $params[] = '%' . $filters['search'] . '%';
         }
         
         if (!empty($filters['min_price'])) {
-            $where_conditions[] = "p.price_pesos >= ?";
+            $sql .= " AND p.price_pesos >= ?";
             $params[] = $filters['min_price'];
         }
         
         if (!empty($filters['max_price'])) {
-            $where_conditions[] = "p.price_pesos <= ?";
+            $sql .= " AND p.price_pesos <= ?";
             $params[] = $filters['max_price'];
         }
         
@@ -576,13 +623,8 @@ class ProductManager {
                 $params[] = $tag;
             }
             if (!empty($tag_conditions)) {
-                $where_conditions[] = "(" . implode(" AND ", $tag_conditions) . ")";
+                $sql .= " AND (" . implode(" AND ", $tag_conditions) . ")";
             }
-        }
-        
-        // Agregar condiciones WHERE
-        if (!empty($where_conditions)) {
-            $sql .= " AND " . implode(" AND ", $where_conditions);
         }
         
         $stmt = $this->pdo->prepare($sql);
