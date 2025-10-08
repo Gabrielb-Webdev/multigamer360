@@ -78,11 +78,14 @@ Options -Indexes
     AddOutputFilterByType DEFLATE application/x-javascript
 </IfModule>
 
-# Prevenir hotlinking de imágenes
+# Prevenir hotlinking de imágenes (permitir Hostinger y dominios locales)
 <IfModule mod_rewrite.c>
+    RewriteEngine On
     RewriteCond %{HTTP_REFERER} !^$
     RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?multigamer360\.local [NC]
     RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?localhost [NC]
+    RewriteCond %{HTTP_REFERER} !^http(s)?://.*\.hostingersite\.com [NC]
+    RewriteCond %{HTTP_REFERER} !^http(s)?://teal-fish-507993\.hostingersite\.com [NC]
     RewriteRule \.(jpg|jpeg|png|gif|webp)$ - [NC,F,L]
 </IfModule>
 
