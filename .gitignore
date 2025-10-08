@@ -1,5 +1,6 @@
 # Archivos de configuración local
-config/database.php
+# TEMPORAL: Permitir database.php para deployment inicial
+# config/database.php
 config/config.php
 config/settings.php
 
