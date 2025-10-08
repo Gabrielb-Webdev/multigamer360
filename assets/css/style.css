@@ -370,9 +370,9 @@ body.navbar-only {
 }
 
 /* Dropdown compacto para consolas - centrado */
-.dropdown-menu-compact {
-    left: -100px !important; /* Centrar el dropdown compacto */
-}
+/* .dropdown-menu-compact { */
+    /* left: -100px !important; Centrar el dropdown compacto */
+/* } */
 
 /* Search Section Styles */
 .nav-search-section {
