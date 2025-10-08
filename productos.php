@@ -160,7 +160,7 @@ require_once 'includes/header.php';
 ?>
 
 <!-- CSS específico para selector de consolas -->
-<link rel="stylesheet" href="assets/css/console-selector.css">
+<link rel="stylesheet" href="assets/css/console-selector.css?v=0.1">
 
 <!-- =====================================================
      CONTENIDO PRINCIPAL
