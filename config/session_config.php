@@ -19,8 +19,11 @@ if (!function_exists('initSecureSession')) {
             // Iniciar sesión
             session_start();
             
-            // Debugging
-            error_log("SESSION INIT: ID = " . session_id() . " at " . $_SERVER['REQUEST_URI']);
+            // Debugging (solo si la función existe y está en local)
+            if (function_exists('error_log') && (php_sapi_name() === 'cli' || 
+                (isset($_SERVER['SERVER_NAME']) && ($_SERVER['SERVER_NAME'] === 'localhost' || $_SERVER['SERVER_NAME'] === '127.0.0.1')))) {
+                @error_log("SESSION INIT: ID = " . session_id() . " at " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
+            }
         }
         
         return session_id();

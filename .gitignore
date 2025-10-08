@@ -21,7 +21,7 @@ uploads/*
 !uploads/.gitkeep
 !uploads/products/.gitkeep
 !uploads/users/.gitkeep
-
+|
 # Archivos del sistema
 .DS_Store
 Thumbs.db
@@ -66,3 +66,4 @@ phpmyadmin/
 # Archivos de configuración de hosting
 .htaccess.bak
 cpanel_logs/
+|

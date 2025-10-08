@@ -1,6 +1,12 @@
 # CONFIGURACIÓN DE SEGURIDAD PARA MULTIGAMER360
 # Headers de seguridad con CSP permitiendo CDNs externos
 
+# TEMPORAL: Mostrar errores para diagnóstico (REMOVER EN PRODUCCIÓN FINAL)
+<IfModule mod_php.c>
+    php_flag display_errors on
+    php_value error_reporting E_ALL
+</IfModule>
+
 <IfModule mod_headers.c>
     # Headers básicos de seguridad
     Header always set X-Content-Type-Options "nosniff"
