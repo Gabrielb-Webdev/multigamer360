@@ -1,0 +1,246 @@
+/**
+ * Estilos para el Selector de Consolas de Videojuegos
+ * Inspirado en GameOn.com.ar
+ */
+
+/* Sección del selector de consolas */
+.console-selector-section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.console-selector-section .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.console-selector-section .section-subtitle {
+    font-size: 1.1rem;
+    color: #b0b0b0;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Grid de consolas */
+.console-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .console-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .console-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Card de consola */
+.console-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    background: #2a2a2a;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.console-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.console-card:hover::before {
+    opacity: 0.1;
+}
+
+.console-card:hover {
+    transform: translateY(-8px);
+    border-color: #dc2626;
+    box-shadow: 0 15px 40px rgba(220, 38, 38, 0.3);
+}
+
+/* Imagen de la consola */
+.console-image {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.console-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: brightness(0.9);
+    transition: all 0.3s ease;
+}
+
+.console-card:hover .console-image img {
+    filter: brightness(1);
+    transform: scale(1.1);
+}
+
+.console-image i {
+    font-size: 4rem;
+    color: #dc2626;
+    transition: all 0.3s ease;
+}
+
+.console-card:hover .console-image i {
+    transform: scale(1.2);
+    color: #ef4444;
+}
+
+/* Nombre de la consola */
+.console-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.console-card:hover .console-name {
+    color: #dc2626;
+}
+
+/* Contador de productos */
+.console-count {
+    font-size: 0.9rem;
+    color: #999;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.console-card:hover .console-count {
+    color: #dc2626;
+}
+
+/* Breadcrumb para navegación */
+.console-breadcrumb {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #2a2a2a;
+    border-radius: 8px;
+}
+
+.console-breadcrumb nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.console-breadcrumb a {
+    color: #dc2626;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.console-breadcrumb a:hover {
+    color: #ef4444;
+}
+
+.console-breadcrumb .separator {
+    color: #666;
+    margin: 0 0.5rem;
+}
+
+.console-breadcrumb .current {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.console-card {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.console-card:nth-child(1) { animation-delay: 0.05s; }
+.console-card:nth-child(2) { animation-delay: 0.1s; }
+.console-card:nth-child(3) { animation-delay: 0.15s; }
+.console-card:nth-child(4) { animation-delay: 0.2s; }
+.console-card:nth-child(5) { animation-delay: 0.25s; }
+.console-card:nth-child(6) { animation-delay: 0.3s; }
+.console-card:nth-child(7) { animation-delay: 0.35s; }
+.console-card:nth-child(8) { animation-delay: 0.4s; }
+
+/* Botón de regreso */
+.back-to-consoles {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.back-to-consoles:hover {
+    background: #991b1b;
+    transform: translateX(-5px);
+    box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3);
+}
+
+.back-to-consoles i {
+    transition: transform 0.3s ease;
+}
+
+.back-to-consoles:hover i {
+    transform: translateX(-3px);
+}

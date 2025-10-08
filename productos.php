@@ -31,6 +31,15 @@ $sessionId = initSecureSession();
 require_once 'config/database.php';
 require_once 'includes/auth.php';
 require_once 'includes/product_manager.php';
+require_once 'includes/videogame_filters.php';
+
+// =====================================================
+// INICIALIZAR SISTEMA DE FILTROS DE VIDEOJUEGOS
+// =====================================================
+
+$videoGameFilters = new VideoGameFilters($pdo);
+$isVideoGamesView = $videoGameFilters->isVideoGamesView();
+$currentConsole = $videoGameFilters->getCurrentConsole();
 
 // =====================================================
 // PROCESAMIENTO DE PARÁMETROS
@@ -132,6 +141,9 @@ try {
 // =====================================================
 require_once 'includes/header.php';
 ?>
+
+<!-- CSS específico para selector de consolas -->
+<link rel="stylesheet" href="assets/css/console-selector.css">
 
 <!-- =====================================================
      CONTENIDO PRINCIPAL
@@ -313,9 +325,20 @@ require_once 'includes/header.php';
                 </div>
 
                 <!-- =====================================================
+                     SELECTOR DE CONSOLAS (Cuando se selecciona "Videojuegos")
+                     ===================================================== -->
+                <?php if ($isVideoGamesView && !$currentConsole): ?>
+                    <div class="console-selector-section">
+                        <h2 class="section-title">Selecciona tu Consola</h2>
+                        <p class="section-subtitle">Explora nuestra colección de videojuegos por plataforma</p>
+                        <?php echo $videoGameFilters->renderConsoleGrid(); ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- =====================================================
                      GRID DE PRODUCTOS (ESTRUCTURA LIMPIA)
                      ===================================================== -->
-                <div class="products-grid" id="products-grid">
+                <div class="products-grid" id="products-grid" <?php if ($isVideoGamesView && !$currentConsole): ?>style="display:none;"<?php endif; ?>>
                     <?php if (!empty($products)): ?>
                         <?php foreach ($products as $product): ?>
                             <!-- =====================================================
