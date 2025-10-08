@@ -137,6 +137,126 @@ class VideoGameFilters {
     }
     
     /**
+     * Obtener filtros dinámicos específicos para una consola
+     * Solo muestra opciones de filtros que realmente existen en productos de esa consola
+     */
+    public function getConsoleSpecificFilters($consoleSlug) {
+        $console = $this->getCurrentConsole($consoleSlug);
+        
+        if (!$console) {
+            return [];
+        }
+        
+        // Obtener tags que realmente existen en productos de esta consola
+        $stmt = $this->pdo->prepare("
+            SELECT DISTINCT 
+                tc.id as category_id,
+                tc.name as category_name,
+                tc.slug as category_slug,
+                t.id as tag_id,
+                t.name as tag_name,
+                t.slug as tag_slug,
+                COUNT(DISTINCT pt.product_id) as product_count
+            FROM tag_categories tc
+            INNER JOIN tags t ON tc.id = t.category_id
+            INNER JOIN product_tags pt ON t.id = pt.tag_id
+            INNER JOIN products p ON pt.product_id = p.id
+            INNER JOIN product_categories pc ON p.id = pc.product_id
+            WHERE pc.category_id = ? 
+            AND p.status = 'active'
+            GROUP BY tc.id, tc.name, tc.slug, t.id, t.name, t.slug
+            HAVING product_count > 0
+            ORDER BY tc.sort_order ASC, tc.name ASC, t.name ASC
+        ");
+        
+        $stmt->execute([$console['id']]);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Organizar por categorías
+        $organized = [];
+        foreach ($results as $row) {
+            $catId = $row['category_id'];
+            
+            if (!isset($organized[$catId])) {
+                $organized[$catId] = [
+                    'id' => $catId,
+                    'name' => $row['category_name'],
+                    'slug' => $row['category_slug'],
+                    'tags' => []
+                ];
+            }
+            
+            $organized[$catId]['tags'][] = [
+                'id' => $row['tag_id'],
+                'name' => $row['tag_name'],
+                'slug' => $row['tag_slug'],
+                'count' => $row['product_count']
+            ];
+        }
+        
+        return array_values($organized);
+    }
+    
+    /**
+     * Obtener marcas específicas disponibles para una consola
+     */
+    public function getConsoleBrands($consoleSlug) {
+        $console = $this->getCurrentConsole($consoleSlug);
+        
+        if (!$console) {
+            return [];
+        }
+        
+        $stmt = $this->pdo->prepare("
+            SELECT DISTINCT 
+                b.id, 
+                b.name,
+                COUNT(DISTINCT p.id) as product_count
+            FROM brands b
+            INNER JOIN products p ON b.id = p.brand_id
+            INNER JOIN product_categories pc ON p.id = pc.product_id
+            WHERE pc.category_id = ? 
+            AND p.status = 'active'
+            GROUP BY b.id, b.name
+            HAVING product_count > 0
+            ORDER BY b.name ASC
+        ");
+        
+        $stmt->execute([$console['id']]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Obtener rango de precios para una consola específica
+     */
+    public function getConsolePriceRange($consoleSlug) {
+        $console = $this->getCurrentConsole($consoleSlug);
+        
+        if (!$console) {
+            return ['min' => 0, 'max' => 0];
+        }
+        
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                MIN(p.price_pesos) as min_price,
+                MAX(p.price_pesos) as max_price
+            FROM products p
+            INNER JOIN product_categories pc ON p.id = pc.product_id
+            WHERE pc.category_id = ? 
+            AND p.status = 'active'
+            AND p.price_pesos > 0
+        ");
+        
+        $stmt->execute([$console['id']]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return [
+            'min' => $result['min_price'] ?? 0,
+            'max' => $result['max_price'] ?? 0
+        ];
+    }
+    
+    /**
      * Verificar si estamos en la vista de videojuegos
      */
     public function isVideoGamesView($categorySlug = null) {

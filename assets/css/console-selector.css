@@ -244,3 +244,62 @@
 .back-to-consoles:hover i {
     transform: translateX(-3px);
 }
+
+/* Breadcrumb en filtros */
+.console-breadcrumb-filter {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #1a1a1a;
+    border-radius: 8px;
+    border: 2px solid #dc2626;
+}
+
+.console-breadcrumb-filter .back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #dc2626;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.console-breadcrumb-filter .back-link:hover {
+    color: #ef4444;
+    transform: translateX(-3px);
+}
+
+.console-breadcrumb-filter .current-console {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.console-breadcrumb-filter .current-console i {
+    color: #dc2626;
+}
+
+/* Contador de filtros */
+.filter-count {
+    font-size: 0.8rem;
+    color: #999;
+    margin-left: 0.25rem;
+}
+
+/* Rango de precios info */
+.price-range-info {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: #1a1a1a;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.price-range-info small {
+    color: #dc2626;
+    font-weight: 600;
+}
+

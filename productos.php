@@ -41,6 +41,23 @@ $videoGameFilters = new VideoGameFilters($pdo);
 $isVideoGamesView = $videoGameFilters->isVideoGamesView();
 $currentConsole = $videoGameFilters->getCurrentConsole();
 
+// Si estamos en una consola específica, obtener filtros personalizados
+$consoleSpecificFilters = [];
+$consoleBrands = [];
+$consolePriceRange = ['min' => 0, 'max' => 0];
+
+if ($currentConsole && !$isVideoGamesView) {
+    // Estamos en una consola específica (ej: NES)
+    // Obtener solo los filtros, marcas y precios relevantes para esta consola
+    try {
+        $consoleSpecificFilters = $videoGameFilters->getConsoleSpecificFilters($_GET['category']);
+        $consoleBrands = $videoGameFilters->getConsoleBrands($_GET['category']);
+        $consolePriceRange = $videoGameFilters->getConsolePriceRange($_GET['category']);
+    } catch (Exception $e) {
+        error_log("Error obteniendo filtros de consola: " . $e->getMessage());
+    }
+}
+
 // =====================================================
 // PROCESAMIENTO DE PARÁMETROS
 // =====================================================
@@ -180,8 +197,21 @@ require_once 'includes/header.php';
                         </button>
                     </div>
                     
-                    <!-- Filtros por Categoría -->
-                    <?php if (!empty($categories)): ?>
+                    <!-- Breadcrumb / Navegación -->
+                    <?php if ($currentConsole && !$isVideoGamesView): ?>
+                    <div class="console-breadcrumb-filter">
+                        <a href="productos.php?category=videojuegos" class="back-link">
+                            <i class="fas fa-arrow-left"></i> Volver a Consolas
+                        </a>
+                        <div class="current-console">
+                            <i class="fas fa-gamepad"></i>
+                            <strong><?php echo htmlspecialchars($currentConsole['name']); ?></strong>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- Filtros por Categoría (SOLO si NO estamos en una consola específica) -->
+                    <?php if (!$currentConsole && !empty($categories)): ?>
                     <div class="filter-section">
                         <h5 class="filter-title collapsible-filter" data-target="categories-filter">
                             <i class="fas fa-th-large"></i> Categorías
@@ -210,18 +240,29 @@ require_once 'includes/header.php';
                             <i class="fas fa-dollar-sign"></i> Precio
                         </h5>
                         <div class="filter-options">
+                            <?php if ($currentConsole && $consolePriceRange['max'] > 0): ?>
+                            <div class="price-range-info">
+                                <small>Rango disponible: $<?php echo number_format($consolePriceRange['min'], 0, ',', '.'); ?> - $<?php echo number_format($consolePriceRange['max'], 0, ',', '.'); ?></small>
+                            </div>
+                            <?php endif; ?>
                             <div class="price-inputs">
                                 <input type="number" 
                                        id="price-min" 
                                        class="price-input"
                                        placeholder="Mínimo"
-                                       value="<?php echo $_GET['min_price'] ?? ''; ?>">
+                                       value="<?php echo $_GET['min_price'] ?? ''; ?>"
+                                       <?php if ($currentConsole && $consolePriceRange['min'] > 0): ?>
+                                       min="<?php echo $consolePriceRange['min']; ?>"
+                                       <?php endif; ?>>
                                 <span class="price-separator">-</span>
                                 <input type="number" 
                                        id="price-max" 
                                        class="price-input"
                                        placeholder="Máximo"
-                                       value="<?php echo $_GET['max_price'] ?? ''; ?>">
+                                       value="<?php echo $_GET['max_price'] ?? ''; ?>"
+                                       <?php if ($currentConsole && $consolePriceRange['max'] > 0): ?>
+                                       max="<?php echo $consolePriceRange['max']; ?>"
+                                       <?php endif; ?>>
                             </div>
                             <button class="btn btn-custom-primary btn-sm w-100" onclick="applyPriceFilter()">
                                 <i class="fas fa-filter"></i> Actualizar Precio
@@ -230,22 +271,32 @@ require_once 'includes/header.php';
                     </div>
 
                     <!-- Filtros por Marca -->
-                    <?php if (!empty($brands)): ?>
+                    <?php 
+                    // Usar marcas específicas de consola si están disponibles
+                    $brandsToShow = !empty($consoleBrands) ? $consoleBrands : $brands;
+                    ?>
+                    <?php if (!empty($brandsToShow)): ?>
                     <div class="filter-section">
                         <h5 class="filter-title collapsible-filter" data-target="brands-filter">
                             <i class="fas fa-industry"></i> Marcas
+                            <?php if (!empty($consoleBrands)): ?>
+                            <small class="text-muted">(<?php echo count($consoleBrands); ?>)</small>
+                            <?php endif; ?>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </h5>
                         <div class="filter-options collapse-content" id="brands-filter">
-                            <?php foreach ($brands as $brand): ?>
+                            <?php foreach ($brandsToShow as $brand): ?>
                             <div class="filter-option">
                                 <input type="checkbox" 
                                        id="brand_<?php echo $brand['id']; ?>" 
                                        class="filter-checkbox brand-filter"
-                                       value="<?php echo htmlspecialchars($brand['slug']); ?>"
-                                       <?php echo (isset($_GET['brand']) && $_GET['brand'] == $brand['slug']) ? 'checked' : ''; ?>>
+                                       value="<?php echo htmlspecialchars($brand['name']); ?>"
+                                       <?php echo (isset($_GET['brand']) && $_GET['brand'] == $brand['name']) ? 'checked' : ''; ?>>
                                 <label for="brand_<?php echo $brand['id']; ?>">
                                     <?php echo htmlspecialchars($brand['name']); ?>
+                                    <?php if (isset($brand['product_count'])): ?>
+                                    <span class="filter-count">(<?php echo $brand['product_count']; ?>)</span>
+                                    <?php endif; ?>
                                 </label>
                             </div>
                             <?php endforeach; ?>
@@ -256,29 +307,56 @@ require_once 'includes/header.php';
                     <!-- =====================================================
                          FILTROS DINÁMICOS POR ETIQUETAS
                          ===================================================== -->
-                    <?php if ($dynamicFiltersAvailable && !empty($organizedFilters)): ?>
-                        <?php foreach ($organizedFilters as $filterGroup): ?>
-                            <?php $category = $filterGroup['category']; ?>
-                            <?php $tags = $filterGroup['tags']; ?>
+                    <?php 
+                    // Usar filtros específicos de consola si están disponibles
+                    $filtersToShow = !empty($consoleSpecificFilters) ? $consoleSpecificFilters : $organizedFilters;
+                    ?>
+                    <?php if ($dynamicFiltersAvailable && !empty($filtersToShow)): ?>
+                        <?php foreach ($filtersToShow as $filterGroup): ?>
+                            <?php 
+                            // Manejar ambos formatos (consola específica y general)
+                            if (isset($filterGroup['category'])) {
+                                $category = $filterGroup['category'];
+                                $tags = $filterGroup['tags'];
+                            } else {
+                                // Formato de filtros de consola
+                                $category = [
+                                    'id' => $filterGroup['id'],
+                                    'name' => $filterGroup['slug'],
+                                    'display_name' => $filterGroup['name'],
+                                    'icon' => 'fas fa-tag'
+                                ];
+                                $tags = $filterGroup['tags'];
+                            }
+                            ?>
                             
                             <div class="filter-section">
                                 <h5 class="filter-title collapsible-filter" data-target="dynamic-filter-<?php echo $category['id']; ?>">
-                                    <i class="<?php echo $category['icon']; ?>"></i> 
-                                    <?php echo htmlspecialchars($category['display_name']); ?>
+                                    <i class="<?php echo $category['icon'] ?? 'fas fa-tag'; ?>"></i> 
+                                    <?php echo htmlspecialchars($category['display_name'] ?? $category['name']); ?>
+                                    <?php if (!empty($consoleSpecificFilters)): ?>
+                                    <small class="text-muted">(<?php echo count($tags); ?>)</small>
+                                    <?php endif; ?>
                                     <i class="fas fa-chevron-down toggle-icon"></i>
                                 </h5>
                                 <div class="filter-options collapse-content" id="dynamic-filter-<?php echo $category['id']; ?>">
                                     <?php foreach ($tags as $tag): ?>
+                                    <?php
+                                    // Manejar ambos formatos de tags
+                                    $tagValue = $tag['tag'] ?? $tag['slug'];
+                                    $tagDisplay = $tag['display_name'] ?? $tag['name'];
+                                    $tagCount = $tag['product_count'] ?? $tag['count'];
+                                    ?>
                                     <div class="filter-option">
                                         <input type="checkbox" 
-                                               id="tag_<?php echo $tag['category_id']; ?>_<?php echo md5($tag['tag']); ?>" 
+                                               id="tag_<?php echo $category['id']; ?>_<?php echo md5($tagValue); ?>" 
                                                class="filter-checkbox tag-filter"
                                                data-category="<?php echo $category['name']; ?>"
-                                               value="<?php echo htmlspecialchars($tag['tag']); ?>"
-                                               <?php echo (isset($filters['tags']) && in_array($tag['tag'], $filters['tags'])) ? 'checked' : ''; ?>>
-                                        <label for="tag_<?php echo $tag['category_id']; ?>_<?php echo md5($tag['tag']); ?>">
-                                            <?php echo htmlspecialchars($tag['display_name']); ?>
-                                            <span class="tag-count">(<?php echo $tag['product_count']; ?>)</span>
+                                               value="<?php echo htmlspecialchars($tagValue); ?>"
+                                               <?php echo (isset($filters['tags']) && in_array($tagValue, $filters['tags'])) ? 'checked' : ''; ?>>
+                                        <label for="tag_<?php echo $category['id']; ?>_<?php echo md5($tagValue); ?>">
+                                            <?php echo htmlspecialchars($tagDisplay); ?>
+                                            <span class="tag-count">(<?php echo $tagCount; ?>)</span>
                                         </label>
                                     </div>
                                     <?php endforeach; ?>
