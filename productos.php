@@ -1326,11 +1326,27 @@ require_once 'includes/header.php';
     display: flex;
     align-items: center;
     margin-bottom: 8px;
+    transition: opacity 0.3s ease;
+}
+
+.filter-option.filter-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.filter-option.filter-disabled label {
+    color: #888;
+    cursor: not-allowed;
 }
 
 .filter-checkbox {
     margin-right: 10px;
     flex-shrink: 0; /* No permitir que se comprima */
+}
+
+.filter-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .filter-option label {
@@ -1792,6 +1808,42 @@ function initializePendingFilters() {
 }
 
 /**
+ * Marcar checkboxes según filtros aplicados en la URL
+ */
+function markAppliedFilters() {
+    try {
+        // Marcar categorías
+        pendingFilters.categories.forEach(catId => {
+            const checkbox = document.getElementById(`cat_${catId}`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Marcar marcas
+        pendingFilters.brands.forEach(brandId => {
+            const checkbox = document.getElementById(`brand_${brandId}`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Marcar consolas
+        pendingFilters.consoles.forEach(consoleId => {
+            const checkbox = document.getElementById(`console_${consoleId}`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Marcar géneros
+        pendingFilters.genres.forEach(genreId => {
+            const checkbox = document.getElementById(`genre_${genreId}`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        console.log('✅ Checkboxes marcados según filtros aplicados');
+        
+    } catch (error) {
+        console.error('❌ Error marcando filtros aplicados:', error);
+    }
+}
+
+/**
  * =====================================================
  * FILTROS COLAPSABLES - FUNCIONES
  * =====================================================
@@ -1968,6 +2020,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar el estado de filtros pendientes con la URL actual
     initializePendingFilters();
+    
+    // Marcar checkboxes según filtros aplicados y actualizar compatibilidad
+    setTimeout(() => {
+        markAppliedFilters();
+        updateFilterCompatibility();
+    }, 100);
     
     // Verificar que las funciones básicas funcionen
     try {
@@ -2154,12 +2212,149 @@ function updateFilter(filterType, value, checked) {
         }
         
         filtersChanged = true;
+        updateFilterCompatibility(); // Actualizar compatibilidad después de cada cambio
         updateFilterButtons();
         console.log('📝 Filtro actualizado:', filterType, value, checked);
         
     } catch (error) {
         console.error('❌ Error en updateFilter:', error);
     }
+}
+
+/**
+ * Actualizar compatibilidad de filtros
+ * Deshabilita opciones que no tienen productos compatibles con los filtros actuales
+ */
+function updateFilterCompatibility() {
+    try {
+        // Construir query string con filtros actuales
+        const params = new URLSearchParams();
+        
+        if (pendingFilters.categories.length > 0) {
+            params.set('category', pendingFilters.categories.join(','));
+        }
+        if (pendingFilters.brands.length > 0) {
+            params.set('brands', pendingFilters.brands.join(','));
+        }
+        if (pendingFilters.consoles.length > 0) {
+            params.set('consoles', pendingFilters.consoles.join(','));
+        }
+        if (pendingFilters.genres.length > 0) {
+            params.set('genres', pendingFilters.genres.join(','));
+        }
+        
+        // Si no hay filtros seleccionados, habilitar todo
+        if (params.toString() === '') {
+            enableAllFilters();
+            return;
+        }
+        
+        // Hacer petición AJAX para obtener filtros compatibles
+        fetch(`includes/get_compatible_filters.php?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateFilterAvailability(data.filters);
+                } else {
+                    console.error('Error obteniendo filtros compatibles:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error en petición AJAX:', error);
+            });
+        
+    } catch (error) {
+        console.error('❌ Error en updateFilterCompatibility:', error);
+    }
+}
+
+/**
+ * Actualizar disponibilidad de checkboxes basado en filtros compatibles
+ */
+function updateFilterAvailability(compatibleFilters) {
+    // Actualizar categorías
+    document.querySelectorAll('.category-filter').forEach(checkbox => {
+        const isCompatible = compatibleFilters.categories.includes(parseInt(checkbox.value));
+        const isSelected = pendingFilters.categories.includes(checkbox.value);
+        
+        checkbox.disabled = !isCompatible && !isSelected;
+        
+        // Agregar/quitar clase visual
+        const label = checkbox.closest('.filter-option');
+        if (label) {
+            if (checkbox.disabled) {
+                label.classList.add('filter-disabled');
+            } else {
+                label.classList.remove('filter-disabled');
+            }
+        }
+    });
+    
+    // Actualizar marcas
+    document.querySelectorAll('.brand-filter').forEach(checkbox => {
+        const isCompatible = compatibleFilters.brands.includes(parseInt(checkbox.value));
+        const isSelected = pendingFilters.brands.includes(checkbox.value);
+        
+        checkbox.disabled = !isCompatible && !isSelected;
+        
+        const label = checkbox.closest('.filter-option');
+        if (label) {
+            if (checkbox.disabled) {
+                label.classList.add('filter-disabled');
+            } else {
+                label.classList.remove('filter-disabled');
+            }
+        }
+    });
+    
+    // Actualizar consolas
+    document.querySelectorAll('.console-filter').forEach(checkbox => {
+        const isCompatible = compatibleFilters.consoles.includes(parseInt(checkbox.value));
+        const isSelected = pendingFilters.consoles.includes(checkbox.value);
+        
+        checkbox.disabled = !isCompatible && !isSelected;
+        
+        const label = checkbox.closest('.filter-option');
+        if (label) {
+            if (checkbox.disabled) {
+                label.classList.add('filter-disabled');
+            } else {
+                label.classList.remove('filter-disabled');
+            }
+        }
+    });
+    
+    // Actualizar géneros
+    document.querySelectorAll('.genre-filter').forEach(checkbox => {
+        const isCompatible = compatibleFilters.genres.includes(parseInt(checkbox.value));
+        const isSelected = pendingFilters.genres.includes(checkbox.value);
+        
+        checkbox.disabled = !isCompatible && !isSelected;
+        
+        const label = checkbox.closest('.filter-option');
+        if (label) {
+            if (checkbox.disabled) {
+                label.classList.add('filter-disabled');
+            } else {
+                label.classList.remove('filter-disabled');
+            }
+        }
+    });
+    
+    console.log('✅ Disponibilidad de filtros actualizada');
+}
+
+/**
+ * Habilitar todos los filtros
+ */
+function enableAllFilters() {
+    document.querySelectorAll('.category-filter, .brand-filter, .console-filter, .genre-filter').forEach(checkbox => {
+        checkbox.disabled = false;
+        const label = checkbox.closest('.filter-option');
+        if (label) {
+            label.classList.remove('filter-disabled');
+        }
+    });
 }
 
 /**
