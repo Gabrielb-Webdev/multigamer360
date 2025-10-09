@@ -186,10 +186,14 @@ function clearAllFilters() {
         syncGlobalState(); // Sincronizar estado global
         updateFilterButtons();
 
-        // Redirigir a la página sin filtros
+        // Redirigir a la página sin filtros PERO manteniendo la categoría (consola)
         const url = new URL(window.location);
         const search = url.searchParams.get('search');
+        const category = url.searchParams.get('category'); // Preservar categoría
         url.search = '';
+        if (category) {
+            url.searchParams.set('category', category); // Mantener categoría
+        }
         if (search) {
             url.searchParams.set('search', search);
         }

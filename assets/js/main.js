@@ -214,16 +214,23 @@ function clearAllFilters() {
     checkboxes.forEach(checkbox => checkbox.checked = false);
     
     // Limpiar precio
-    document.getElementById('min-price').value = '';
-    document.getElementById('max-price').value = '';
+    const minPriceEl = document.getElementById('min-price');
+    const maxPriceEl = document.getElementById('max-price');
+    if (minPriceEl) minPriceEl.value = '';
+    if (maxPriceEl) maxPriceEl.value = '';
     
-    // Mostrar todos los productos
-    const products = document.querySelectorAll('.product-card');
-    products.forEach(product => {
-        product.style.display = 'block';
-        product.classList.remove('hidden-product');
-        product.classList.add('visible-product');
-    });
+    // Redirigir manteniendo la categoría (consola) si existe
+    const url = new URL(window.location);
+    const category = url.searchParams.get('category');
+    const search = url.searchParams.get('search');
+    url.search = '';
+    if (category) {
+        url.searchParams.set('category', category); // Preservar categoría
+    }
+    if (search) {
+        url.searchParams.set('search', search);
+    }
+    window.location.href = url.toString();
 }
 
 function sortProducts(sortType) {

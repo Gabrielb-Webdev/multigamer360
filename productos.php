@@ -2225,9 +2225,17 @@ function clearAllFilters() {
         filtersChanged = false;
         updateFilterButtons();
         
-        // Redirigir a la página sin filtros
+        // Redirigir a la página sin filtros PERO manteniendo la categoría (consola)
         const url = new URL(window.location);
+        const category = url.searchParams.get('category'); // Preservar categoría
+        const search = url.searchParams.get('search');
         url.search = '';
+        if (category) {
+            url.searchParams.set('category', category); // Mantener categoría
+        }
+        if (search) {
+            url.searchParams.set('search', search);
+        }
         window.location.href = url.toString();
         
     } catch (error) {

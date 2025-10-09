@@ -82,7 +82,7 @@
     <!-- JavaScript Files - Orden optimizado para evitar conflictos -->
     <script src="assets/js/wishlist-system.js?v=0.1"></script>
     <script src="assets/js/modern-cart-button.js?v=0.1"></script>
-    <script src="assets/js/main.js?v=0.1"></script>
+    <script src="assets/js/main.js?v=0.2"></script>
     
     <!-- Verificación de errores y limpieza -->
     <script>
