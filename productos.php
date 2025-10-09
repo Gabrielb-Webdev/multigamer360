@@ -227,7 +227,6 @@ require_once 'includes/header.php';
                     <div class="filter-section">
                         <h5 class="filter-title collapsible-filter" data-target="categories-filter">
                             <i class="fas fa-th-large"></i> Categorías
-                            <small class="text-muted ms-1">(<?php echo count($availableFilters['categories']); ?>)</small>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </h5>
                         <div class="filter-options collapse-content" id="categories-filter">
@@ -296,7 +295,6 @@ require_once 'includes/header.php';
                     <div class="filter-section">
                         <h5 class="filter-title collapsible-filter" data-target="brands-filter">
                             <i class="fas fa-industry"></i> Marcas
-                            <small class="text-muted ms-1">(<?php echo count($availableFilters['brands']); ?>)</small>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </h5>
                         <div class="filter-options collapse-content" id="brands-filter">
@@ -327,7 +325,6 @@ require_once 'includes/header.php';
                     <div class="filter-section">
                         <h5 class="filter-title collapsible-filter" data-target="consoles-filter">
                             <i class="fas fa-gamepad"></i> Consolas
-                            <small class="text-muted ms-1">(<?php echo count($availableFilters['consoles']); ?>)</small>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </h5>
                         <div class="filter-options collapse-content" id="consoles-filter">
@@ -358,7 +355,6 @@ require_once 'includes/header.php';
                     <div class="filter-section">
                         <h5 class="filter-title collapsible-filter" data-target="genres-filter">
                             <i class="fas fa-tags"></i> Géneros
-                            <small class="text-muted ms-1">(<?php echo count($availableFilters['genres']); ?>)</small>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </h5>
                         <div class="filter-options collapse-content" id="genres-filter">
