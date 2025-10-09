@@ -1740,7 +1740,8 @@ require_once 'includes/header.php';
 let pendingFilters = {
     categories: [],
     brands: [],
-    tags: [],
+    consoles: [],
+    genres: [],
     minPrice: '',
     maxPrice: ''
 };
@@ -1756,19 +1757,25 @@ function initializePendingFilters() {
         // Inicializar categorías
         const categoryParam = urlParams.get('category');
         if (categoryParam) {
-            pendingFilters.categories = [categoryParam];
+            pendingFilters.categories = categoryParam.split(',');
         }
         
         // Inicializar marcas
-        const brandParam = urlParams.get('brand');
+        const brandParam = urlParams.get('brands');
         if (brandParam) {
-            pendingFilters.brands = [brandParam];
+            pendingFilters.brands = brandParam.split(',');
         }
         
-        // Inicializar tags dinámicos
-        const tagsParams = urlParams.getAll('tags[]');
-        if (tagsParams.length > 0) {
-            pendingFilters.tags = tagsParams;
+        // Inicializar consolas
+        const consolesParam = urlParams.get('consoles');
+        if (consolesParam) {
+            pendingFilters.consoles = consolesParam.split(',');
+        }
+        
+        // Inicializar géneros
+        const genresParam = urlParams.get('genres');
+        if (genresParam) {
+            pendingFilters.genres = genresParam.split(',');
         }
         
         // Inicializar precios
@@ -2029,18 +2036,36 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('❌ Error configurando filtros de marca:', error);
     }
     
-    // Filtros por etiquetas dinámicas con manejo de errores
+    // Filtros por consolas
     try {
-        const tagFilters = document.querySelectorAll('.tag-filter');
-        console.log(`🔧 Configurando ${tagFilters.length} filtros de etiquetas dinámicas`);
+        const consoleFilters = document.querySelectorAll('.console-filter');
+        console.log(`🔧 Configurando ${consoleFilters.length} filtros de consolas`);
         
-        tagFilters.forEach((checkbox, index) => {
+        consoleFilters.forEach((checkbox, index) => {
             try {
                 checkbox.addEventListener('change', function() {
-                    updateTagFilter(this.value, this.checked);
+                    updateFilter('console', this.value, this.checked);
                 });
             } catch (error) {
-                console.error(`❌ Error configurando filtro de etiqueta ${index + 1}:`, error);
+                console.error(`❌ Error configurando filtro de consola ${index + 1}:`, error);
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error configurando filtros de consolas:', error);
+    }
+    
+    // Filtros por géneros
+    try {
+        const genreFilters = document.querySelectorAll('.genre-filter');
+        console.log(`🔧 Configurando ${genreFilters.length} filtros de géneros`);
+        
+        genreFilters.forEach((checkbox, index) => {
+            try {
+                checkbox.addEventListener('change', function() {
+                    updateFilter('genre', this.value, this.checked);
+                });
+            } catch (error) {
+                console.error(`❌ Error configurando filtro de género ${index + 1}:`, error);
             }
         });
     } catch (error) {
@@ -2110,6 +2135,22 @@ function updateFilter(filterType, value, checked) {
             } else {
                 pendingFilters.brands = pendingFilters.brands.filter(brand => brand !== value);
             }
+        } else if (filterType === 'console') {
+            if (checked) {
+                if (!pendingFilters.consoles.includes(value)) {
+                    pendingFilters.consoles.push(value);
+                }
+            } else {
+                pendingFilters.consoles = pendingFilters.consoles.filter(console => console !== value);
+            }
+        } else if (filterType === 'genre') {
+            if (checked) {
+                if (!pendingFilters.genres.includes(value)) {
+                    pendingFilters.genres.push(value);
+                }
+            } else {
+                pendingFilters.genres = pendingFilters.genres.filter(genre => genre !== value);
+            }
         }
         
         filtersChanged = true;
@@ -2122,43 +2163,6 @@ function updateFilter(filterType, value, checked) {
 }
 
 /**
- * Actualizar filtro de tags dinámicos
- */
-function updateTagFilter(tag, checked) {
-    try {
-        // Auto-expandir el filtro dinámico correspondiente si se selecciona una opción
-        if (checked) {
-            const tagCheckbox = document.querySelector(`input[value="${tag}"]`);
-            if (tagCheckbox) {
-                const categoryAttribute = tagCheckbox.getAttribute('data-category');
-                if (categoryAttribute) {
-                    // Buscar el ID del filtro dinámico correspondiente
-                    const dynamicFilterId = document.querySelector(`[id^="dynamic-filter-"]`)?.id;
-                    if (dynamicFilterId) {
-                        expandFilter(dynamicFilterId);
-                    }
-                }
-            }
-        }
-        
-        if (checked) {
-            if (!pendingFilters.tags.includes(tag)) {
-                pendingFilters.tags.push(tag);
-            }
-        } else {
-            pendingFilters.tags = pendingFilters.tags.filter(t => t !== tag);
-        }
-        
-        filtersChanged = true;
-        updateFilterButtons();
-        console.log('📝 Tag actualizado:', tag, checked);
-        
-    } catch (error) {
-        console.error('❌ Error en updateTagFilter:', error);
-    }
-}
-
-/**
  * Aplicar todos los filtros seleccionados
  */
 function applyAllFilters() {
@@ -2167,28 +2171,31 @@ function applyAllFilters() {
         
         // Limpiar parámetros existentes
         url.searchParams.delete('category');
-        url.searchParams.delete('brand');
-        url.searchParams.delete('tags[]');
-        url.searchParams.delete('tags');
+        url.searchParams.delete('brands');
+        url.searchParams.delete('consoles');
+        url.searchParams.delete('genres');
         url.searchParams.delete('min_price');
         url.searchParams.delete('max_price');
         url.searchParams.delete('page');
         
         // Aplicar categorías
         if (pendingFilters.categories.length > 0) {
-            url.searchParams.set('category', pendingFilters.categories[0]); // Por ahora solo una categoría
+            url.searchParams.set('category', pendingFilters.categories.join(','));
         }
         
         // Aplicar marcas
         if (pendingFilters.brands.length > 0) {
-            url.searchParams.set('brand', pendingFilters.brands[0]); // Por ahora solo una marca
+            url.searchParams.set('brands', pendingFilters.brands.join(','));
         }
         
-        // Aplicar tags dinámicos
-        if (pendingFilters.tags.length > 0) {
-            pendingFilters.tags.forEach(tag => {
-                url.searchParams.append('tags[]', tag);
-            });
+        // Aplicar consolas
+        if (pendingFilters.consoles.length > 0) {
+            url.searchParams.set('consoles', pendingFilters.consoles.join(','));
+        }
+        
+        // Aplicar géneros
+        if (pendingFilters.genres.length > 0) {
+            url.searchParams.set('genres', pendingFilters.genres.join(','));
         }
         
         // Aplicar precios
@@ -2218,7 +2225,8 @@ function clearAllFilters() {
         // Desmarcar todos los checkboxes
         document.querySelectorAll('.category-filter').forEach(cb => cb.checked = false);
         document.querySelectorAll('.brand-filter').forEach(cb => cb.checked = false);
-        document.querySelectorAll('.tag-filter').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.console-filter').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.genre-filter').forEach(cb => cb.checked = false);
         
         // Limpiar campos de precio
         const minPriceInput = document.getElementById('price-min');
@@ -2230,7 +2238,8 @@ function clearAllFilters() {
         pendingFilters = {
             categories: [],
             brands: [],
-            tags: [],
+            consoles: [],
+            genres: [],
             minPrice: '',
             maxPrice: ''
         };
@@ -2238,16 +2247,12 @@ function clearAllFilters() {
         filtersChanged = false;
         updateFilterButtons();
         
-        // Redirigir a la página sin filtros PERO manteniendo la categoría (consola)
+        // Redirigir a la página sin filtros (limpiar TODOS los parámetros)
         const url = new URL(window.location);
-        const category = url.searchParams.get('category'); // Preservar categoría
         const search = url.searchParams.get('search');
         url.search = '';
-        if (category) {
-            url.searchParams.set('category', category); // Mantener categoría
-        }
         if (search) {
-            url.searchParams.set('search', search);
+            url.searchParams.set('search', search); // Solo mantener búsqueda si existe
         }
         window.location.href = url.toString();
         
@@ -2270,7 +2275,8 @@ function updateFilterButtons() {
     if (applyBtn && clearBtn) {
         const totalFilters = pendingFilters.categories.length + 
                            pendingFilters.brands.length + 
-                           pendingFilters.tags.length +
+                           pendingFilters.consoles.length +
+                           pendingFilters.genres.length +
                            (pendingFilters.minPrice ? 1 : 0) +
                            (pendingFilters.maxPrice ? 1 : 0);
         
