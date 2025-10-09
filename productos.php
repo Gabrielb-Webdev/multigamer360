@@ -31,10 +31,10 @@ $sessionId = initSecureSession();
 require_once 'config/database.php';
 require_once 'includes/auth.php';
 require_once 'includes/product_manager.php';
-require_once 'includes/smart_filters.php';
+require_once 'includes/smart_filters_v2.php'; // ACTUALIZADO: Nueva versión con tablas relacionales
 
 // =====================================================
-// INICIALIZAR SISTEMA DE FILTROS INTELIGENTES
+// INICIALIZAR SISTEMA DE FILTROS INTELIGENTES V2
 // =====================================================
 
 $smartFilters = new SmartFilters($pdo);
@@ -52,14 +52,14 @@ if (!empty($_GET['brands'])) {
     $appliedFilters['brands'] = array_map('intval', explode(',', $_GET['brands']));
 }
 
-// Consolas (nombres de consolas seleccionadas)
+// Consolas (IDs de consolas seleccionadas - ACTUALIZADO)
 if (!empty($_GET['consoles'])) {
-    $appliedFilters['consoles'] = explode(',', $_GET['consoles']);
+    $appliedFilters['consoles'] = array_map('intval', explode(',', $_GET['consoles']));
 }
 
-// Géneros (nombres de géneros seleccionados)
+// Géneros (IDs de géneros seleccionados - ACTUALIZADO)
 if (!empty($_GET['genres'])) {
-    $appliedFilters['genres'] = explode(',', $_GET['genres']);
+    $appliedFilters['genres'] = array_map('intval', explode(',', $_GET['genres']));
 }
 
 // Obtener todos los filtros disponibles (solo compatibles con selección actual)
@@ -334,12 +334,12 @@ require_once 'includes/header.php';
                             ?>
                             <div class="filter-option">
                                 <input type="checkbox" 
-                                       id="console_<?php echo md5($console['console']); ?>" 
+                                       id="console_<?php echo $console['id']; ?>" 
                                        class="filter-checkbox console-filter"
-                                       value="<?php echo htmlspecialchars($console['console']); ?>"
-                                       <?php echo in_array($console['console'], $selectedConsoles) ? 'checked' : ''; ?>>
-                                <label for="console_<?php echo md5($console['console']); ?>">
-                                    <?php echo htmlspecialchars($console['console']); ?>
+                                       value="<?php echo $console['id']; ?>"
+                                       <?php echo in_array($console['id'], $selectedConsoles) ? 'checked' : ''; ?>>
+                                <label for="console_<?php echo $console['id']; ?>">
+                                    <?php echo htmlspecialchars($console['name']); ?>
                                     <span class="filter-count">(<?php echo $console['product_count']; ?>)</span>
                                 </label>
                             </div>
@@ -364,12 +364,12 @@ require_once 'includes/header.php';
                             ?>
                             <div class="filter-option">
                                 <input type="checkbox" 
-                                       id="genre_<?php echo md5($genre['genre']); ?>" 
+                                       id="genre_<?php echo $genre['id']; ?>" 
                                        class="filter-checkbox genre-filter"
-                                       value="<?php echo htmlspecialchars($genre['genre']); ?>"
-                                       <?php echo in_array($genre['genre'], $selectedGenres) ? 'checked' : ''; ?>>
-                                <label for="genre_<?php echo md5($genre['genre']); ?>">
-                                    <?php echo htmlspecialchars($genre['genre']); ?>
+                                       value="<?php echo $genre['id']; ?>"
+                                       <?php echo in_array($genre['id'], $selectedGenres) ? 'checked' : ''; ?>>
+                                <label for="genre_<?php echo $genre['id']; ?>">
+                                    <?php echo htmlspecialchars($genre['name']); ?>
                                     <span class="filter-count">(<?php echo $genre['product_count']; ?>)</span>
                                 </label>
                             </div>
