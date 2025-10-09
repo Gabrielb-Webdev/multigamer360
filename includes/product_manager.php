@@ -59,35 +59,73 @@ class ProductManager {
         
         $params = [];
         
+        // Filtro por categoría (slug único)
         if (!empty($filters['category'])) {
             $sql .= " AND c.slug = :category";
             $params['category'] = $filters['category'];
         }
         
+        // Filtro por múltiples categorías (IDs)
+        if (!empty($filters['categories']) && is_array($filters['categories'])) {
+            $placeholders = str_repeat('?,', count($filters['categories']) - 1) . '?';
+            $sql .= " AND p.category_id IN ($placeholders)";
+            $params = array_merge($params, $filters['categories']);
+        }
+        
+        // Filtro por marca (slug único)
         if (!empty($filters['brand'])) {
             $sql .= " AND b.slug = :brand";
             $params['brand'] = $filters['brand'];
         }
         
+        // Filtro por múltiples marcas (IDs)
+        if (!empty($filters['brands']) && is_array($filters['brands'])) {
+            $placeholders = str_repeat('?,', count($filters['brands']) - 1) . '?';
+            $sql .= " AND p.brand_id IN ($placeholders)";
+            $params = array_merge($params, $filters['brands']);
+        }
+        
+        // Filtro por múltiples consolas
+        if (!empty($filters['consoles']) && is_array($filters['consoles'])) {
+            $placeholders = str_repeat('?,', count($filters['consoles']) - 1) . '?';
+            $sql .= " AND p.console IN ($placeholders)";
+            $params = array_merge($params, $filters['consoles']);
+        }
+        
+        // Filtro por múltiples géneros
+        if (!empty($filters['genres']) && is_array($filters['genres'])) {
+            $genreConditions = [];
+            foreach ($filters['genres'] as $genre) {
+                $genreConditions[] = "p.genre LIKE ?";
+                $params[] = "%$genre%";
+            }
+            if (!empty($genreConditions)) {
+                $sql .= " AND (" . implode(" OR ", $genreConditions) . ")";
+            }
+        }
+        
+        // Búsqueda general
         if (!empty($filters['search'])) {
-            $sql .= " AND (p.name LIKE :search OR p.description LIKE :search)";
-            $params['search'] = '%' . $filters['search'] . '%';
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+            $params[] = '%' . $filters['search'] . '%';
+            $params[] = '%' . $filters['search'] . '%';
         }
         
         // Búsqueda por etiquetas internas (solo para administradores)
         if (!empty($filters['tags']) && isset($filters['admin_search']) && $filters['admin_search']) {
-            $sql .= " AND JSON_CONTAINS(p.tags, JSON_ARRAY(:tag))";
-            $params['tag'] = $filters['tags'];
+            $sql .= " AND JSON_CONTAINS(p.tags, JSON_ARRAY(?))";
+            $params[] = $filters['tags'];
         }
         
+        // Filtros de precio
         if (!empty($filters['min_price'])) {
-            $sql .= " AND p.price_pesos >= :min_price";
-            $params['min_price'] = $filters['min_price'];
+            $sql .= " AND p.price_pesos >= ?";
+            $params[] = $filters['min_price'];
         }
         
         if (!empty($filters['max_price'])) {
-            $sql .= " AND p.price_pesos <= :max_price";
-            $params['max_price'] = $filters['max_price'];
+            $sql .= " AND p.price_pesos <= ?";
+            $params[] = $filters['max_price'];
         }
         
         // Orden personalizable - SIEMPRE productos con stock primero
@@ -98,20 +136,12 @@ class ProductManager {
         }
         
         if (!empty($filters['limit'])) {
-            $sql .= " LIMIT :limit";
+            $sql .= " LIMIT ?";
+            $params[] = $filters['limit'];
         }
         
         $stmt = $this->pdo->prepare($sql);
-        
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
-        }
-        
-        if (!empty($filters['limit'])) {
-            $stmt->bindValue(':limit', $filters['limit'], PDO::PARAM_INT);
-        }
-        
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
     
@@ -236,38 +266,71 @@ class ProductManager {
         
         $params = [];
         
+        // Filtro por categoría (slug único)
         if (!empty($filters['category'])) {
-            $sql .= " AND c.slug = :category";
-            $params['category'] = $filters['category'];
+            $sql .= " AND c.slug = ?";
+            $params[] = $filters['category'];
         }
         
+        // Filtro por múltiples categorías (IDs)
+        if (!empty($filters['categories']) && is_array($filters['categories'])) {
+            $placeholders = str_repeat('?,', count($filters['categories']) - 1) . '?';
+            $sql .= " AND p.category_id IN ($placeholders)";
+            $params = array_merge($params, $filters['categories']);
+        }
+        
+        // Filtro por marca (slug único)
         if (!empty($filters['brand'])) {
-            $sql .= " AND b.slug = :brand";
-            $params['brand'] = $filters['brand'];
+            $sql .= " AND b.slug = ?";
+            $params[] = $filters['brand'];
         }
         
+        // Filtro por múltiples marcas (IDs)
+        if (!empty($filters['brands']) && is_array($filters['brands'])) {
+            $placeholders = str_repeat('?,', count($filters['brands']) - 1) . '?';
+            $sql .= " AND p.brand_id IN ($placeholders)";
+            $params = array_merge($params, $filters['brands']);
+        }
+        
+        // Filtro por múltiples consolas
+        if (!empty($filters['consoles']) && is_array($filters['consoles'])) {
+            $placeholders = str_repeat('?,', count($filters['consoles']) - 1) . '?';
+            $sql .= " AND p.console IN ($placeholders)";
+            $params = array_merge($params, $filters['consoles']);
+        }
+        
+        // Filtro por múltiples géneros
+        if (!empty($filters['genres']) && is_array($filters['genres'])) {
+            $genreConditions = [];
+            foreach ($filters['genres'] as $genre) {
+                $genreConditions[] = "p.genre LIKE ?";
+                $params[] = "%$genre%";
+            }
+            if (!empty($genreConditions)) {
+                $sql .= " AND (" . implode(" OR ", $genreConditions) . ")";
+            }
+        }
+        
+        // Búsqueda general
         if (!empty($filters['search'])) {
-            $sql .= " AND (p.name LIKE :search OR p.description LIKE :search)";
-            $params['search'] = '%' . $filters['search'] . '%';
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+            $params[] = '%' . $filters['search'] . '%';
+            $params[] = '%' . $filters['search'] . '%';
         }
         
+        // Filtros de precio
         if (!empty($filters['min_price'])) {
-            $sql .= " AND p.price_pesos >= :min_price";
-            $params['min_price'] = $filters['min_price'];
+            $sql .= " AND p.price_pesos >= ?";
+            $params[] = $filters['min_price'];
         }
         
         if (!empty($filters['max_price'])) {
-            $sql .= " AND p.price_pesos <= :max_price";
-            $params['max_price'] = $filters['max_price'];
+            $sql .= " AND p.price_pesos <= ?";
+            $params[] = $filters['max_price'];
         }
         
         $stmt = $this->pdo->prepare($sql);
-        
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
-        }
-        
-        $stmt->execute();
+        $stmt->execute($params);
         $result = $stmt->fetch();
         return $result['total'];
     }
