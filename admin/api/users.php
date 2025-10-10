@@ -107,7 +107,7 @@ function handleGet($pdo) {
         
         // Obtener usuarios
         $stmt = $pdo->prepare("
-            SELECT id, email, first_name, last_name, role, is_active, 
+            SELECT id, email, first_name, last_name, phone, birth_date, role, is_active, 
                    email_verified, created_at, last_login
             FROM users 
             WHERE $where_clause
@@ -166,8 +166,8 @@ function handlePost($pdo) {
     
     // Insertar usuario
     $stmt = $pdo->prepare("
-        INSERT INTO users (email, password, first_name, last_name, role, is_active, email_verified, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+        INSERT INTO users (email, password, first_name, last_name, phone, birth_date, role, is_active, email_verified, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
     
     $result = $stmt->execute([
@@ -175,6 +175,8 @@ function handlePost($pdo) {
         $password_hash,
         $data['first_name'] ?? '',
         $data['last_name'] ?? '',
+        $data['phone'] ?? null,
+        $data['birth_date'] ?? null,
         $role,
         isset($data['is_active']) ? intval($data['is_active']) : 1,
         isset($data['email_verified']) ? intval($data['email_verified']) : 0
@@ -225,7 +227,7 @@ function handlePut($pdo) {
     $params = [];
     
     // Campos actualizables
-    $allowed_fields = ['first_name', 'last_name', 'email', 'is_active', 'email_verified', 'role'];
+    $allowed_fields = ['first_name', 'last_name', 'email', 'phone', 'birth_date', 'is_active', 'email_verified', 'role'];
     
     foreach ($allowed_fields as $field) {
         if (isset($data[$field])) {

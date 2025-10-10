@@ -45,9 +45,9 @@ class UserManagerSimple {
             $hashed_password = password_hash($data['password'], PASSWORD_BCRYPT);
             
             $sql = "INSERT INTO users (
-                        email, password, first_name, last_name, phone, 
+                        email, password, first_name, last_name, phone, birth_date,
                         role, is_active, email_verified, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, NOW())";
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, NOW())";
             
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
@@ -56,6 +56,7 @@ class UserManagerSimple {
                 $data['first_name'] ?? '',
                 $data['last_name'] ?? '',
                 $data['phone'] ?? null,
+                $data['birth_date'] ?? null,
                 $role
             ]);
             
@@ -79,7 +80,7 @@ class UserManagerSimple {
         try {
             $stmt = $this->pdo->prepare("
                 SELECT id, email, password, first_name, last_name, 
-                       phone, role, is_active, email_verified
+                       phone, birth_date, role, is_active, email_verified
                 FROM users 
                 WHERE email = ? AND is_active = 1
             ");
