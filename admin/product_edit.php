@@ -367,7 +367,7 @@ function generateSlug($text) {
                                 <div class="row g-3" id="images-grid">
                                     <?php foreach ($product_images as $index => $image): ?>
                                     <div class="col-md-3 image-item" data-image-id="<?php echo $image['id']; ?>" data-order="<?php echo $image['display_order'] ?? $index; ?>">
-                                        <div class="card h-100 position-relative" style="cursor: move;">
+                                        <div class="card h-100 position-relative">
                                             <!-- Badge de orden (drag handle) -->
                                             <div class="position-absolute top-0 start-0 p-2" style="z-index: 10;">
                                                 <span class="badge bg-dark bg-opacity-75 drag-handle">
@@ -862,25 +862,17 @@ function generateSlug($text) {
 /* Estilos para drag & drop de imágenes */
 .image-item {
     transition: all 0.3s ease;
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-    background: #f8f9fa;
-    border: 2px dashed #0d6efd;
-}
-
-.sortable-chosen {
-    cursor: grabbing !important;
-}
-
-.sortable-drag {
-    opacity: 0.8;
-    transform: rotate(5deg);
+    position: relative;
 }
 
 .image-item .card {
     transition: transform 0.2s, box-shadow 0.2s;
+    cursor: grab;
+    user-select: none;
+}
+
+.image-item .card:active {
+    cursor: grabbing;
 }
 
 .image-item:hover .card {
@@ -888,12 +880,52 @@ function generateSlug($text) {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
+/* Estados de Sortable */
+.sortable-ghost {
+    opacity: 0.3 !important;
+}
+
+.sortable-ghost .card {
+    background: #f8f9fa;
+    border: 3px dashed #0d6efd !important;
+    transform: scale(0.95);
+}
+
+.sortable-chosen .card {
+    cursor: grabbing !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+    transform: scale(1.05) rotate(2deg);
+    z-index: 1000;
+}
+
+.sortable-drag {
+    opacity: 1 !important;
+}
+
+.sortable-drag .card {
+    transform: rotate(5deg) scale(1.1);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4) !important;
+}
+
+/* Badge de arrastre */
 .drag-handle {
     cursor: grab;
+    user-select: none;
 }
 
 .drag-handle:active {
     cursor: grabbing;
+}
+
+/* Animación al soltar */
+@keyframes dropAnimation {
+    0% { transform: scale(1.1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.image-item.just-dropped .card {
+    animation: dropAnimation 0.3s ease;
 }
 </style>
 
@@ -901,8 +933,19 @@ function generateSlug($text) {
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
+// Verificar que Sortable está cargado
+console.log('Sortable disponible:', typeof Sortable !== 'undefined');
+
 // Esperar a que el DOM y Bootstrap estén completamente cargados
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM Cargado - Iniciando sistema de imágenes');
+    
+    // Verificar Sortable nuevamente
+    if (typeof Sortable === 'undefined') {
+        console.error('❌ Sortable.js NO está cargado!');
+    } else {
+        console.log('✅ Sortable.js cargado correctamente');
+    }
 
 // ============================================
 // GESTIÓN DE IMÁGENES
@@ -1078,19 +1121,31 @@ function uploadPendingImagesManually() {
 // Configurar Sortable para reordenar imágenes
 const imagesGrid = document.getElementById('images-grid');
 if (imagesGrid) {
-    new Sortable(imagesGrid, {
+    const sortable = new Sortable(imagesGrid, {
         animation: 200,
-        easing: "cubic-bezier(1, 0, 0, 1)",
+        easing: "cubic-bezier(0.25, 1, 0.5, 1)",
         draggable: '.image-item',
+        handle: '.card', // Toda la card es el handle
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
+        forceFallback: true, // Mejora la compatibilidad
+        fallbackTolerance: 3,
+        scroll: true,
+        bubbleScroll: true,
+        onStart: function(evt) {
+            console.log('🎯 Iniciando arrastre de imagen', evt.oldIndex + 1);
+        },
         onEnd: function(evt) {
+            console.log('🎯 Imagen movida de posición', evt.oldIndex + 1, '→', evt.newIndex + 1);
             updateImageOrder();
         }
     });
     
-    console.log('Sortable inicializado correctamente');
+    console.log('✓ Sortable inicializado correctamente en', imagesGrid);
+    console.log('✓ Elementos arrastrables:', imagesGrid.querySelectorAll('.image-item').length);
+} else {
+    console.error('✗ No se encontró el contenedor images-grid');
 }
 
 // Actualizar orden de imágenes en el servidor
@@ -1303,7 +1358,7 @@ if (autoGenerateSeoBtn) {
     updateSEOCounters();
     updateSERPPreview();
     
-    alert('Campos SEO generados automáticamente');
+    console.log('✓ Campos SEO generados automáticamente');
 });
 }
 
