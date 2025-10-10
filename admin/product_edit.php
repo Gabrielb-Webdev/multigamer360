@@ -1309,32 +1309,58 @@ if (autoGenerateSeoBtn) {
 
 // Contadores de caracteres SEO
 function updateSEOCounters() {
-    const metaTitle = document.getElementById('meta_title').value;
-    const metaDesc = document.getElementById('meta_description').value;
-    
+    const metaTitleInput = document.getElementById('meta_title');
+    const metaDescInput = document.getElementById('meta_description');
     const titleCounter = document.getElementById('meta-title-counter');
     const descCounter = document.getElementById('meta-desc-counter');
     
-    titleCounter.textContent = `(${metaTitle.length}/60)`;
-    titleCounter.className = metaTitle.length > 60 ? 'text-danger small' : 'text-muted small';
+    // Verificar que los elementos existen
+    if (!metaTitleInput || !metaDescInput) {
+        console.warn('Campos SEO no encontrados');
+        return;
+    }
     
-    descCounter.textContent = `(${metaDesc.length}/160)`;
-    descCounter.className = metaDesc.length > 160 ? 'text-danger small' : 'text-muted small';
+    const metaTitle = metaTitleInput.value || '';
+    const metaDesc = metaDescInput.value || '';
+    
+    if (titleCounter) {
+        titleCounter.textContent = `(${metaTitle.length}/60)`;
+        titleCounter.className = metaTitle.length > 60 ? 'text-danger small' : 'text-muted small';
+    }
+    
+    if (descCounter) {
+        descCounter.textContent = `(${metaDesc.length}/160)`;
+        descCounter.className = metaDesc.length > 160 ? 'text-danger small' : 'text-muted small';
+    }
 }
 
 // Actualizar vista previa SERP
 function updateSERPPreview() {
-    const title = document.getElementById('meta_title').value || document.getElementById('name').value || 'Título del producto';
-    const desc = document.getElementById('meta_description').value || document.getElementById('short_description').value || 'Descripción del producto';
+    const titleInput = document.getElementById('meta_title');
+    const descInput = document.getElementById('meta_description');
+    const nameInput = document.getElementById('name');
+    const descriptionInput = document.getElementById('description');
     
-    document.getElementById('serp-preview-title').textContent = title;
-    document.getElementById('serp-preview-desc').textContent = desc;
+    // Verificar que los elementos existen antes de acceder a sus valores
+    const title = (titleInput ? titleInput.value : '') || 
+                  (nameInput ? nameInput.value : '') || 
+                  'Título del producto';
+    
+    const desc = (descInput ? descInput.value : '') || 
+                 (descriptionInput ? descriptionInput.value.substring(0, 160) : '') || 
+                 'Descripción del producto';
+    
+    const previewTitle = document.getElementById('serp-preview-title');
+    const previewDesc = document.getElementById('serp-preview-desc');
+    
+    if (previewTitle) previewTitle.textContent = title;
+    if (previewDesc) previewDesc.textContent = desc;
 }
 
 const metaTitleInput = document.getElementById('meta_title');
 const metaDescInput = document.getElementById('meta_description');
 const nameInput = document.getElementById('name');
-const shortDescInput = document.getElementById('short_description');
+const descriptionInput = document.getElementById('description');
 
 if (metaTitleInput) {
     metaTitleInput.addEventListener('input', function() {
@@ -1354,12 +1380,13 @@ if (nameInput) {
     nameInput.addEventListener('input', updateSERPPreview);
 }
 
-if (shortDescInput) {
-    shortDescInput.addEventListener('input', updateSERPPreview);
+if (descriptionInput) {
+    descriptionInput.addEventListener('input', updateSERPPreview);
 }
 
-// Inicializar contadores
+// Inicializar contadores y vista previa
 updateSEOCounters();
+updateSERPPreview();
 
 // ============================================
 // PRECIOS Y DESCUENTOS POR PORCENTAJE
