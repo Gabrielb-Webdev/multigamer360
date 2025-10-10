@@ -31,8 +31,15 @@ class UserManagerSimple {
                 return ['success' => false, 'message' => $validation['message']];
             }
             
-            // Rol por defecto
-            $role = $data['role'] ?? 'customer';
+            // Rol por defecto: cliente
+            // Roles disponibles: 'administrador', 'cliente', 'colaborador', 'moderador'
+            $role = $data['role'] ?? 'cliente';
+            
+            // Validar que el rol sea válido
+            $valid_roles = ['administrador', 'cliente', 'colaborador', 'moderador'];
+            if (!in_array($role, $valid_roles)) {
+                $role = 'cliente';
+            }
             
             // Hash de la contraseña
             $hashed_password = password_hash($data['password'], PASSWORD_BCRYPT);
@@ -84,9 +91,10 @@ class UserManagerSimple {
                 unset($user['password']);
                 
                 // Agregar información adicional del rol
-                $user['role_name'] = ucfirst($user['role']);
+                $user['role_name'] = $this->getRoleName($user['role']);
                 $user['role_slug'] = $user['role'];
-                $user['is_admin'] = ($user['role'] === 'admin');
+                $user['is_admin'] = ($user['role'] === 'administrador');
+                $user['can_manage_content'] = in_array($user['role'], ['administrador', 'colaborador', 'moderador']);
                 
                 return ['success' => true, 'user' => $user];
             } else {
@@ -207,7 +215,46 @@ class UserManagerSimple {
             $stmt = $this->pdo->prepare("SELECT role FROM users WHERE id = ?");
             $stmt->execute([$user_id]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $user && $user['role'] === 'admin';
+            return $user && $user['role'] === 'administrador';
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Obtener nombre legible del rol
+     */
+    public function getRoleName($role) {
+        $roles = [
+            'administrador' => 'Administrador',
+            'cliente' => 'Cliente',
+            'colaborador' => 'Colaborador',
+            'moderador' => 'Moderador'
+        ];
+        return $roles[$role] ?? 'Cliente';
+    }
+    
+    /**
+     * Obtener todos los roles disponibles
+     */
+    public function getAvailableRoles() {
+        return [
+            'administrador' => 'Administrador - Acceso completo al sistema',
+            'colaborador' => 'Colaborador - Puede gestionar productos y contenido',
+            'moderador' => 'Moderador - Puede moderar reviews y comentarios',
+            'cliente' => 'Cliente - Usuario normal que compra productos'
+        ];
+    }
+    
+    /**
+     * Verificar si el usuario puede gestionar contenido
+     */
+    public function canManageContent($user_id) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT role FROM users WHERE id = ?");
+            $stmt->execute([$user_id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $user && in_array($user['role'], ['administrador', 'colaborador', 'moderador']);
         } catch (PDOException $e) {
             return false;
         }

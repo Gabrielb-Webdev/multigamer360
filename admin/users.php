@@ -80,7 +80,7 @@ try {
         SELECT 
             COUNT(*) as total_users,
             COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_users,
-            COUNT(CASE WHEN role = 'admin' OR role = 'superadmin' THEN 1 END) as admin_users,
+            COUNT(CASE WHEN role = 'administrador' THEN 1 END) as admin_users,
             COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as new_today,
             COUNT(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as active_30_days
         FROM users u 
@@ -362,17 +362,35 @@ try {
                             <td>
                                 <?php
                                 $role_colors = [
-                                    'superadmin' => 'bg-danger',
-                                    'admin' => 'bg-warning text-dark',
-                                    'moderator' => 'bg-info',
-                                    'customer' => 'bg-success',
-                                    'user' => 'bg-secondary'
+                                    'administrador' => 'bg-danger',
+                                    'colaborador' => 'bg-info',
+                                    'moderador' => 'bg-warning text-dark',
+                                    'cliente' => 'bg-success'
+                                ];
+                                $role_names = [
+                                    'administrador' => '👑 Administrador',
+                                    'colaborador' => '🤝 Colaborador',
+                                    'moderador' => '🛡️ Moderador',
+                                    'cliente' => '🛒 Cliente'
                                 ];
                                 $role_color = $role_colors[$user['role']] ?? 'bg-secondary';
+                                $role_name = $role_names[$user['role']] ?? ucfirst($user['role'] ?? 'cliente');
                                 ?>
+                                <?php if (hasPermission('users', 'update') && $user['id'] !== $_SESSION['user_id']): ?>
+                                <select class="form-select form-select-sm role-select" 
+                                        data-user-id="<?php echo $user['id']; ?>" 
+                                        data-current-role="<?php echo $user['role']; ?>"
+                                        style="width: auto; min-width: 150px;">
+                                    <option value="administrador" <?php echo $user['role'] === 'administrador' ? 'selected' : ''; ?>>👑 Administrador</option>
+                                    <option value="colaborador" <?php echo $user['role'] === 'colaborador' ? 'selected' : ''; ?>>🤝 Colaborador</option>
+                                    <option value="moderador" <?php echo $user['role'] === 'moderador' ? 'selected' : ''; ?>>🛡️ Moderador</option>
+                                    <option value="cliente" <?php echo $user['role'] === 'cliente' ? 'selected' : ''; ?>>🛒 Cliente</option>
+                                </select>
+                                <?php else: ?>
                                 <span class="badge <?php echo $role_color; ?>">
-                                    <?php echo ucfirst($user['role'] ?? 'user'); ?>
+                                    <?php echo $role_name; ?>
                                 </span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($user['orders_count'] > 0): ?>
@@ -703,6 +721,62 @@ function bulkDelete() {
         });
     });
 }
+
+// Cambiar rol de usuario con dropdown
+document.querySelectorAll('.role-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const userId = this.dataset.userId;
+        const currentRole = this.dataset.currentRole;
+        const newRole = this.value;
+        
+        if (currentRole === newRole) {
+            return;
+        }
+        
+        const roleNames = {
+            'administrador': '👑 Administrador',
+            'colaborador': '🤝 Colaborador',
+            'moderador': '🛡️ Moderador',
+            'cliente': '🛒 Cliente'
+        };
+        
+        const message = `¿Cambiar rol de ${roleNames[currentRole]} a ${roleNames[newRole]}?`;
+        
+        Utils.confirm(message, () => {
+            fetch('api/users.php', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': AdminPanel.csrfToken
+                },
+                body: JSON.stringify({
+                    id: userId,
+                    role: newRole,
+                    csrf_token: AdminPanel.csrfToken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Utils.showToast('Rol actualizado correctamente', 'success');
+                    this.dataset.currentRole = newRole;
+                    location.reload();
+                } else {
+                    Utils.showToast(data.message || 'Error al actualizar rol', 'danger');
+                    this.value = currentRole;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Utils.showToast('Error de conexión', 'danger');
+                this.value = currentRole;
+            });
+        }, () => {
+            // Cancelado - restaurar valor anterior
+            this.value = currentRole;
+        });
+    });
+});
 </script>
 
 <?php require_once 'inc/footer.php'; ?>

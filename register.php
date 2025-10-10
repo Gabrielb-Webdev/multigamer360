@@ -131,7 +131,7 @@ if ($_POST) {
     } else {
         try {
             // Asignar rol de cliente por defecto
-            $data['role'] = 'customer';
+            $data['role'] = 'cliente';
             
             $result = $userManager->registerUser($data);
             
