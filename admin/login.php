@@ -1,17 +1,12 @@
 <?php
 session_start();
 require_once '../config/database.php';
-require_once '../config/user_manager.php';
+require_once '../config/user_manager_simple.php';
 
 // Si ya está logueado y es admin, redirigir al dashboard
-if (isset($_SESSION['user_id'])) {
-    $userManager = new UserManager($pdo);
-    $user = $userManager->getUserById($_SESSION['user_id']);
-    
-    if ($user && $user['role_level'] >= 60) {
-        header('Location: index.php');
-        exit;
-    }
+if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
+    header('Location: index.php');
+    exit;
 }
 
 $error = '';
@@ -43,34 +38,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($email) || empty($password)) {
         $error = 'Por favor complete todos los campos';
     } else {
-        $userManager = new UserManager($pdo);
+        $userManager = new UserManagerSimple($pdo);
         $result = $userManager->loginUser($email, $password);
         
         if ($result['success']) {
             $user = $result['user'];
             
-            // VERIFICACIÓN ESTRICTA: Solo administradores (nivel >= 80)
-            if ($user['role_level'] >= 80) {
+            // VERIFICACIÓN ESTRICTA: Solo administradores
+            if ($user['role'] === 'administrador') {
+                // Establecer todas las variables de sesión
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['user_role'] = $user['role_name'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['first_name'] = $user['first_name'];
+                $_SESSION['last_name'] = $user['last_name'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['role_name'] = $user['role_name'];
+                $_SESSION['is_admin'] = true;
+                $_SESSION['can_manage_content'] = true;
                 
                 // Log de acceso exitoso
                 error_log("ACCESO ADMIN EXITOSO - Usuario: " . $user['email'] . 
-                         " - Rol: " . $user['role_name'] . 
-                         " - Nivel: " . $user['role_level'] . 
+                         " - Rol: " . $user['role'] . 
                          " - IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'desconocida') . 
                          " - Fecha: " . date('Y-m-d H:i:s'));
                 
                 header('Location: index.php');
                 exit;
             } else {
-                $error = 'Acceso denegado. Se requieren permisos de administrador (nivel 80+). Su nivel actual: ' . $user['role_level'];
+                $error = '❌ Acceso denegado. Solo los administradores pueden acceder a este panel. Tu rol actual es: ' . $user['role_name'];
                 
                 // Log del intento de acceso denegado
                 error_log("INTENTO DE LOGIN ADMIN DENEGADO - Usuario: " . $user['email'] . 
-                         " - Rol: " . $user['role_name'] . 
-                         " - Nivel: " . $user['role_level'] . 
+                         " - Rol: " . $user['role'] . 
                          " - IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'desconocida') . 
                          " - Fecha: " . date('Y-m-d H:i:s'));
             }
@@ -155,12 +154,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-card">
             <div class="login-header">
                 <i class="fas fa-shield-alt text-warning"></i>
-                <h2>MultiGamer360</h2>
+                <h2>🎮 MultiGamer360</h2>
                 <p class="text-muted">Panel de Administración</p>
                 <div class="alert alert-warning border-0" style="background: rgba(255, 193, 7, 0.1);">
                     <small>
                         <i class="fas fa-lock me-1"></i>
-                        <strong>Acceso Restringido:</strong> Solo usuarios con permisos de administrador (Nivel 80+)
+                        <strong>Acceso Restringido:</strong> Solo usuarios con rol "👑 Administrador"
                     </small>
                 </div>
             </div>
