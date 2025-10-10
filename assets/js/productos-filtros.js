@@ -136,26 +136,43 @@ function applyAllFilters() {
         const url = new URL(window.location);
         const filters = filterState.pendingFilters;
 
-        // Limpiar parámetros existentes
-        ['category', 'brand', 'tags[]', 'tags', 'min_price', 'max_price', 'page'].forEach(param => {
+        // Limpiar parámetros existentes de filtros
+        ['category', 'brand', 'brands', 'consoles', 'genres', 'tags[]', 'tags', 'min_price', 'max_price', 'page'].forEach(param => {
             url.searchParams.delete(param);
         });
 
-        // Aplicar filtros
+        // Aplicar filtros de categorías
         if (filters.categories.length > 0) {
             url.searchParams.set('category', filters.categories[0]);
         }
         
+        // Aplicar filtros de marcas
         if (filters.brands.length > 0) {
             url.searchParams.set('brand', filters.brands[0]);
         }
         
+        // Aplicar filtros de consolas
+        if (filters.consoles.length > 0) {
+            filters.consoles.forEach(consoleId => {
+                url.searchParams.append('consoles[]', consoleId);
+            });
+        }
+        
+        // Aplicar filtros de géneros
+        if (filters.genres.length > 0) {
+            filters.genres.forEach(genreId => {
+                url.searchParams.append('genres[]', genreId);
+            });
+        }
+        
+        // Aplicar filtros de tags
         if (filters.tags.length > 0) {
             filters.tags.forEach(tag => {
                 url.searchParams.append('tags[]', tag);
             });
         }
         
+        // Aplicar filtros de precio
         if (filters.minPrice) {
             url.searchParams.set('min_price', filters.minPrice);
         }
@@ -165,6 +182,12 @@ function applyAllFilters() {
         }
 
         console.log('🔄 Aplicando filtros:', filters);
+        console.log('🔗 Nueva URL:', url.toString());
+        
+        // Marcar que ya no hay cambios pendientes antes de redirigir
+        filterState.filtersChanged = false;
+        syncGlobalState();
+        
         window.location.href = url.toString();
     } catch (error) {
         console.error('❌ Error en applyAllFilters:', error);
@@ -306,28 +329,34 @@ function initializeFiltersFromURL() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Leer categorías de la URL
+        // Leer categorías de la URL (solo una)
         const categoryParam = urlParams.get('category');
         if (categoryParam) {
             filterState.pendingFilters.categories = categoryParam.split(',');
         }
         
-        // Leer marcas de la URL
-        const brandParam = urlParams.get('brands');
+        // Leer marcas de la URL (solo una)
+        const brandParam = urlParams.get('brand');
         if (brandParam) {
-            filterState.pendingFilters.brands = brandParam.split(',');
+            filterState.pendingFilters.brands = [brandParam];
         }
         
-        // Leer consolas de la URL
-        const consolesParam = urlParams.get('consoles');
-        if (consolesParam) {
-            filterState.pendingFilters.consoles = consolesParam.split(',');
+        // Leer consolas de la URL (array)
+        const consolesParams = urlParams.getAll('consoles[]');
+        if (consolesParams.length > 0) {
+            filterState.pendingFilters.consoles = consolesParams;
         }
         
-        // Leer géneros de la URL
-        const genresParam = urlParams.get('genres');
-        if (genresParam) {
-            filterState.pendingFilters.genres = genresParam.split(',');
+        // Leer géneros de la URL (array)
+        const genresParams = urlParams.getAll('genres[]');
+        if (genresParams.length > 0) {
+            filterState.pendingFilters.genres = genresParams;
+        }
+        
+        // Leer tags de la URL (array)
+        const tagsParams = urlParams.getAll('tags[]');
+        if (tagsParams.length > 0) {
+            filterState.pendingFilters.tags = tagsParams;
         }
         
         // Leer precios de la URL
