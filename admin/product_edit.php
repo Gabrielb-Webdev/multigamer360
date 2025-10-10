@@ -329,28 +329,29 @@ function generateSlug($text) {
                             </h5>
                         </div>
                         <div class="card-body">
-                            <?php if ($is_edit && $product_id): ?>
                             <div class="mb-3">
-                                <label for="images" class="form-label">Agregar Más Imágenes</label>
+                                <label for="images" class="form-label">Agregar Imágenes</label>
                                 <input type="file" class="form-control" id="images" 
                                        multiple accept="image/jpeg,image/png,image/webp,image/jpg">
                                 <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Las imágenes se subirán automáticamente al seleccionarlas. 
-                                    Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.
-                                </div>
-                                <div id="upload-progress" class="mt-2" style="display: none;">
-                                    <div class="progress">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
-                                             style="width: 100%">Subiendo imágenes...</div>
-                                    </div>
+                                    <i class="fas fa-info-circle"></i> Selecciona una o más imágenes. 
+                                    Se agregarán a las existentes. Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.
                                 </div>
                             </div>
-                            <?php else: ?>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Guarda el producto primero</strong> para poder agregar imágenes.
+                            
+                            <!-- Vista previa de imágenes nuevas (temporal) -->
+                            <div id="new-images-preview" class="row g-3 mb-3"></div>
+                            
+                            <!-- Botón para subir imágenes pendientes -->
+                            <div id="upload-pending-section" style="display: none;" class="mb-3">
+                                <button type="button" class="btn btn-success w-100" id="upload-pending-btn" onclick="uploadPendingImagesManually()">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                                    Subir <span id="pending-count">0</span> imagen(es) pendiente(s)
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Las imágenes se subirán inmediatamente al hacer clic
+                                </small>
                             </div>
-                            <?php endif; ?>
                             
                             <!-- Todas las imágenes del producto -->
                             <div id="all-images-container">
@@ -359,16 +360,17 @@ function generateSlug($text) {
                                     <span class="badge bg-primary" id="images-count"><?php echo count($product_images); ?></span>
                                 </h6>
                                 <p class="text-muted small mb-3">
-                                    <i class="fas fa-star text-warning me-1"></i> Marca UNA imagen como portada
-                                    <i class="fas fa-arrows-alt text-info ms-3 me-1"></i> Arrastra para reordenar
+                                    <i class="fas fa-star text-warning me-1"></i> Selecciona la imagen de portada con el radio button
+                                    <br>
+                                    <i class="fas fa-arrows-alt text-info me-1"></i> Arrastra la imagen (desde cualquier parte) para reordenar
                                 </p>
                                 <div class="row g-3" id="images-grid">
                                     <?php foreach ($product_images as $index => $image): ?>
                                     <div class="col-md-3 image-item" data-image-id="<?php echo $image['id']; ?>" data-order="<?php echo $image['display_order'] ?? $index; ?>">
-                                        <div class="card h-100 position-relative">
-                                            <!-- Badge de orden -->
+                                        <div class="card h-100 position-relative" style="cursor: move;">
+                                            <!-- Badge de orden (drag handle) -->
                                             <div class="position-absolute top-0 start-0 p-2" style="z-index: 10;">
-                                                <span class="badge bg-dark bg-opacity-75">
+                                                <span class="badge bg-dark bg-opacity-75 drag-handle">
                                                     <i class="fas fa-grip-vertical"></i> #<?php echo $index + 1; ?>
                                                 </span>
                                             </div>
@@ -384,26 +386,29 @@ function generateSlug($text) {
                                             
                                             <!-- Imagen -->
                                             <img src="../uploads/products/<?php echo htmlspecialchars($image['image_url'] ?? $image['filename'] ?? ''); ?>" 
-                                                 class="card-img-top" style="height: 180px; object-fit: cover; cursor: move;"
+                                                 class="card-img-top" style="height: 180px; object-fit: cover;"
                                                  alt="Imagen del producto">
                                             
                                             <!-- Controles -->
                                             <div class="card-body p-2">
-                                                <div class="d-grid gap-2">
-                                                    <!-- Marcar como portada -->
-                                                    <button type="button" class="btn btn-sm btn-warning" 
-                                                            onclick="setAsPrimary(<?php echo $image['id']; ?>)"
-                                                            <?php echo $image['is_primary'] ? 'disabled' : ''; ?>>
-                                                        <i class="fas fa-star"></i> 
-                                                        <?php echo $image['is_primary'] ? 'Es Portada' : 'Marcar Portada'; ?>
-                                                    </button>
-                                                    
-                                                    <!-- Eliminar -->
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="deleteProductImage(<?php echo $image['id']; ?>)">
-                                                        <i class="fas fa-trash"></i> Eliminar
-                                                    </button>
+                                                <!-- Radio button para portada -->
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input primary-image-radio" 
+                                                           type="radio" 
+                                                           name="primary_image_radio" 
+                                                           id="primary_<?php echo $image['id']; ?>"
+                                                           value="<?php echo $image['id']; ?>"
+                                                           <?php echo $image['is_primary'] ? 'checked' : ''; ?>>
+                                                    <label class="form-check-label fw-bold text-warning" for="primary_<?php echo $image['id']; ?>">
+                                                        <i class="fas fa-star"></i> Imagen de Portada
+                                                    </label>
                                                 </div>
+                                                
+                                                <!-- Botón eliminar -->
+                                                <button type="button" class="btn btn-sm btn-outline-danger w-100" 
+                                                        onclick="deleteProductImage(<?php echo $image['id']; ?>)">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -853,6 +858,45 @@ function generateSlug($text) {
     </div>
 </div>
 
+<style>
+/* Estilos para drag & drop de imágenes */
+.image-item {
+    transition: all 0.3s ease;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f8f9fa;
+    border: 2px dashed #0d6efd;
+}
+
+.sortable-chosen {
+    cursor: grabbing !important;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    transform: rotate(5deg);
+}
+
+.image-item .card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.image-item:hover .card {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+</style>
+
 <!-- Incluir SortableJS para drag & drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
@@ -863,112 +907,190 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 // GESTIÓN DE IMÁGENES
 // ============================================
-// SISTEMA DE IMÁGENES MEJORADO - SUBIDA AUTOMÁTICA
+// SISTEMA DE IMÁGENES MEJORADO - ACUMULATIVO
 // ============================================
 
-// Subida automática de imágenes al seleccionarlas
+// Array para almacenar las imágenes nuevas que se van a subir
+let pendingImages = [];
+let pendingImageFiles = [];
+
+// Vista previa de imágenes nuevas
 const imagesInput = document.getElementById('images');
 if (imagesInput) {
+    console.log('✓ Input de imágenes encontrado');
+    
     imagesInput.addEventListener('change', function(e) {
         const files = Array.from(this.files);
         
+        console.log('Archivos seleccionados:', files.length);
+        
         if (files.length === 0) return;
         
-        // Validar que estamos editando un producto existente
-        const productId = <?php echo $product_id ?? 0; ?>;
-        if (!productId) {
-            alert('Debes crear el producto primero antes de agregar imágenes');
-            this.value = '';
-            return;
-        }
-        
-        // Validar tamaños
-        let hasInvalidSize = false;
-        files.forEach(file => {
-            if (file.size > 5 * 1024 * 1024) {
-                alert(`La imagen "${file.name}" excede el tamaño máximo de 5MB`);
-                hasInvalidSize = true;
+        // Agregar nuevos archivos al array de pendientes
+        files.forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                // Validar tamaño (5MB máximo)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`La imagen "${file.name}" excede el tamaño máximo de 5MB`);
+                    return;
+                }
+                
+                console.log('Procesando imagen:', file.name);
+                pendingImageFiles.push(file);
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = {
+                        file: file,
+                        dataUrl: e.target.result,
+                        name: file.name
+                    };
+                    pendingImages.push(imageData);
+                    console.log('Imagen cargada, total pendientes:', pendingImages.length);
+                    renderPendingImages();
+                };
+                reader.readAsDataURL(file);
             }
         });
         
-        if (hasInvalidSize) {
-            this.value = '';
-            return;
-        }
-        
-        // Subir inmediatamente
-        uploadImagesDirectly(files);
-        
-        // Limpiar el input
-        this.value = '';
+        // NO limpiar el input - esto permite seguir agregando
+        // this.value = '';
     });
+} else {
+    console.error('✗ Input de imágenes NO encontrado');
 }
 
-// Subir imágenes directamente sin vista previa
-function uploadImagesDirectly(files) {
-    const productId = <?php echo $product_id ?? 0; ?>;
+// Renderizar vista previa de imágenes pendientes
+function renderPendingImages() {
+    const preview = document.getElementById('new-images-preview');
+    const uploadSection = document.getElementById('upload-pending-section');
+    const pendingCount = document.getElementById('pending-count');
     
-    if (!productId) {
-        alert('Error: No se puede subir imágenes sin un producto');
+    console.log('Renderizando vista previa. Imágenes pendientes:', pendingImages.length);
+    
+    if (!preview) {
+        console.error('✗ Contenedor new-images-preview NO encontrado');
         return;
     }
     
-    // Mostrar barra de progreso
-    const progressDiv = document.getElementById('upload-progress');
-    if (progressDiv) {
-        progressDiv.style.display = 'block';
+    preview.innerHTML = '';
+    
+    if (pendingImages.length === 0) {
+        if (uploadSection) uploadSection.style.display = 'none';
+        console.log('No hay imágenes pendientes');
+        return;
     }
     
-    // Deshabilitar el input mientras se sube
-    const imagesInput = document.getElementById('images');
-    if (imagesInput) {
-        imagesInput.disabled = true;
+    // Mostrar botón de subida si hay producto editándose
+    if (uploadSection && <?php echo $product_id ?? 0; ?> > 0) {
+        uploadSection.style.display = 'block';
+        pendingCount.textContent = pendingImages.length;
+        console.log('✓ Botón de subida mostrado');
+    }
+    
+    pendingImages.forEach((img, index) => {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 pending-image-preview';
+        col.innerHTML = `
+            <div class="card border-success shadow-sm">
+                <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
+                    <small><i class="fas fa-cloud-upload-alt"></i> Nueva #${index + 1}</small>
+                    <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                            onclick="removePendingImage(${index})" aria-label="Cancelar"></button>
+                </div>
+                <img src="${img.dataUrl}" class="card-img-top" 
+                     style="height: 150px; object-fit: cover;" alt="Vista previa">
+                <div class="card-body p-2">
+                    <small class="text-muted d-block text-truncate" title="${img.name}">
+                        <i class="fas fa-file-image me-1"></i>${img.name}
+                    </small>
+                </div>
+            </div>
+        `;
+        preview.appendChild(col);
+    });
+    
+    console.log('✓ Vista previa renderizada con', pendingImages.length, 'imágenes');
+}
+
+// Eliminar imagen pendiente (antes de subir)
+function removePendingImage(index) {
+    pendingImages.splice(index, 1);
+    pendingImageFiles.splice(index, 1);
+    renderPendingImages();
+}
+
+// Subir imágenes pendientes mediante AJAX
+function uploadPendingImages() {
+    if (pendingImageFiles.length === 0) {
+        return Promise.resolve();
     }
     
     const formData = new FormData();
-    formData.append('product_id', productId);
+    formData.append('action', 'upload_images');
+    formData.append('product_id', <?php echo $product_id ?? 0; ?>);
     
-    files.forEach((file) => {
+    pendingImageFiles.forEach((file, index) => {
         formData.append('images[]', file);
     });
     
-    fetch('api/upload_product_images.php', {
+    return fetch('api/upload_product_images.php', {
         method: 'POST',
         body: formData
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Limpiar arrays de pendientes
+            pendingImages = [];
+            pendingImageFiles = [];
+            renderPendingImages();
+            
             // Recargar la página para mostrar las nuevas imágenes
             location.reload();
         } else {
-            alert('Error al subir imágenes: ' + (data.message || 'Error desconocido'));
-            if (progressDiv) progressDiv.style.display = 'none';
-            if (imagesInput) imagesInput.disabled = false;
+            throw new Error(data.message || 'Error al subir imágenes');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión al subir imágenes');
-        if (progressDiv) progressDiv.style.display = 'none';
-        if (imagesInput) imagesInput.disabled = false;
     });
+}
+
+// Subir imágenes manualmente (botón específico)
+function uploadPendingImagesManually() {
+    if (pendingImageFiles.length === 0) {
+        alert('No hay imágenes pendientes para subir');
+        return;
+    }
+    
+    const uploadBtn = document.getElementById('upload-pending-btn');
+    const originalHTML = uploadBtn.innerHTML;
+    
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo...';
+    
+    uploadPendingImages()
+        .catch(error => {
+            alert('Error: ' + error.message);
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalHTML;
+        });
 }
 
 // Configurar Sortable para reordenar imágenes
 const imagesGrid = document.getElementById('images-grid');
-if (imagesGrid && typeof Sortable !== 'undefined') {
+if (imagesGrid) {
     new Sortable(imagesGrid, {
-        animation: 150,
+        animation: 200,
+        easing: "cubic-bezier(1, 0, 0, 1)",
         draggable: '.image-item',
-        handle: '.card-img-top',
-        ghostClass: 'opacity-50',
-        chosenClass: 'border-primary',
-        dragClass: 'opacity-75',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
         onEnd: function(evt) {
             updateImageOrder();
         }
     });
+    
+    console.log('Sortable inicializado correctamente');
 }
 
 // Actualizar orden de imágenes en el servidor
@@ -983,11 +1105,13 @@ function updateImageOrder() {
         });
         
         // Actualizar el badge de orden visualmente
-        const badge = item.querySelector('.badge');
+        const badge = item.querySelector('.drag-handle');
         if (badge) {
             badge.innerHTML = `<i class="fas fa-grip-vertical"></i> #${index + 1}`;
         }
     });
+    
+    console.log('Nuevo orden:', imageOrder);
     
     // Enviar al servidor
     fetch('api/update_image_order.php', {
@@ -1003,11 +1127,25 @@ function updateImageOrder() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('Orden actualizado');
+            console.log('✓ Orden actualizado en servidor');
+        } else {
+            console.error('Error al actualizar orden:', data.message);
         }
     })
     .catch(error => console.error('Error:', error));
 }
+
+// Manejar radio buttons de imagen principal
+const primaryRadios = document.querySelectorAll('.primary-image-radio');
+primaryRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.checked) {
+            const imageId = this.value;
+            console.log('Cambiando imagen principal a:', imageId);
+            setAsPrimary(imageId);
+        }
+    });
+});
 
 // Marcar imagen como portada/principal
 function setAsPrimary(imageId) {
@@ -1370,6 +1508,30 @@ if (productForm) {
         e.preventDefault();
         alert('Debe seleccionar una categoría');
         document.getElementById('category_id').focus();
+        return false;
+    }
+    
+    // Si hay imágenes pendientes, subirlas primero mediante AJAX
+    if (pendingImageFiles.length > 0 && <?php echo $product_id ?? 0; ?> > 0) {
+        e.preventDefault();
+        
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo imágenes...';
+        
+        uploadPendingImages()
+            .then(() => {
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando producto...';
+                // Continuar con el envío del formulario
+                productForm.submit();
+            })
+            .catch(error => {
+                alert('Error al subir imágenes: ' + error.message);
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            });
+        
         return false;
     }
 });
