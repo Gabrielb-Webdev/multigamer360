@@ -481,34 +481,100 @@ function generateSlug($text) {
 <script>
 // JavaScript simplificado para creación
 document.addEventListener('DOMContentLoaded', function() {
-    // Vista previa de imágenes
+    // Array para acumular archivos seleccionados
+    let selectedFiles = [];
+    
+    // Vista previa de imágenes (acumulativa)
     const imagesInput = document.getElementById('images');
     if (imagesInput) {
         imagesInput.addEventListener('change', function(e) {
             const preview = document.getElementById('image-preview');
-            preview.innerHTML = '';
             
-            const files = Array.from(this.files);
-            files.forEach((file, index) => {
+            // Agregar nuevos archivos al array existente
+            const newFiles = Array.from(this.files);
+            newFiles.forEach(file => {
                 if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const col = document.createElement('div');
-                        col.className = 'col-md-3';
-                        col.innerHTML = `
-                            <div class="card">
-                                <img src="${e.target.result}" class="card-img-top" 
-                                     style="height: 150px; object-fit: cover;" alt="Vista previa">
-                                <div class="card-body p-2 text-center">
-                                    ${index === 0 ? '<span class="badge bg-success"><i class="fas fa-star"></i> Portada</span>' : `<span class="badge bg-secondary">#${index + 1}</span>`}
-                                </div>
-                            </div>
-                        `;
-                        preview.appendChild(col);
-                    };
-                    reader.readAsDataURL(file);
+                    selectedFiles.push(file);
                 }
             });
+            
+            // Limpiar vista previa y regenerarla con TODOS los archivos
+            preview.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3';
+                    col.innerHTML = `
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
+                                <small>#${index + 1}</small>
+                                <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                                        onclick="removePreviewImage(${index})" aria-label="Eliminar"></button>
+                            </div>
+                            <img src="${e.target.result}" class="card-img-top" 
+                                 style="height: 150px; object-fit: cover;" alt="Vista previa">
+                            <div class="card-body p-2 text-center">
+                                ${index === 0 ? '<span class="badge bg-warning"><i class="fas fa-star"></i> Portada</span>' : '<span class="badge bg-secondary">Extra</span>'}
+                            </div>
+                        </div>
+                    `;
+                    preview.appendChild(col);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // NO limpiar el input - permite seguir agregando
+            console.log('Total de imágenes seleccionadas:', selectedFiles.length);
+        });
+    }
+    
+    // Función global para eliminar imagen de vista previa
+    window.removePreviewImage = function(index) {
+        selectedFiles.splice(index, 1);
+        
+        // Regenerar vista previa
+        const preview = document.getElementById('image-preview');
+        preview.innerHTML = '';
+        
+        selectedFiles.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3';
+                col.innerHTML = `
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
+                            <small>#${idx + 1}</small>
+                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                                    onclick="removePreviewImage(${idx})" aria-label="Eliminar"></button>
+                        </div>
+                        <img src="${e.target.result}" class="card-img-top" 
+                             style="height: 150px; object-fit: cover;" alt="Vista previa">
+                        <div class="card-body p-2 text-center">
+                            ${idx === 0 ? '<span class="badge bg-warning"><i class="fas fa-star"></i> Portada</span>' : '<span class="badge bg-secondary">Extra</span>'}
+                        </div>
+                    </div>
+                `;
+                preview.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        console.log('Imágenes restantes:', selectedFiles.length);
+    };
+    
+    // Antes de enviar el formulario, actualizar el input con todos los archivos
+    const form = document.getElementById('product-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Crear un DataTransfer para actualizar el input con todos los archivos acumulados
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imagesInput.files = dt.files;
+            
+            console.log('Enviando formulario con', selectedFiles.length, 'imágenes');
         });
     }
     
