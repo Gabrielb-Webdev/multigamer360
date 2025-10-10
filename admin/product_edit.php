@@ -329,29 +329,28 @@ function generateSlug($text) {
                             </h5>
                         </div>
                         <div class="card-body">
+                            <?php if ($is_edit && $product_id): ?>
                             <div class="mb-3">
-                                <label for="images" class="form-label">Agregar Imágenes</label>
+                                <label for="images" class="form-label">Agregar Más Imágenes</label>
                                 <input type="file" class="form-control" id="images" 
                                        multiple accept="image/jpeg,image/png,image/webp,image/jpg">
                                 <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Selecciona una o más imágenes. 
-                                    Se agregarán a las existentes. Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.
+                                    <i class="fas fa-info-circle"></i> Las imágenes se subirán automáticamente al seleccionarlas. 
+                                    Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.
+                                </div>
+                                <div id="upload-progress" class="mt-2" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                             style="width: 100%">Subiendo imágenes...</div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <!-- Vista previa de imágenes nuevas (temporal) -->
-                            <div id="new-images-preview" class="row g-3 mb-3"></div>
-                            
-                            <!-- Botón para subir imágenes pendientes -->
-                            <div id="upload-pending-section" style="display: none;" class="mb-3">
-                                <button type="button" class="btn btn-success w-100" id="upload-pending-btn" onclick="uploadPendingImagesManually()">
-                                    <i class="fas fa-cloud-upload-alt me-2"></i>
-                                    Subir <span id="pending-count">0</span> imagen(es) pendiente(s)
-                                </button>
-                                <small class="text-muted d-block mt-2">
-                                    <i class="fas fa-info-circle"></i> Las imágenes se subirán inmediatamente al hacer clic
-                                </small>
+                            <?php else: ?>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Guarda el producto primero</strong> para poder agregar imágenes.
                             </div>
+                            <?php endif; ?>
                             
                             <!-- Todas las imágenes del producto -->
                             <div id="all-images-container">
@@ -864,14 +863,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 // GESTIÓN DE IMÁGENES
 // ============================================
-// SISTEMA DE IMÁGENES MEJORADO - ACUMULATIVO
+// SISTEMA DE IMÁGENES MEJORADO - SUBIDA AUTOMÁTICA
 // ============================================
 
-// Array para almacenar las imágenes nuevas que se van a subir
-let pendingImages = [];
-let pendingImageFiles = [];
-
-// Vista previa de imágenes nuevas
+// Subida automática de imágenes al seleccionarlas
 const imagesInput = document.getElementById('images');
 if (imagesInput) {
     imagesInput.addEventListener('change', function(e) {
@@ -879,145 +874,97 @@ if (imagesInput) {
         
         if (files.length === 0) return;
         
-        // Agregar nuevos archivos al array de pendientes
-        files.forEach((file, index) => {
-            if (file.type.startsWith('image/')) {
-                // Validar tamaño (5MB máximo)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert(`La imagen "${file.name}" excede el tamaño máximo de 5MB`);
-                    return;
-                }
-                
-                pendingImageFiles.push(file);
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imageData = {
-                        file: file,
-                        dataUrl: e.target.result,
-                        name: file.name
-                    };
-                    pendingImages.push(imageData);
-                    renderPendingImages();
-                };
-                reader.readAsDataURL(file);
+        // Validar que estamos editando un producto existente
+        const productId = <?php echo $product_id ?? 0; ?>;
+        if (!productId) {
+            alert('Debes crear el producto primero antes de agregar imágenes');
+            this.value = '';
+            return;
+        }
+        
+        // Validar tamaños
+        let hasInvalidSize = false;
+        files.forEach(file => {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`La imagen "${file.name}" excede el tamaño máximo de 5MB`);
+                hasInvalidSize = true;
             }
         });
         
-        // Limpiar el input para permitir seleccionar las mismas imágenes otra vez
+        if (hasInvalidSize) {
+            this.value = '';
+            return;
+        }
+        
+        // Subir inmediatamente
+        uploadImagesDirectly(files);
+        
+        // Limpiar el input
         this.value = '';
     });
 }
 
-// Renderizar vista previa de imágenes pendientes
-function renderPendingImages() {
-    const preview = document.getElementById('new-images-preview');
-    const uploadSection = document.getElementById('upload-pending-section');
-    const pendingCount = document.getElementById('pending-count');
+// Subir imágenes directamente sin vista previa
+function uploadImagesDirectly(files) {
+    const productId = <?php echo $product_id ?? 0; ?>;
     
-    preview.innerHTML = '';
-    
-    if (pendingImages.length === 0) {
-        if (uploadSection) uploadSection.style.display = 'none';
+    if (!productId) {
+        alert('Error: No se puede subir imágenes sin un producto');
         return;
     }
     
-    // Mostrar botón de subida si hay producto editándose
-    if (uploadSection && <?php echo $product_id ?? 0; ?> > 0) {
-        uploadSection.style.display = 'block';
-        pendingCount.textContent = pendingImages.length;
+    // Mostrar barra de progreso
+    const progressDiv = document.getElementById('upload-progress');
+    if (progressDiv) {
+        progressDiv.style.display = 'block';
     }
     
-    pendingImages.forEach((img, index) => {
-        const col = document.createElement('div');
-        col.className = 'col-md-3';
-        col.innerHTML = `
-            <div class="card border-success">
-                <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
-                    <small><i class="fas fa-cloud-upload-alt"></i> Nueva #${index + 1}</small>
-                    <button type="button" class="btn btn-sm btn-light btn-close" 
-                            onclick="removePendingImage(${index})" aria-label="Cancelar"></button>
-                </div>
-                <img src="${img.dataUrl}" class="card-img-top" 
-                     style="height: 150px; object-fit: cover;" alt="Preview">
-                <div class="card-body p-2">
-                    <small class="text-muted d-block text-truncate" title="${img.name}">${img.name}</small>
-                </div>
-            </div>
-        `;
-        preview.appendChild(col);
-    });
-}
-
-// Eliminar imagen pendiente (antes de subir)
-function removePendingImage(index) {
-    pendingImages.splice(index, 1);
-    pendingImageFiles.splice(index, 1);
-    renderPendingImages();
-}
-
-// Subir imágenes pendientes mediante AJAX
-function uploadPendingImages() {
-    if (pendingImageFiles.length === 0) {
-        return Promise.resolve();
+    // Deshabilitar el input mientras se sube
+    const imagesInput = document.getElementById('images');
+    if (imagesInput) {
+        imagesInput.disabled = true;
     }
     
     const formData = new FormData();
-    formData.append('action', 'upload_images');
-    formData.append('product_id', <?php echo $product_id ?? 0; ?>);
+    formData.append('product_id', productId);
     
-    pendingImageFiles.forEach((file, index) => {
+    files.forEach((file) => {
         formData.append('images[]', file);
     });
     
-    return fetch('api/upload_product_images.php', {
+    fetch('api/upload_product_images.php', {
         method: 'POST',
         body: formData
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Limpiar arrays de pendientes
-            pendingImages = [];
-            pendingImageFiles = [];
-            renderPendingImages();
-            
             // Recargar la página para mostrar las nuevas imágenes
             location.reload();
         } else {
-            throw new Error(data.message || 'Error al subir imágenes');
+            alert('Error al subir imágenes: ' + (data.message || 'Error desconocido'));
+            if (progressDiv) progressDiv.style.display = 'none';
+            if (imagesInput) imagesInput.disabled = false;
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión al subir imágenes');
+        if (progressDiv) progressDiv.style.display = 'none';
+        if (imagesInput) imagesInput.disabled = false;
     });
-}
-
-// Subir imágenes manualmente (botón específico)
-function uploadPendingImagesManually() {
-    if (pendingImageFiles.length === 0) {
-        alert('No hay imágenes pendientes para subir');
-        return;
-    }
-    
-    const uploadBtn = document.getElementById('upload-pending-btn');
-    const originalHTML = uploadBtn.innerHTML;
-    
-    uploadBtn.disabled = true;
-    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo...';
-    
-    uploadPendingImages()
-        .catch(error => {
-            alert('Error: ' + error.message);
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = originalHTML;
-        });
 }
 
 // Configurar Sortable para reordenar imágenes
 const imagesGrid = document.getElementById('images-grid');
-if (imagesGrid) {
+if (imagesGrid && typeof Sortable !== 'undefined') {
     new Sortable(imagesGrid, {
         animation: 150,
-        handle: '.image-item',
-        ghostClass: 'bg-light',
+        draggable: '.image-item',
+        handle: '.card-img-top',
+        ghostClass: 'opacity-50',
+        chosenClass: 'border-primary',
+        dragClass: 'opacity-75',
         onEnd: function(evt) {
             updateImageOrder();
         }
@@ -1423,30 +1370,6 @@ if (productForm) {
         e.preventDefault();
         alert('Debe seleccionar una categoría');
         document.getElementById('category_id').focus();
-        return false;
-    }
-    
-    // Si hay imágenes pendientes, subirlas primero mediante AJAX
-    if (pendingImageFiles.length > 0 && <?php echo $product_id ?? 0; ?> > 0) {
-        e.preventDefault();
-        
-        const submitButton = this.querySelector('button[type="submit"]');
-        const originalText = submitButton.innerHTML;
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo imágenes...';
-        
-        uploadPendingImages()
-            .then(() => {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando producto...';
-                // Continuar con el envío del formulario
-                productForm.submit();
-            })
-            .catch(error => {
-                alert('Error al subir imágenes: ' + error.message);
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-            });
-        
         return false;
     }
 });
