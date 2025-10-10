@@ -362,16 +362,16 @@ function generateSlug($text) {
                                 <p class="text-muted small mb-3">
                                     <i class="fas fa-star text-warning me-1"></i> Selecciona la imagen de portada con el radio button
                                     <br>
-                                    <i class="fas fa-arrows-alt text-info me-1"></i> Arrastra la imagen (desde cualquier parte) para reordenar
+                                    <i class="fas fa-arrows-alt-v text-info me-1"></i> Usa las flechas ↑↓ para cambiar el orden
                                 </p>
                                 <div class="row g-3" id="images-grid">
                                     <?php foreach ($product_images as $index => $image): ?>
                                     <div class="col-md-3 image-item" data-image-id="<?php echo $image['id']; ?>" data-order="<?php echo $image['display_order'] ?? $index; ?>">
                                         <div class="card h-100 position-relative">
-                                            <!-- Badge de orden (drag handle) -->
+                                            <!-- Badge de orden -->
                                             <div class="position-absolute top-0 start-0 p-2" style="z-index: 10;">
-                                                <span class="badge bg-dark bg-opacity-75 drag-handle">
-                                                    <i class="fas fa-grip-vertical"></i> #<?php echo $index + 1; ?>
+                                                <span class="badge bg-dark bg-opacity-75">
+                                                    #<?php echo $index + 1; ?>
                                                 </span>
                                             </div>
                                             
@@ -391,6 +391,22 @@ function generateSlug($text) {
                                             
                                             <!-- Controles -->
                                             <div class="card-body p-2">
+                                                <!-- Botones de reordenamiento -->
+                                                <div class="btn-group w-100 mb-2" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                            onclick="moveImage(<?php echo $image['id']; ?>, 'up')"
+                                                            <?php echo $index === 0 ? 'disabled' : ''; ?>
+                                                            title="Mover arriba">
+                                                        <i class="fas fa-arrow-up"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                            onclick="moveImage(<?php echo $image['id']; ?>, 'down')"
+                                                            <?php echo $index === count($product_images) - 1 ? 'disabled' : ''; ?>
+                                                            title="Mover abajo">
+                                                        <i class="fas fa-arrow-down"></i>
+                                                    </button>
+                                                </div>
+                                                
                                                 <!-- Radio button para portada -->
                                                 <div class="form-check mb-2">
                                                     <input class="form-check-input primary-image-radio" 
@@ -861,109 +877,64 @@ function generateSlug($text) {
 <style>
 /**
  * ESTILOS PARA SISTEMA DE IMÁGENES
- * Versión: 2.1.0
+ * Versión: 2.2.0 - Simplificado (sin drag & drop)
  * Última actualización: 2025-01-10
  */
 
-/* Estilos para drag & drop de imágenes */
+/* Cards de imágenes */
 .image-item {
     transition: all 0.3s ease;
-    position: relative;
 }
 
 .image-item .card {
     transition: transform 0.2s, box-shadow 0.2s;
-    cursor: grab;
-    user-select: none;
-}
-
-.image-item .card:active {
-    cursor: grabbing;
 }
 
 .image-item:hover .card {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* Estados de Sortable */
-.sortable-ghost {
-    opacity: 0.3 !important;
+/* Botones de reordenamiento */
+.image-item .btn-group button {
+    flex: 1;
 }
 
-.sortable-ghost .card {
-    background: #f8f9fa;
-    border: 3px dashed #0d6efd !important;
-    transform: scale(0.95);
+.image-item .btn-group button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
-.sortable-chosen .card {
-    cursor: grabbing !important;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
-    transform: scale(1.05) rotate(2deg);
-    z-index: 1000;
+/* Vista previa de imágenes nuevas */
+.pending-image-preview {
+    animation: fadeIn 0.3s ease;
 }
 
-.sortable-drag {
-    opacity: 1 !important;
-}
-
-.sortable-drag .card {
-    transform: rotate(5deg) scale(1.1);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4) !important;
-}
-
-/* Badge de arrastre */
-.drag-handle {
-    cursor: grab;
-    user-select: none;
-}
-
-.drag-handle:active {
-    cursor: grabbing;
-}
-
-/* Animación al soltar */
-@keyframes dropAnimation {
-    0% { transform: scale(1.1); }
-    50% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-}
-
-.image-item.just-dropped .card {
-    animation: dropAnimation 0.3s ease;
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 </style>
 
-<!-- Incluir SortableJS para drag & drop -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- NO necesitamos SortableJS - Sistema simplificado con botones -->
 
 <script>
 /**
  * SISTEMA DE IMÁGENES DEL PRODUCTO
- * Versión: 2.1.0
+ * Versión: 2.2.0 - Sistema Simplificado
  * Última actualización: 2025-01-10
  * Cambios:
- * - Drag & drop mejorado con forceFallback
- * - Radio buttons para selección de portada
- * - Vista previa persistente sin alertas
- * - Eliminado campo short_description
+ * - Sistema de flechas ↑↓ en lugar de drag & drop
+ * - Más intuitivo y confiable
+ * - Compatible con todos los navegadores
+ * - Sin dependencias externas (Sortable.js removido)
  */
 
-// Verificar que Sortable está cargado
-console.log('Sortable disponible:', typeof Sortable !== 'undefined');
-console.log('📦 Sistema de Imágenes v2.1.0');
+console.log('📦 Sistema de Imágenes v2.2.0 - Simplificado');
 
-// Esperar a que el DOM y Bootstrap estén completamente cargados
+// Esperar a que el DOM esté cargado
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM Cargado - Iniciando sistema de imágenes');
-    
-    // Verificar Sortable nuevamente
-    if (typeof Sortable === 'undefined') {
-        console.error('❌ Sortable.js NO está cargado!');
-    } else {
-        console.log('✅ Sortable.js cargado correctamente');
-    }
+    console.log('🚀 DOM Cargado - Sistema de flechas activo');
 
 // ============================================
 // GESTIÓN DE IMÁGENES
@@ -1136,38 +1107,67 @@ function uploadPendingImagesManually() {
         });
 }
 
-// Configurar Sortable para reordenar imágenes
-const imagesGrid = document.getElementById('images-grid');
-if (imagesGrid) {
-    const sortable = new Sortable(imagesGrid, {
-        animation: 200,
-        easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-        draggable: '.image-item',
-        handle: '.card', // Toda la card es el handle
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
-        forceFallback: true, // Mejora la compatibilidad
-        fallbackTolerance: 3,
-        scroll: true,
-        bubbleScroll: true,
-        onStart: function(evt) {
-            console.log('🎯 Iniciando arrastre de imagen', evt.oldIndex + 1);
-        },
-        onEnd: function(evt) {
-            console.log('🎯 Imagen movida de posición', evt.oldIndex + 1, '→', evt.newIndex + 1);
-            updateImageOrder();
-        }
-    });
+// ============================================
+// REORDENAR IMÁGENES CON FLECHAS (SIMPLE)
+// ============================================
+
+function moveImage(imageId, direction) {
+    const container = document.getElementById('images-grid');
+    const items = Array.from(container.querySelectorAll('.image-item'));
+    const currentItem = items.find(item => item.dataset.imageId == imageId);
     
-    console.log('✓ Sortable inicializado correctamente en', imagesGrid);
-    console.log('✓ Elementos arrastrables:', imagesGrid.querySelectorAll('.image-item').length);
-} else {
-    console.error('✗ No se encontró el contenedor images-grid');
+    if (!currentItem) {
+        console.error('Imagen no encontrada');
+        return;
+    }
+    
+    const currentIndex = items.indexOf(currentItem);
+    let newIndex;
+    
+    if (direction === 'up' && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+    } else if (direction === 'down' && currentIndex < items.length - 1) {
+        newIndex = currentIndex + 1;
+    } else {
+        return; // No se puede mover
+    }
+    
+    console.log(`🔄 Moviendo imagen ${currentIndex + 1} → ${newIndex + 1}`);
+    
+    // Intercambiar elementos en el DOM
+    if (direction === 'up') {
+        container.insertBefore(currentItem, items[newIndex]);
+    } else {
+        container.insertBefore(currentItem, items[newIndex].nextSibling);
+    }
+    
+    // Actualizar badges de orden
+    updateImageOrderBadges();
+    
+    // Guardar nuevo orden en servidor
+    saveImageOrder();
 }
 
-// Actualizar orden de imágenes en el servidor
-function updateImageOrder() {
+function updateImageOrderBadges() {
+    const items = document.querySelectorAll('.image-item');
+    items.forEach((item, index) => {
+        const badge = item.querySelector('.badge');
+        if (badge) {
+            badge.textContent = `#${index + 1}`;
+        }
+        
+        // Actualizar botones de flecha
+        const upBtn = item.querySelector('button[onclick*="up"]');
+        const downBtn = item.querySelector('button[onclick*="down"]');
+        
+        if (upBtn) upBtn.disabled = (index === 0);
+        if (downBtn) downBtn.disabled = (index === items.length - 1);
+    });
+    
+    console.log('✓ Badges y botones actualizados');
+}
+
+function saveImageOrder() {
     const items = document.querySelectorAll('.image-item');
     const imageOrder = [];
     
@@ -1176,17 +1176,10 @@ function updateImageOrder() {
             id: item.dataset.imageId,
             order: index + 1
         });
-        
-        // Actualizar el badge de orden visualmente
-        const badge = item.querySelector('.drag-handle');
-        if (badge) {
-            badge.innerHTML = `<i class="fas fa-grip-vertical"></i> #${index + 1}`;
-        }
     });
     
-    console.log('Nuevo orden:', imageOrder);
+    console.log('💾 Guardando orden:', imageOrder);
     
-    // Enviar al servidor
     fetch('api/update_image_order.php', {
         method: 'POST',
         headers: {
@@ -1200,13 +1193,17 @@ function updateImageOrder() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('✓ Orden actualizado en servidor');
+            console.log('✅ Orden guardado en servidor');
         } else {
-            console.error('Error al actualizar orden:', data.message);
+            console.error('❌ Error al guardar orden:', data.message);
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => console.error('❌ Error de red:', error));
 }
+
+// ============================================
+// MARCAR IMAGEN COMO PORTADA
+// ============================================
 
 // Manejar radio buttons de imagen principal
 const primaryRadios = document.querySelectorAll('.primary-image-radio');
