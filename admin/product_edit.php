@@ -859,6 +859,12 @@ function generateSlug($text) {
 </div>
 
 <style>
+/**
+ * ESTILOS PARA SISTEMA DE IMÁGENES
+ * Versión: 2.1.0
+ * Última actualización: 2025-01-10
+ */
+
 /* Estilos para drag & drop de imágenes */
 .image-item {
     transition: all 0.3s ease;
@@ -933,8 +939,20 @@ function generateSlug($text) {
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
+/**
+ * SISTEMA DE IMÁGENES DEL PRODUCTO
+ * Versión: 2.1.0
+ * Última actualización: 2025-01-10
+ * Cambios:
+ * - Drag & drop mejorado con forceFallback
+ * - Radio buttons para selección de portada
+ * - Vista previa persistente sin alertas
+ * - Eliminado campo short_description
+ */
+
 // Verificar que Sortable está cargado
 console.log('Sortable disponible:', typeof Sortable !== 'undefined');
+console.log('📦 Sistema de Imágenes v2.1.0');
 
 // Esperar a que el DOM y Bootstrap estén completamente cargados
 document.addEventListener('DOMContentLoaded', function() {
