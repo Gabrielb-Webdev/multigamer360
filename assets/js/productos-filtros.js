@@ -9,6 +9,8 @@ const filterState = {
         categories: [],
         brands: [],
         tags: [],
+        consoles: [],
+        genres: [],
         minPrice: '',
         maxPrice: ''
     },
@@ -20,6 +22,8 @@ let pendingFilters = {
     categories: [],
     brands: [],
     tags: [],
+    consoles: [],
+    genres: [],
     minPrice: '',
     maxPrice: ''
 };
@@ -53,6 +57,12 @@ function updateFilter(filterType, value, checked) {
                 break;
             case 'tag':
                 targetArray = filters.tags;
+                break;
+            case 'console':
+                targetArray = filters.consoles;
+                break;
+            case 'genre':
+                targetArray = filters.genres;
                 break;
             default:
                 console.error('❌ Tipo de filtro no válido:', filterType);
@@ -164,7 +174,7 @@ function applyAllFilters() {
 function clearAllFilters() {
     try {
         // Desmarcar todos los checkboxes
-        ['category-filter', 'brand-filter', 'tag-filter'].forEach(className => {
+        ['category-filter', 'brand-filter', 'tag-filter', 'console-filter', 'genre-filter'].forEach(className => {
             document.querySelectorAll(`.${className}`).forEach(cb => cb.checked = false);
         });
 
@@ -179,6 +189,8 @@ function clearAllFilters() {
             categories: [],
             brands: [],
             tags: [],
+            consoles: [],
+            genres: [],
             minPrice: '',
             maxPrice: ''
         };
@@ -218,24 +230,32 @@ function updateFilterButtons() {
             filters.categories.length + 
             filters.brands.length + 
             filters.tags.length + 
+            filters.consoles.length +
+            filters.genres.length +
             (filters.minPrice ? 1 : 0) + 
             (filters.maxPrice ? 1 : 0);
 
-        if (filterState.filtersChanged && totalFilters > 0) {
+        // Mostrar botón "Aplicar Filtros" si hay cambios pendientes
+        if (filterState.filtersChanged) {
             applyBtn.style.display = 'block';
-            clearBtn.style.display = 'block';
-            if (filterCount) {
+            if (filterCount && totalFilters > 0) {
                 filterCount.textContent = totalFilters;
                 filterCount.style.display = 'inline';
+            } else if (filterCount) {
+                filterCount.style.display = 'none';
             }
         } else {
             applyBtn.style.display = 'none';
-            if (totalFilters === 0) {
-                clearBtn.style.display = 'none';
-            }
             if (filterCount) {
                 filterCount.style.display = 'none';
             }
+        }
+        
+        // Mostrar botón "Limpiar Filtros" si hay filtros activos
+        if (totalFilters > 0) {
+            clearBtn.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
         }
     }
 }
