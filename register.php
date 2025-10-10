@@ -28,7 +28,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once 'config/database.php';
-require_once 'config/user_manager.php';
+require_once 'config/user_manager_simple.php';
 
 // =====================================================
 // INICIALIZACIÓN DE MANAGERS
@@ -36,7 +36,7 @@ require_once 'config/user_manager.php';
 
 // Crear instancia del manejador de usuarios
 try {
-    $userManager = new UserManager($pdo);
+    $userManager = new UserManagerSimple($pdo);
 } catch (Exception $e) {
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }
@@ -130,8 +130,8 @@ if ($_POST) {
         $error = 'La contraseña debe tener: mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial';
     } else {
         try {
-            // Asignar rol de cliente por defecto (nivel 10)
-            $data['role_id'] = 5; // Cliente
+            // Asignar rol de cliente por defecto
+            $data['role'] = 'customer';
             
             $result = $userManager->registerUser($data);
             
@@ -140,16 +140,14 @@ if ($_POST) {
                 $loginResult = $userManager->loginUser($data['email'], $data['password']);
                 
                 if ($loginResult['success']) {
-                    // Establecer sesión con la misma estructura que el login
+                    // Establecer sesión
                     $_SESSION['user_id'] = $loginResult['user']['id'];
                     $_SESSION['email'] = $loginResult['user']['email'];
                     $_SESSION['first_name'] = $loginResult['user']['first_name'];
                     $_SESSION['last_name'] = $loginResult['user']['last_name'];
-                    $_SESSION['role_id'] = $loginResult['user']['role_id'];
+                    $_SESSION['role'] = $loginResult['user']['role'];
                     $_SESSION['role_name'] = $loginResult['user']['role_name'];
-                    $_SESSION['role_slug'] = $loginResult['user']['role_slug'];
-                    $_SESSION['role_level'] = $loginResult['user']['role_level'];
-                    $_SESSION['permissions'] = $loginResult['user']['permissions'];
+                    $_SESSION['is_admin'] = $loginResult['user']['is_admin'];
                     
                     // Redireccionar a la página principal con mensaje de bienvenida
                     header('Location: index.php?registered=1');
