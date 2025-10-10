@@ -62,21 +62,17 @@ try {
     $genres_stmt = $pdo->query("SELECT id, name FROM genres WHERE is_active = 1 ORDER BY name");
     $genres = $genres_stmt->fetchAll();
     
-    // Géneros seleccionados (si es edición)
+    // Géneros seleccionados (siempre cargamos para edición)
     $selected_genres = [];
-    if ($is_edit) {
-        $selected_genres_stmt = $pdo->prepare("SELECT genre_id FROM product_genres WHERE product_id = ?");
-        $selected_genres_stmt->execute([$product_id]);
-        $selected_genres = $selected_genres_stmt->fetchAll(PDO::FETCH_COLUMN);
-    }
+    $selected_genres_stmt = $pdo->prepare("SELECT genre_id FROM product_genres WHERE product_id = ?");
+    $selected_genres_stmt->execute([$product_id]);
+    $selected_genres = $selected_genres_stmt->fetchAll(PDO::FETCH_COLUMN);
     
-    // Imágenes del producto (si es edición)
+    // Imágenes del producto (siempre cargamos para edición)
     $product_images = [];
-    if ($is_edit) {
-        $images_stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, display_order ASC");
-        $images_stmt->execute([$product_id]);
-        $product_images = $images_stmt->fetchAll();
-    }
+    $images_stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, display_order ASC");
+    $images_stmt->execute([$product_id]);
+    $product_images = $images_stmt->fetchAll();
     
 } catch (PDOException $e) {
     $_SESSION['error'] = 'Error al cargar datos: ' . $e->getMessage();
@@ -107,9 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generar SKU si no se proporciona
         $sku = !empty($_POST['sku']) ? $_POST['sku'] : generateSKU($_POST['name']);
         
-        // Verificar SKU único
+        // Verificar SKU único (excluyendo el producto actual)
         $sku_check = $pdo->prepare("SELECT id FROM products WHERE sku = ? AND id != ?");
-        $sku_check->execute([$sku, $product_id ?? 0]);
+        $sku_check->execute([$sku, $product_id]);
         if ($sku_check->fetch()) {
             throw new Exception('El SKU ya existe');
         }
@@ -124,7 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'name' => trim($_POST['name']),
             'slug' => $slug,
             'description' => trim($_POST['description']),
-            'short_description' => trim($_POST['short_description'] ?? ''),
             'sku' => $sku,
             'price_pesos' => floatval($_POST['price_pesos']),
             'price_dollars' => !empty($_POST['price_dollars']) ? floatval($_POST['price_dollars']) : null,
@@ -142,32 +137,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'updated_at' => date('Y-m-d H:i:s')
         ];
         
-        if ($is_edit) {
-            // Actualizar producto
-            $set_clauses = [];
-            foreach ($product_data as $key => $value) {
-                $set_clauses[] = "$key = :$key";
-            }
-            
-            $sql = "UPDATE products SET " . implode(', ', $set_clauses) . " WHERE id = :id";
-            $product_data['id'] = $product_id;
-            
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($product_data);
-            
-        } else {
-            // Crear producto
-            $product_data['created_at'] = date('Y-m-d H:i:s');
-            
-            $columns = implode(', ', array_keys($product_data));
-            $placeholders = ':' . implode(', :', array_keys($product_data));
-            
-            $sql = "INSERT INTO products ($columns) VALUES ($placeholders)";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($product_data);
-            
-            $product_id = $pdo->lastInsertId();
+        // ACTUALIZAR producto existente
+        $set_clauses = [];
+        foreach ($product_data as $key => $value) {
+            $set_clauses[] = "$key = :$key";
         }
+        
+        $sql = "UPDATE products SET " . implode(', ', $set_clauses) . " WHERE id = :id";
+        $product_data['id'] = $product_id;
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($product_data);
         
         // Guardar géneros (relación muchos a muchos)
         if (!empty($_POST['genres'])) {
@@ -234,8 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $pdo->commit();
         
-        $_SESSION['success'] = $is_edit ? 'Producto actualizado correctamente' : 'Producto creado correctamente';
-        header('Location: products.php');
+        $_SESSION['success'] = 'Producto actualizado correctamente';
+        header('Location: product_edit.php?id=' . $product_id);
         exit;
         
     } catch (Exception $e) {
@@ -266,6 +246,11 @@ function generateSlug($text) {
 
 <div class="row">
     <div class="col-12">
+        <div class="alert alert-primary">
+            <i class="fas fa-edit me-2"></i>
+            <strong>Editando:</strong> <?php echo htmlspecialchars($product['name']); ?>
+        </div>
+        
         <form method="POST" enctype="multipart/form-data" id="product-form">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <input type="hidden" name="primary_image_id" id="primary_image_id" value="">
@@ -445,56 +430,6 @@ function generateSlug($text) {
                             <?php if (empty($product_images)): ?>
                             <div class="alert alert-info" id="no-images-alert">
                                 <i class="fas fa-info-circle"></i> Este producto aún no tiene imágenes. Agrega al menos una imagen para tu producto.
-                            </div>
-                            <?php endif; ?>
-                            
-                            <!-- Imágenes existentes -->
-                            <?php if (false && !empty($product_images)): // Oculto, ahora se usa el nuevo sistema ?>
-                            <div class="current-images">
-                                <h6 class="mb-3">
-                                    <i class="fas fa-folder-open me-2"></i>Imágenes Actuales 
-                                    <span class="badge bg-secondary"><?php echo count($product_images); ?></span>
-                                </h6>
-                                <p class="text-muted small">
-                                    <i class="fas fa-arrows-alt me-1"></i> Arrastra las imágenes para reordenarlas
-                                </p>
-                                <div class="row g-3" id="current-images-sortable">
-                                    <?php foreach ($product_images as $image): ?>
-                                    <div class="col-md-3 sortable-image-item" data-image-id="<?php echo $image['id']; ?>">
-                                        <div class="card position-relative" style="cursor: move;">
-                                            <div class="position-absolute top-0 start-0 p-2">
-                                                <span class="badge bg-dark bg-opacity-75">
-                                                    <i class="fas fa-grip-vertical"></i>
-                                                </span>
-                                            </div>
-                                            <?php if ($image['is_primary']): ?>
-                                            <div class="position-absolute top-0 end-0 p-2">
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-star"></i> Principal
-                                                </span>
-                                            </div>
-                                            <?php endif; ?>
-                                            <img src="../uploads/products/<?php echo htmlspecialchars($image['image_url'] ?? $image['filename'] ?? ''); ?>" 
-                                                 class="card-img-top" style="height: 150px; object-fit: cover;"
-                                                 alt="Imagen del producto">
-                                            <div class="card-body p-2">
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input image-primary-radio" type="radio" 
-                                                           name="primary_image" value="<?php echo $image['id']; ?>"
-                                                           <?php echo $image['is_primary'] ? 'checked' : ''; ?>>
-                                                    <label class="form-check-label small">
-                                                        Marcar como principal
-                                                    </label>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-danger w-100" 
-                                                        onclick="deleteProductImage(<?php echo $image['id']; ?>)">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </div>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -750,21 +685,19 @@ function generateSlug($text) {
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save me-2"></i>
-                                    <?php echo $is_edit ? 'Actualizar' : 'Crear'; ?> Producto
+                                    Actualizar Producto
                                 </button>
                                 
                                 <a href="products.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-2"></i>
-                                    Cancelar
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Volver a Productos
                                 </a>
                                 
-                                <?php if ($is_edit): ?>
                                 <a href="../product.php?id=<?php echo $product_id; ?>" 
                                    class="btn btn-outline-info" target="_blank">
                                     <i class="fas fa-eye me-2"></i>
                                     Ver en Sitio
                                 </a>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -1023,8 +956,8 @@ function renderPendingImages() {
         return;
     }
     
-    // Mostrar botón de subida si hay producto editándose
-    if (uploadSection && <?php echo $product_id ?? 0; ?> > 0) {
+    // Mostrar botón de subida (siempre hay producto en edición)
+    if (uploadSection) {
         uploadSection.style.display = 'block';
         pendingCount.textContent = pendingImages.length;
         console.log('✓ Botón de subida mostrado');
@@ -1070,7 +1003,7 @@ function uploadPendingImages() {
     
     const formData = new FormData();
     formData.append('action', 'upload_images');
-    formData.append('product_id', <?php echo $product_id ?? 0; ?>);
+    formData.append('product_id', <?php echo $product_id; ?>);
     
     pendingImageFiles.forEach((file, index) => {
         formData.append('images[]', file);
@@ -1196,7 +1129,7 @@ function saveImageOrder() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            product_id: <?php echo $product_id ?? 0; ?>,
+            product_id: <?php echo $product_id; ?>,
             order: imageOrder
         })
     })
@@ -1235,7 +1168,7 @@ function setAsPrimary(imageId) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            product_id: <?php echo $product_id ?? 0; ?>,
+            product_id: <?php echo $product_id; ?>,
             image_id: imageId
         })
     })
@@ -1274,7 +1207,7 @@ function updatePrimaryImage(imageId) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
-            product_id: <?php echo $product_id ?? 0; ?>,
+            product_id: <?php echo $product_id; ?>,
             image_id: imageId 
         })
     })
@@ -1618,8 +1551,8 @@ if (productForm) {
         return false;
     }
     
-    // Si hay imágenes pendientes, subirlas primero mediante AJAX
-    if (pendingImageFiles.length > 0 && <?php echo $product_id ?? 0; ?> > 0) {
+    // Si hay imágenes pendientes en modo edición, subirlas primero
+    if (pendingImageFiles.length > 0) {
         e.preventDefault();
         
         const submitButton = this.querySelector('button[type="submit"]');

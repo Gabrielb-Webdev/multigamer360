@@ -1,6 +1,6 @@
 <?php
 $page_title = 'Gestión de Productos';
-$page_actions = '<a href="product_edit.php" class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo Producto</a>';
+$page_actions = '<a href="product_create.php" class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo Producto</a>';
 
 require_once 'inc/header.php';
 
@@ -208,7 +208,7 @@ try {
                     <?php endif; ?>
                 </p>
                 <?php if (hasPermission('products', 'create')): ?>
-                    <a href="product_edit.php" class="btn btn-primary">
+                    <a href="product_create.php" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Agregar Producto
                     </a>
                 <?php endif; ?>
