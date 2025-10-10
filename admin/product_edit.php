@@ -1088,31 +1088,8 @@ function setAsPrimary(imageId) {
         alert('Error al marcar imagen como portada');
     });
 }
-    
-    items.forEach((item, index) => {
-        imageOrder.push({
-            id: item.dataset.imageId,
-            order: index + 1
-        });
-    });
-    
-    fetch('api/update_image_order.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ images: imageOrder })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Orden actualizado');
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
 
-// Marcar imagen como principal
+// Marcar imagen como principal (usando radio buttons - código legacy)
 const imagePrimaryRadios = document.querySelectorAll('.image-primary-radio');
 imagePrimaryRadios.forEach(radio => {
     radio.addEventListener('change', function() {
