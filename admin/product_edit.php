@@ -1,37 +1,47 @@
 <?php
-// Determinar si es creación o edición
+/**
+ * EDITAR PRODUCTO EXISTENTE
+ * Este archivo es SOLO para editar productos existentes (requiere ID)
+ * Para crear nuevos productos, usar product_create.php
+ */
+
+// Verificar que se proporcionó un ID
 $product_id = $_GET['id'] ?? null;
-$is_edit = !empty($product_id);
-$page_title = $is_edit ? 'Editar Producto' : 'Nuevo Producto';
 
-require_once 'inc/header.php';
-
-// Verificar permisos
-$required_permission = $is_edit ? 'update' : 'create';
-if (!hasPermission('products', $required_permission)) {
-    $_SESSION['error'] = 'No tiene permisos para ' . ($is_edit ? 'editar' : 'crear') . ' productos';
+if (empty($product_id)) {
+    $_SESSION['error'] = 'ID de producto no proporcionado';
     header('Location: products.php');
     exit;
 }
 
-// Cargar producto si es edición
+$is_edit = true;
+$page_title = 'Editar Producto';
+
+require_once 'inc/header.php';
+
+// Verificar permisos de edición
+if (!hasPermission('products', 'update')) {
+    $_SESSION['error'] = 'No tiene permisos para editar productos';
+    header('Location: products.php');
+    exit;
+}
+
+// Cargar producto existente
 $product = null;
-if ($is_edit) {
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
-        $stmt->execute([$product_id]);
-        $product = $stmt->fetch();
-        
-        if (!$product) {
-            $_SESSION['error'] = 'Producto no encontrado';
-            header('Location: products.php');
-            exit;
-        }
-    } catch (PDOException $e) {
-        $_SESSION['error'] = 'Error al cargar producto: ' . $e->getMessage();
+try {
+    $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
+    $stmt->execute([$product_id]);
+    $product = $stmt->fetch();
+    
+    if (!$product) {
+        $_SESSION['error'] = 'Producto no encontrado';
         header('Location: products.php');
         exit;
     }
+} catch (PDOException $e) {
+    $_SESSION['error'] = 'Error al cargar producto: ' . $e->getMessage();
+    header('Location: products.php');
+    exit;
 }
 
 // Cargar datos auxiliares
