@@ -27,7 +27,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once 'config/database.php';
-require_once 'config/user_manager.php';
+require_once 'config/user_manager_simple.php';
 
 // =====================================================
 // INICIALIZACIÓN DE MANAGERS
@@ -35,7 +35,7 @@ require_once 'config/user_manager.php';
 
 // Crear instancia del manejador de usuarios
 try {
-    $userManager = new UserManager($pdo);
+    $userManager = new UserManagerSimple($pdo);
 } catch (Exception $e) {
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }
@@ -73,20 +73,18 @@ if ($_POST) {
             $result = $userManager->loginUser($email, $password);
             
             if ($result['success']) {
-                // Guardar datos en sesión incluyendo información de rol
+                // Guardar datos en sesión
                 $_SESSION['user_id'] = $result['user']['id'];
                 $_SESSION['email'] = $result['user']['email'];
                 $_SESSION['first_name'] = $result['user']['first_name'];
                 $_SESSION['last_name'] = $result['user']['last_name'];
-                $_SESSION['role_id'] = $result['user']['role_id'];
+                $_SESSION['role'] = $result['user']['role'];
                 $_SESSION['role_name'] = $result['user']['role_name'];
-                $_SESSION['role_slug'] = $result['user']['role_slug'];
-                $_SESSION['role_level'] = $result['user']['role_level'];
-                $_SESSION['permissions'] = $result['user']['permissions'];
+                $_SESSION['is_admin'] = $result['user']['is_admin'];
                 
                 // Redirigir según el rol
-                if ($result['user']['role_level'] >= 80) {
-                    // Admin o Super Admin - ir al panel de administración
+                if ($result['user']['is_admin']) {
+                    // Admin - ir al panel de administración
                     header('Location: admin/dashboard.php');
                 } else {
                     // Usuario normal - ir al inicio
