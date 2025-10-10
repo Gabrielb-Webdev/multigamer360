@@ -172,19 +172,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Procesar imágenes nuevas
+        // Procesar imágenes nuevas (SE AGREGAN, NO SE REEMPLAZAN)
         if (!empty($_FILES['images']['name'][0])) {
             $upload_dir = '../uploads/products/';
             if (!file_exists($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
             
+            // Obtener el orden máximo actual
             $current_max_order = 0;
-            if ($is_edit) {
-                $order_stmt = $pdo->prepare("SELECT MAX(display_order) as max_order FROM product_images WHERE product_id = ?");
-                $order_stmt->execute([$product_id]);
-                $current_max_order = $order_stmt->fetchColumn() ?? 0;
-            }
+            $order_stmt = $pdo->prepare("SELECT MAX(display_order) as max_order FROM product_images WHERE product_id = ?");
+            $order_stmt->execute([$product_id]);
+            $current_max_order = $order_stmt->fetchColumn() ?? 0;
+            
+            // Verificar si ya existe una imagen principal
+            $has_primary_stmt = $pdo->prepare("SELECT COUNT(*) FROM product_images WHERE product_id = ? AND is_primary = 1");
+            $has_primary_stmt->execute([$product_id]);
+            $has_primary = $has_primary_stmt->fetchColumn() > 0;
             
             foreach ($_FILES['images']['name'] as $key => $name) {
                 if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
@@ -195,13 +199,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     if (move_uploaded_file($tmp_name, $destination)) {
                         $current_max_order++;
-                        $is_primary = ($key == 0 && empty($product_images)) ? 1 : 0;
+                        // Solo marcar como principal si es la primera imagen del producto
+                        $is_primary = (!$has_primary && $key == 0) ? 1 : 0;
+                        if ($is_primary) {
+                            $has_primary = true; // Marcar que ya hay una principal
+                        }
                         
                         $pdo->prepare("INSERT INTO product_images (product_id, image_url, is_primary, display_order) VALUES (?, ?, ?, ?)")
                             ->execute([$product_id, $new_filename, $is_primary, $current_max_order]);
                     }
                 }
             }
+        }
+        
+        // Actualizar imagen principal si se seleccionó una
+        if (!empty($_POST['primary_image_id'])) {
+            // Quitar is_primary de todas las imágenes del producto
+            $pdo->prepare("UPDATE product_images SET is_primary = 0 WHERE product_id = ?")->execute([$product_id]);
+            
+            // Marcar la seleccionada como principal
+            $pdo->prepare("UPDATE product_images SET is_primary = 1 WHERE id = ? AND product_id = ?")
+                ->execute([intval($_POST['primary_image_id']), $product_id]);
         }
         
         $pdo->commit();
@@ -240,6 +258,7 @@ function generateSlug($text) {
     <div class="col-12">
         <form method="POST" enctype="multipart/form-data" id="product-form">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+            <input type="hidden" name="primary_image_id" id="primary_image_id" value="">
             
             <div class="row">
                 <!-- Información básica -->
@@ -275,13 +294,6 @@ function generateSlug($text) {
                                         <option value="out_of_stock" <?php echo ($product['status'] ?? '') === 'out_of_stock' ? 'selected' : ''; ?>>Agotado</option>
                                     </select>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="short_description" class="form-label">Descripción Corta</label>
-                                <textarea class="form-control" id="short_description" name="short_description" 
-                                          rows="2" maxlength="500"><?php echo htmlspecialchars($product['short_description'] ?? ''); ?></textarea>
-                                <div class="form-text">Máximo 500 caracteres</div>
                             </div>
                             
                             <div class="mb-3">
@@ -867,6 +879,8 @@ imagePrimaryRadios.forEach(radio => {
     radio.addEventListener('change', function() {
         if (this.checked) {
             const imageId = this.value;
+            // Actualizar el campo oculto del formulario
+            document.getElementById('primary_image_id').value = imageId;
             updatePrimaryImage(imageId);
         }
     });
