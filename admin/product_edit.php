@@ -756,12 +756,17 @@ function generateSlug($text) {
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
+// Esperar a que el DOM y Bootstrap estén completamente cargados
+document.addEventListener('DOMContentLoaded', function() {
+
 // ============================================
 // GESTIÓN DE IMÁGENES
 // ============================================
 
 // Vista previa de imágenes nuevas
-document.getElementById('images').addEventListener('change', function(e) {
+const imagesInput = document.getElementById('images');
+if (imagesInput) {
+    imagesInput.addEventListener('change', function(e) {
     const preview = document.getElementById('image-preview');
     preview.innerHTML = '';
     
@@ -797,6 +802,7 @@ document.getElementById('images').addEventListener('change', function(e) {
         }
     });
 });
+}
 
 // Configurar Sortable para reordenar imágenes existentes
 <?php if (!empty($product_images)): ?>
@@ -842,7 +848,8 @@ function updateImageOrder() {
 <?php endif; ?>
 
 // Marcar imagen como principal
-document.querySelectorAll('.image-primary-radio').forEach(radio => {
+const imagePrimaryRadios = document.querySelectorAll('.image-primary-radio');
+imagePrimaryRadios.forEach(radio => {
     radio.addEventListener('change', function() {
         if (this.checked) {
             const imageId = this.value;
@@ -911,7 +918,9 @@ function deleteProductImage(imageId) {
 // ============================================
 
 // Auto-generar campos SEO
-document.getElementById('auto-generate-seo').addEventListener('click', function() {
+const autoGenerateSeoBtn = document.getElementById('auto-generate-seo');
+if (autoGenerateSeoBtn) {
+    autoGenerateSeoBtn.addEventListener('click', function() {
     const name = document.getElementById('name').value;
     const description = document.getElementById('description').value;
     
@@ -941,6 +950,7 @@ document.getElementById('auto-generate-seo').addEventListener('click', function(
     
     alert('Campos SEO generados automáticamente');
 });
+}
 
 // Contadores de caracteres SEO
 function updateSEOCounters() {
@@ -966,18 +976,32 @@ function updateSERPPreview() {
     document.getElementById('serp-preview-desc').textContent = desc;
 }
 
-document.getElementById('meta_title').addEventListener('input', function() {
-    updateSEOCounters();
-    updateSERPPreview();
-});
+const metaTitleInput = document.getElementById('meta_title');
+const metaDescInput = document.getElementById('meta_description');
+const nameInput = document.getElementById('name');
+const shortDescInput = document.getElementById('short_description');
 
-document.getElementById('meta_description').addEventListener('input', function() {
-    updateSEOCounters();
-    updateSERPPreview();
-});
+if (metaTitleInput) {
+    metaTitleInput.addEventListener('input', function() {
+        updateSEOCounters();
+        updateSERPPreview();
+    });
+}
 
-document.getElementById('name').addEventListener('input', updateSERPPreview);
-document.getElementById('short_description').addEventListener('input', updateSERPPreview);
+if (metaDescInput) {
+    metaDescInput.addEventListener('input', function() {
+        updateSEOCounters();
+        updateSERPPreview();
+    });
+}
+
+if (nameInput) {
+    nameInput.addEventListener('input', updateSERPPreview);
+}
+
+if (shortDescInput) {
+    shortDescInput.addEventListener('input', updateSERPPreview);
+}
 
 // Inicializar contadores
 updateSEOCounters();
@@ -1012,8 +1036,16 @@ function updateDiscountPreview() {
     }
 }
 
-document.getElementById('price_pesos').addEventListener('input', updateDiscountPreview);
-document.getElementById('offer_price').addEventListener('input', updateDiscountPreview);
+const pesosInput = document.getElementById('price_pesos');
+const offerInput = document.getElementById('offer_price');
+
+if (pesosInput) {
+    pesosInput.addEventListener('input', updateDiscountPreview);
+}
+
+if (offerInput) {
+    offerInput.addEventListener('input', updateDiscountPreview);
+}
 
 // Alerta de stock bajo
 function updateStockAlert() {
@@ -1029,7 +1061,10 @@ function updateStockAlert() {
     }
 }
 
-document.getElementById('stock_quantity').addEventListener('input', updateStockAlert);
+const stockInput = document.getElementById('stock_quantity');
+if (stockInput) {
+    stockInput.addEventListener('input', updateStockAlert);
+}
 
 // Inicializar
 updateDiscountPreview();
@@ -1039,19 +1074,24 @@ updateStockAlert();
 // GENERAR SKU AUTOMÁTICO
 // ============================================
 
-document.getElementById('name').addEventListener('blur', function() {
+const nameInputForSku = document.getElementById('name');
+if (nameInputForSku) {
+    nameInputForSku.addEventListener('blur', function() {
     const skuField = document.getElementById('sku');
     if (!skuField.value && this.value) {
         const sku = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8);
         skuField.value = sku + '-' + Math.floor(Math.random() * 9000 + 1000);
     }
 });
+}
 
 // ============================================
 // VALIDACIÓN DEL FORMULARIO
 // ============================================
 
-document.getElementById('product-form').addEventListener('submit', function(e) {
+const productForm = document.getElementById('product-form');
+if (productForm) {
+    productForm.addEventListener('submit', function(e) {
     const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
     const offerPrice = parseFloat(document.getElementById('offer_price').value) || 0;
     
@@ -1070,6 +1110,7 @@ document.getElementById('product-form').addEventListener('submit', function(e) {
         return false;
     }
 });
+}
 
 // ============================================
 // FUNCIONES PARA AGREGAR NUEVOS ELEMENTOS
@@ -1097,7 +1138,11 @@ function saveNewCategory() {
             document.getElementById('category_id').add(option);
             
             // Cerrar modal
-            bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+            const modal = document.getElementById('addCategoryModal');
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
             
             // Limpiar campos
             document.getElementById('new_category_name').value = '';
@@ -1132,7 +1177,13 @@ function saveNewBrand() {
         if (data.success) {
             const option = new Option(data.brand.name, data.brand.id, true, true);
             document.getElementById('brand_id').add(option);
-            bootstrap.Modal.getInstance(document.getElementById('addBrandModal')).hide();
+            
+            const modal = document.getElementById('addBrandModal');
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+            
             document.getElementById('new_brand_name').value = '';
             alert('Marca creada correctamente');
         } else {
@@ -1164,7 +1215,13 @@ function saveNewConsole() {
         if (data.success) {
             const option = new Option(data.console.name, data.console.id, true, true);
             document.getElementById('console_id').add(option);
-            bootstrap.Modal.getInstance(document.getElementById('addConsoleModal')).hide();
+            
+            const modal = document.getElementById('addConsoleModal');
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+            
             document.getElementById('new_console_name').value = '';
             document.getElementById('new_console_manufacturer').value = '';
             alert('Consola creada correctamente');
@@ -1208,10 +1265,12 @@ function saveNewGenre() {
 }
 
 // Inicializar tooltips de Bootstrap
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl);
 });
+
+}); // Fin de DOMContentLoaded
 </script>
 
 <?php require_once 'inc/footer.php'; ?>
