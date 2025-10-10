@@ -118,7 +118,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'sku' => $sku,
             'price_pesos' => floatval($_POST['price_pesos']),
             'price_dollars' => !empty($_POST['price_dollars']) ? floatval($_POST['price_dollars']) : null,
-            'offer_price' => !empty($_POST['offer_price']) ? floatval($_POST['offer_price']) : null,
+            'is_on_sale' => isset($_POST['is_on_sale']) ? 1 : 0,
+            'discount_percentage' => !empty($_POST['discount_percentage']) ? floatval($_POST['discount_percentage']) : 0.00,
             'stock_quantity' => intval($_POST['stock_quantity']),
             'category_id' => intval($_POST['category_id']),
             'brand_id' => !empty($_POST['brand_id']) ? intval($_POST['brand_id']) : null,
@@ -481,23 +482,36 @@ function generateSlug($text) {
                                 <div class="form-text">Opcional: Dejar vacío si no aplica</div>
                             </div>
                             
+                            <hr>
+                            
+                            <!-- Sistema de Descuentos por Porcentaje -->
                             <div class="mb-3">
-                                <label for="offer_price" class="form-label">
-                                    Precio de Oferta (COP)
-                                    <span class="badge bg-danger">OFERTA</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_on_sale" name="is_on_sale" 
+                                           value="1" <?php echo (!empty($product['is_on_sale'])) ? 'checked' : ''; ?>>
+                                    <label class="form-check-label fw-bold" for="is_on_sale">
+                                        <i class="fas fa-percentage text-danger"></i> Producto en Oferta
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3" id="discount-section" style="display: <?php echo (!empty($product['is_on_sale'])) ? 'block' : 'none'; ?>;">
+                                <label for="discount_percentage" class="form-label">
+                                    Porcentaje de Descuento
+                                    <span class="badge bg-danger">%</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="offer_price" name="offer_price" 
-                                           value="<?php echo $product['offer_price'] ?? ''; ?>" 
-                                           min="0" step="0.01">
-                                    <span class="input-group-text">COP</span>
+                                    <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" 
+                                           value="<?php echo $product['discount_percentage'] ?? '0'; ?>" 
+                                           min="0" max="100" step="0.01">
+                                    <span class="input-group-text">%</span>
                                 </div>
                                 <div class="form-text">
-                                    <i class="fas fa-tag"></i> Dejar vacío si no hay oferta. 
-                                    Debe ser menor al precio regular.
+                                    <i class="fas fa-tag"></i> Ingrese el porcentaje de descuento (0-100%)
                                 </div>
-                                <div id="discount-preview" class="mt-2"></div>
+                                
+                                <!-- Vista Previa del Descuento -->
+                                <div id="discount-preview" class="mt-3"></div>
                             </div>
                             
                             <hr>
@@ -1007,44 +1021,88 @@ if (shortDescInput) {
 updateSEOCounters();
 
 // ============================================
-// PRECIOS Y DESCUENTOS
+// PRECIOS Y DESCUENTOS POR PORCENTAJE
 // ============================================
 
-// Calcular descuento
+// Toggle del switch "En Oferta"
+const isOnSaleSwitch = document.getElementById('is_on_sale');
+const discountSection = document.getElementById('discount-section');
+
+if (isOnSaleSwitch) {
+    isOnSaleSwitch.addEventListener('change', function() {
+        if (this.checked) {
+            discountSection.style.display = 'block';
+        } else {
+            discountSection.style.display = 'none';
+            document.getElementById('discount_percentage').value = '0';
+            updateDiscountPreview();
+        }
+    });
+}
+
+// Calcular precio con descuento por porcentaje
 function updateDiscountPreview() {
     const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
-    const offerPrice = parseFloat(document.getElementById('offer_price').value) || 0;
+    const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
     const preview = document.getElementById('discount-preview');
+    const isOnSale = document.getElementById('is_on_sale').checked;
     
-    if (offerPrice > 0 && offerPrice < pricePesos) {
-        const discount = ((pricePesos - offerPrice) / pricePesos * 100).toFixed(0);
-        const savings = (pricePesos - offerPrice).toFixed(2);
-        preview.innerHTML = `
-            <div class="alert alert-success mb-0">
-                <strong><i class="fas fa-percent"></i> Descuento: ${discount}%</strong><br>
-                <small>Ahorro: $${savings} COP</small>
-            </div>
-        `;
-    } else if (offerPrice >= pricePesos) {
+    if (!isOnSale || discountPercentage === 0 || pricePesos === 0) {
+        preview.innerHTML = '';
+        return;
+    }
+    
+    // Validar que el porcentaje esté entre 0 y 100
+    if (discountPercentage < 0 || discountPercentage > 100) {
         preview.innerHTML = `
             <div class="alert alert-warning mb-0">
-                <i class="fas fa-exclamation-triangle"></i> El precio de oferta debe ser menor al precio regular
+                <i class="fas fa-exclamation-triangle"></i> El porcentaje debe estar entre 0 y 100
             </div>
         `;
-    } else {
-        preview.innerHTML = '';
+        return;
     }
+    
+    // Calcular precio final
+    const discountAmount = (pricePesos * discountPercentage / 100);
+    const finalPrice = pricePesos - discountAmount;
+    
+    // Formatear números con separador de miles
+    const formatter = new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+    
+    preview.innerHTML = `
+        <div class="alert alert-success mb-0">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong><i class="fas fa-percentage"></i> Descuento: ${discountPercentage}%</strong><br>
+                    <small class="text-muted">Ahorro: ${formatter.format(discountAmount)}</small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="text-muted small">
+                        <del>${formatter.format(pricePesos)}</del>
+                    </div>
+                    <div class="text-success fs-5 fw-bold">
+                        ${formatter.format(finalPrice)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 const pesosInput = document.getElementById('price_pesos');
-const offerInput = document.getElementById('offer_price');
+const discountPercentageInput = document.getElementById('discount_percentage');
 
 if (pesosInput) {
     pesosInput.addEventListener('input', updateDiscountPreview);
 }
 
-if (offerInput) {
-    offerInput.addEventListener('input', updateDiscountPreview);
+if (discountPercentageInput) {
+    discountPercentageInput.addEventListener('input', updateDiscountPreview);
 }
 
 // Alerta de stock bajo
@@ -1093,12 +1151,14 @@ const productForm = document.getElementById('product-form');
 if (productForm) {
     productForm.addEventListener('submit', function(e) {
     const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
-    const offerPrice = parseFloat(document.getElementById('offer_price').value) || 0;
+    const isOnSale = document.getElementById('is_on_sale').checked;
+    const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
     
-    if (offerPrice > 0 && offerPrice >= pricePesos) {
+    // Validar porcentaje de descuento si está en oferta
+    if (isOnSale && (discountPercentage < 0 || discountPercentage > 100)) {
         e.preventDefault();
-        alert('El precio de oferta debe ser menor al precio regular');
-        document.getElementById('offer_price').focus();
+        alert('El porcentaje de descuento debe estar entre 0 y 100');
+        document.getElementById('discount_percentage').focus();
         return false;
     }
     
