@@ -1812,29 +1812,40 @@ function initializePendingFilters() {
  */
 function markAppliedFilters() {
     try {
+        // Obtener el estado actualizado desde el sistema global
+        const filters = window.pendingFilters || pendingFilters;
+        
         // Marcar categorías
-        pendingFilters.categories.forEach(catId => {
-            const checkbox = document.getElementById(`cat_${catId}`);
-            if (checkbox) checkbox.checked = true;
-        });
+        if (filters.categories && filters.categories.length > 0) {
+            filters.categories.forEach(catId => {
+                const checkbox = document.getElementById(`cat_${catId}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
         
         // Marcar marcas
-        pendingFilters.brands.forEach(brandId => {
-            const checkbox = document.getElementById(`brand_${brandId}`);
-            if (checkbox) checkbox.checked = true;
-        });
+        if (filters.brands && filters.brands.length > 0) {
+            filters.brands.forEach(brandId => {
+                const checkbox = document.getElementById(`brand_${brandId}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
         
         // Marcar consolas
-        pendingFilters.consoles.forEach(consoleId => {
-            const checkbox = document.getElementById(`console_${consoleId}`);
-            if (checkbox) checkbox.checked = true;
-        });
+        if (filters.consoles && filters.consoles.length > 0) {
+            filters.consoles.forEach(consoleId => {
+                const checkbox = document.getElementById(`console_${consoleId}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
         
         // Marcar géneros
-        pendingFilters.genres.forEach(genreId => {
-            const checkbox = document.getElementById(`genre_${genreId}`);
-            if (checkbox) checkbox.checked = true;
-        });
+        if (filters.genres && filters.genres.length > 0) {
+            filters.genres.forEach(genreId => {
+                const checkbox = document.getElementById(`genre_${genreId}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
         
         console.log('✅ Checkboxes marcados según filtros aplicados');
         
@@ -2018,10 +2029,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('🛍️ Página de productos cargada (versión renovada)');
     
-    // Inicializar el estado de filtros pendientes con la URL actual
-    initializePendingFilters();
-    
-    // Marcar checkboxes según filtros aplicados y actualizar compatibilidad
+    // El sistema de filtros en productos-filtros.js ya inicializa desde URL
+    // Solo necesitamos marcar los checkboxes según filtros aplicados
     setTimeout(() => {
         markAppliedFilters();
         updateFilterCompatibility();

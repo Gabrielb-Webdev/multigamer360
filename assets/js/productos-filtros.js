@@ -301,6 +301,52 @@ function clearFilters() {
     clearAllFilters();
 }
 
+// Función para inicializar filtros desde la URL
+function initializeFiltersFromURL() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Leer categorías de la URL
+        const categoryParam = urlParams.get('category');
+        if (categoryParam) {
+            filterState.pendingFilters.categories = categoryParam.split(',');
+        }
+        
+        // Leer marcas de la URL
+        const brandParam = urlParams.get('brands');
+        if (brandParam) {
+            filterState.pendingFilters.brands = brandParam.split(',');
+        }
+        
+        // Leer consolas de la URL
+        const consolesParam = urlParams.get('consoles');
+        if (consolesParam) {
+            filterState.pendingFilters.consoles = consolesParam.split(',');
+        }
+        
+        // Leer géneros de la URL
+        const genresParam = urlParams.get('genres');
+        if (genresParam) {
+            filterState.pendingFilters.genres = genresParam.split(',');
+        }
+        
+        // Leer precios de la URL
+        const minPrice = urlParams.get('min_price');
+        const maxPrice = urlParams.get('max_price');
+        if (minPrice) filterState.pendingFilters.minPrice = minPrice;
+        if (maxPrice) filterState.pendingFilters.maxPrice = maxPrice;
+        
+        // NO marcar como cambios pendientes al inicializar
+        filterState.filtersChanged = false;
+        
+        syncGlobalState();
+        console.log('🔧 Filtros inicializados desde URL:', filterState.pendingFilters);
+        
+    } catch (error) {
+        console.error('❌ Error inicializando filtros desde URL:', error);
+    }
+}
+
 // ===================================================
 // INICIALIZACIÓN
 // ===================================================
@@ -308,6 +354,9 @@ function clearFilters() {
 // Inicializar el sistema de filtros cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🔧 Inicializando sistema de filtros...');
+    
+    // Inicializar filtros desde la URL primero
+    initializeFiltersFromURL();
     
     // Sincronizar estado global
     syncGlobalState();
@@ -322,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.changeSort = changeSort;
     window.expandFilter = expandFilter;
     window.updateFilterButtons = updateFilterButtons;
+    window.initializeFiltersFromURL = initializeFiltersFromURL;
     
     // Actualizar interfaz
     updateFilterButtons();
