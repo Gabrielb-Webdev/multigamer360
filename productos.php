@@ -2033,7 +2033,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Solo necesitamos marcar los checkboxes según filtros aplicados
     setTimeout(() => {
         markAppliedFilters();
-        updateFilterCompatibility();
+        // updateFilterCompatibility(); // DESHABILITADO - Causaba errores AJAX
     }, 100);
     
     // Verificar que las funciones básicas funcionen
@@ -2221,7 +2221,7 @@ function updateFilter(filterType, value, checked) {
         }
         
         filtersChanged = true;
-        updateFilterCompatibility(); // Actualizar compatibilidad después de cada cambio
+        // updateFilterCompatibility(); // DESHABILITADO - Causaba errores AJAX
         updateFilterButtons();
         console.log('📝 Filtro actualizado:', filterType, value, checked);
         
@@ -2236,6 +2236,13 @@ function updateFilter(filterType, value, checked) {
  */
 function updateFilterCompatibility() {
     try {
+        // TEMPORALMENTE DESHABILITADO - Habilitar todos los filtros
+        // Esta función causaba errores AJAX que impedían el funcionamiento normal
+        // TODO: Revisar y corregir includes/get_compatible_filters.php
+        enableAllFilters();
+        return;
+        
+        /* CÓDIGO ORIGINAL DESHABILITADO
         // Construir query string con filtros actuales
         const params = new URLSearchParams();
         
@@ -2271,6 +2278,7 @@ function updateFilterCompatibility() {
             .catch(error => {
                 console.error('Error en petición AJAX:', error);
             });
+        */
         
     } catch (error) {
         console.error('❌ Error en updateFilterCompatibility:', error);
