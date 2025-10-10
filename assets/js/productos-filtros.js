@@ -137,32 +137,28 @@ function applyAllFilters() {
         const filters = filterState.pendingFilters;
 
         // Limpiar parámetros existentes de filtros
-        ['category', 'brand', 'brands', 'consoles', 'genres', 'tags[]', 'tags', 'min_price', 'max_price', 'page'].forEach(param => {
+        ['category', 'categories', 'brand', 'brands', 'consoles', 'genres', 'tags[]', 'tags', 'min_price', 'max_price', 'page'].forEach(param => {
             url.searchParams.delete(param);
         });
 
-        // Aplicar filtros de categorías
+        // Aplicar filtros de categorías (PHP espera 'categories' en plural)
         if (filters.categories.length > 0) {
-            url.searchParams.set('category', filters.categories[0]);
+            url.searchParams.set('categories', filters.categories.join(','));
         }
         
-        // Aplicar filtros de marcas
+        // Aplicar filtros de marcas (PHP espera 'brands' en plural)
         if (filters.brands.length > 0) {
-            url.searchParams.set('brand', filters.brands[0]);
+            url.searchParams.set('brands', filters.brands.join(','));
         }
         
-        // Aplicar filtros de consolas
+        // Aplicar filtros de consolas (PHP espera 'consoles')
         if (filters.consoles.length > 0) {
-            filters.consoles.forEach(consoleId => {
-                url.searchParams.append('consoles[]', consoleId);
-            });
+            url.searchParams.set('consoles', filters.consoles.join(','));
         }
         
-        // Aplicar filtros de géneros
+        // Aplicar filtros de géneros (PHP espera 'genres')
         if (filters.genres.length > 0) {
-            filters.genres.forEach(genreId => {
-                url.searchParams.append('genres[]', genreId);
-            });
+            url.searchParams.set('genres', filters.genres.join(','));
         }
         
         // Aplicar filtros de tags
@@ -221,14 +217,10 @@ function clearAllFilters() {
         syncGlobalState(); // Sincronizar estado global
         updateFilterButtons();
 
-        // Redirigir a la página sin filtros PERO manteniendo la categoría (consola)
+        // Redirigir a la página sin filtros
         const url = new URL(window.location);
         const search = url.searchParams.get('search');
-        const category = url.searchParams.get('category'); // Preservar categoría
         url.search = '';
-        if (category) {
-            url.searchParams.set('category', category); // Mantener categoría
-        }
         if (search) {
             url.searchParams.set('search', search);
         }
@@ -329,28 +321,28 @@ function initializeFiltersFromURL() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Leer categorías de la URL (solo una)
-        const categoryParam = urlParams.get('category');
-        if (categoryParam) {
-            filterState.pendingFilters.categories = categoryParam.split(',');
+        // Leer categorías de la URL (PHP usa 'categories' en plural)
+        const categoriesParam = urlParams.get('categories');
+        if (categoriesParam) {
+            filterState.pendingFilters.categories = categoriesParam.split(',');
         }
         
-        // Leer marcas de la URL (solo una)
-        const brandParam = urlParams.get('brand');
-        if (brandParam) {
-            filterState.pendingFilters.brands = [brandParam];
+        // Leer marcas de la URL (PHP usa 'brands' en plural)
+        const brandsParam = urlParams.get('brands');
+        if (brandsParam) {
+            filterState.pendingFilters.brands = brandsParam.split(',');
         }
         
-        // Leer consolas de la URL (array)
-        const consolesParams = urlParams.getAll('consoles[]');
-        if (consolesParams.length > 0) {
-            filterState.pendingFilters.consoles = consolesParams;
+        // Leer consolas de la URL
+        const consolesParam = urlParams.get('consoles');
+        if (consolesParam) {
+            filterState.pendingFilters.consoles = consolesParam.split(',');
         }
         
-        // Leer géneros de la URL (array)
-        const genresParams = urlParams.getAll('genres[]');
-        if (genresParams.length > 0) {
-            filterState.pendingFilters.genres = genresParams;
+        // Leer géneros de la URL
+        const genresParam = urlParams.get('genres');
+        if (genresParam) {
+            filterState.pendingFilters.genres = genresParam.split(',');
         }
         
         // Leer tags de la URL (array)
