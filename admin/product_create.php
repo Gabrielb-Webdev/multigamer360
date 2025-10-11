@@ -166,9 +166,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $pdo->commit();
         
-        // Redirigir con parámetros de éxito
+        // Guardar en sesión y redirigir
+        $_SESSION['product_created'] = true;
+        $_SESSION['product_id'] = $product_id;
+        $_SESSION['product_name'] = $_POST['name'];
+        
+        // Redirigir con parámetros GET también como respaldo
         $product_name_encoded = urlencode($_POST['name']);
-        header('Location: product_create.php?success=1&product_id=' . $product_id . '&product_name=' . $product_name_encoded);
+        header('Location: product_create.php?success=1&pid=' . $product_id . '&pname=' . $product_name_encoded);
         exit;
         
     } catch (Exception $e) {
@@ -797,24 +802,61 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<?php if (isset($_GET['success']) && $_GET['success'] == '1' && isset($_GET['product_id'])): ?>
+<?php 
+// Verificar si se creó un producto (usar SESSION como principal y GET como respaldo)
+$showModal = false;
+$productId = 0;
+$productName = '';
+
+if (isset($_SESSION['product_created']) && $_SESSION['product_created']) {
+    $showModal = true;
+    $productId = $_SESSION['product_id'] ?? 0;
+    $productName = $_SESSION['product_name'] ?? '';
+    
+    // Limpiar sesión inmediatamente
+    unset($_SESSION['product_created']);
+    unset($_SESSION['product_id']);
+    unset($_SESSION['product_name']);
+} elseif (isset($_GET['success']) && $_GET['success'] == '1' && isset($_GET['pid'])) {
+    $showModal = true;
+    $productId = intval($_GET['pid']);
+    $productName = urldecode($_GET['pname'] ?? '');
+}
+
+if ($showModal): ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Llenar datos del modal
-    document.getElementById('productNameDisplay').textContent = '<?php echo htmlspecialchars(urldecode($_GET['product_name'] ?? '')); ?>';
-    document.getElementById('productIdDisplay').textContent = '<?php echo intval($_GET['product_id']); ?>';
-    document.getElementById('editProductBtn').href = 'product_edit.php?id=<?php echo intval($_GET['product_id']); ?>';
+// Ejecutar inmediatamente sin esperar DOMContentLoaded
+(function() {
+    // Esperar solo a que Bootstrap esté listo
+    function showSuccessModal() {
+        if (typeof bootstrap !== 'undefined') {
+            // Llenar datos del modal
+            document.getElementById('productNameDisplay').textContent = <?php echo json_encode($productName); ?>;
+            document.getElementById('productIdDisplay').textContent = '<?php echo $productId; ?>';
+            document.getElementById('editProductBtn').href = 'product_edit.php?id=<?php echo $productId; ?>';
+            
+            // Mostrar modal inmediatamente
+            const modalElement = document.getElementById('successModal');
+            const successModal = new bootstrap.Modal(modalElement);
+            successModal.show();
+            
+            // Limpiar URL cuando se cierre el modal
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                window.history.replaceState({}, document.title, 'product_create.php');
+            });
+        } else {
+            // Si Bootstrap no está listo, esperar 100ms y reintentar
+            setTimeout(showSuccessModal, 100);
+        }
+    }
     
-    // Mostrar modal inmediatamente
-    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-    successModal.show();
-    
-    // Limpiar URL después de mostrar el modal (quitar parámetros)
-    successModal._element.addEventListener('hidden.bs.modal', function() {
-        // Limpiar URL sin recargar la página
-        window.history.replaceState({}, document.title, 'product_create.php');
-    });
-});
+    // Iniciar inmediatamente
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showSuccessModal);
+    } else {
+        showSuccessModal();
+    }
+})();
 </script>
 <?php endif; ?>
 
