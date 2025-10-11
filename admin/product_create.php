@@ -798,10 +798,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Auto-generar SKU (mejorado para mayor unicidad)
-    document.getElementById('name').addEventListener('blur', function() {
+    // Auto-generar SKU en tiempo real mientras escribe
+    let skuManuallyEdited = false; // Bandera para saber si el usuario editó el SKU
+    
+    document.getElementById('name').addEventListener('input', function() {
         const skuField = document.getElementById('sku');
-        if (!skuField.value && this.value) {
+        
+        // Solo regenerar si el SKU no ha sido editado manualmente
+        if (!skuManuallyEdited && this.value) {
             // Limpiar y tomar hasta 10 caracteres
             let prefix = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 10);
             
@@ -815,6 +819,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const random = Math.floor(Math.random() * 90 + 10); // 2 dígitos random (10-99)
             
             skuField.value = prefix + '-' + timestamp + random;
+        } else if (!skuManuallyEdited && !this.value) {
+            // Si borra el nombre, limpiar el SKU también
+            skuField.value = '';
+        }
+    });
+    
+    // Detectar cuando el usuario edita manualmente el SKU
+    document.getElementById('sku').addEventListener('input', function() {
+        skuManuallyEdited = true;
+    });
+    
+    // Si el usuario borra completamente el SKU, volver a habilitar generación automática
+    document.getElementById('sku').addEventListener('input', function() {
+        if (this.value === '') {
+            skuManuallyEdited = false;
         }
     });
 });
