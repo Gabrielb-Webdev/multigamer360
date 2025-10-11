@@ -189,9 +189,35 @@ try {
             <span class="me-2">
                 <span class="selected-count">0</span> seleccionado(s)
             </span>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
-                <i class="fas fa-trash"></i> Eliminar
-            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-tasks me-2"></i>Acciones en masa
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Cambiar estado a:</h6></li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="bulkChangeStatus('active'); return false;">
+                            <i class="fas fa-check-circle text-success me-2"></i>Activo
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="bulkChangeStatus('inactive'); return false;">
+                            <i class="fas fa-times-circle text-secondary me-2"></i>Inactivo
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="bulkChangeStatus('draft'); return false;">
+                            <i class="fas fa-file-alt text-warning me-2"></i>Borrador
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="#" onclick="bulkDelete(); return false;">
+                            <i class="fas fa-trash me-2"></i>Eliminar productos
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
         <?php endif; ?>
     </div>
@@ -410,6 +436,35 @@ try {
     </div>
 </div>
 
+<!-- Modal de Confirmación de Cambio de Estado -->
+<div class="modal fade" id="bulkStatusModal" tabindex="-1" aria-labelledby="bulkStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="bulkStatusHeader">
+                <h5 class="modal-title" id="bulkStatusModalLabel">
+                    <i class="fas fa-edit me-2"></i>Cambiar Estado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3" id="bulkStatusMessage">¿Está seguro de que desea cambiar el estado?</p>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Se cambiarán <strong><span id="bulkStatusCount">0</span> producto(s)</strong> al estado: <strong id="bulkStatusName"></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmBulkStatusBtn">
+                    <i class="fas fa-check me-2"></i>Confirmar Cambio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // CSRF Token disponible globalmente
 const AdminPanel = {
@@ -588,6 +643,134 @@ function executeDelete(id) {
 }
 
 // Eliminar productos seleccionados
+function bulkChangeStatus(newStatus) {
+    const selected = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+    if (selected.length === 0) {
+        alert('Seleccione al menos un producto');
+        return;
+    }
+    
+    const ids = Array.from(selected).map(cb => cb.value);
+    
+    // Configurar el modal según el estado
+    const statusConfig = {
+        'active': {
+            name: 'Activo',
+            color: 'success',
+            icon: 'check-circle'
+        },
+        'inactive': {
+            name: 'Inactivo',
+            color: 'secondary',
+            icon: 'times-circle'
+        },
+        'draft': {
+            name: 'Borrador',
+            color: 'warning',
+            icon: 'file-alt'
+        }
+    };
+    
+    const config = statusConfig[newStatus];
+    
+    // Actualizar el modal
+    const modal = document.getElementById('bulkStatusModal');
+    const header = modal.querySelector('#bulkStatusHeader');
+    const message = modal.querySelector('#bulkStatusMessage');
+    const count = modal.querySelector('#bulkStatusCount');
+    const statusName = modal.querySelector('#bulkStatusName');
+    const confirmBtn = modal.querySelector('#confirmBulkStatusBtn');
+    
+    // Cambiar colores del header
+    header.className = `modal-header bg-${config.color} text-white`;
+    
+    // Actualizar contenido
+    count.textContent = ids.length;
+    statusName.textContent = config.name;
+    message.innerHTML = `<i class="fas fa-${config.icon} me-2"></i>¿Está seguro de que desea cambiar el estado de <strong>${ids.length}</strong> producto(s) a <strong>${config.name}</strong>?`;
+    
+    // Configurar el botón de confirmación
+    confirmBtn.className = `btn btn-${config.color}`;
+    confirmBtn.onclick = function() {
+        executeBulkStatusChange(ids, newStatus, config.name);
+    };
+    
+    // Mostrar el modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+function executeBulkStatusChange(ids, newStatus, statusName) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('bulkStatusModal'));
+    const confirmBtn = document.getElementById('confirmBulkStatusBtn');
+    const originalBtnText = confirmBtn.innerHTML;
+    
+    // Deshabilitar el botón y mostrar estado de carga
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Actualizando...';
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || AdminPanel.csrfToken;
+    const formData = new FormData();
+    formData.append('product_ids', ids.join(','));
+    formData.append('status', newStatus);
+    formData.append('csrf_token', csrfToken);
+    
+    console.log('Bulk status change:', {
+        ids: ids,
+        status: newStatus,
+        csrf: csrfToken
+    });
+    
+    fetch('api/bulk_update_status.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+        
+        if (data.success) {
+            // Cerrar modal
+            modal.hide();
+            
+            // Mostrar notificación de éxito
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            // Recargar la página después de 1 segundo
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            throw new Error(data.message || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cambiar el estado: ' + error.message);
+        
+        // Restaurar el botón
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalBtnText;
+    });
+}
+
 function bulkDelete() {
     const selected = document.querySelectorAll('tbody input[type="checkbox"]:checked');
     if (selected.length === 0) {
