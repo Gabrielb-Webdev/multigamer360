@@ -166,11 +166,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $pdo->commit();
         
-        $_SESSION['success'] = 'Producto creado correctamente';
-        $_SESSION['product_id'] = $product_id;
-        $_SESSION['product_name'] = $_POST['name'];
-        $_SESSION['show_success_modal'] = true;
-        header('Location: product_create.php');
+        // Redirigir con parámetros de éxito
+        $product_name_encoded = urlencode($_POST['name']);
+        header('Location: product_create.php?success=1&product_id=' . $product_id . '&product_name=' . $product_name_encoded);
         exit;
         
     } catch (Exception $e) {
@@ -799,24 +797,23 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<?php if (isset($_SESSION['show_success_modal']) && $_SESSION['show_success_modal']): ?>
+<?php if (isset($_GET['success']) && $_GET['success'] == '1' && isset($_GET['product_id'])): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Llenar datos del modal
-    document.getElementById('productNameDisplay').textContent = '<?php echo addslashes($_SESSION['product_name'] ?? ''); ?>';
-    document.getElementById('productIdDisplay').textContent = '<?php echo $_SESSION['product_id'] ?? ''; ?>';
-    document.getElementById('editProductBtn').href = 'product_edit.php?id=<?php echo $_SESSION['product_id'] ?? ''; ?>';
+    document.getElementById('productNameDisplay').textContent = '<?php echo htmlspecialchars(urldecode($_GET['product_name'] ?? '')); ?>';
+    document.getElementById('productIdDisplay').textContent = '<?php echo intval($_GET['product_id']); ?>';
+    document.getElementById('editProductBtn').href = 'product_edit.php?id=<?php echo intval($_GET['product_id']); ?>';
     
-    // Mostrar modal
+    // Mostrar modal inmediatamente
     const successModal = new bootstrap.Modal(document.getElementById('successModal'));
     successModal.show();
     
-    // Limpiar sesión después de mostrar
-    <?php 
-    unset($_SESSION['show_success_modal']); 
-    unset($_SESSION['product_name']); 
-    unset($_SESSION['product_id']); 
-    ?>
+    // Limpiar URL después de mostrar el modal (quitar parámetros)
+    successModal._element.addEventListener('hidden.bs.modal', function() {
+        // Limpiar URL sin recargar la página
+        window.history.replaceState({}, document.title, 'product_create.php');
+    });
 });
 </script>
 <?php endif; ?>
