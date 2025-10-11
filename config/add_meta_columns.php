@@ -1,6 +1,6 @@
 <?php
 /**
- * Script para agregar columnas meta_title y meta_description a la tabla products
+ * Script para agregar todas las columnas faltantes a la tabla products
  * Ejecutar desde el navegador: /config/add_meta_columns.php
  */
 
@@ -8,34 +8,67 @@ require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-echo "<h2>🔧 Actualización de Base de Datos - Columnas SEO</h2>";
+echo "<h2>🔧 Actualización de Base de Datos - Columnas Completas</h2>";
 echo "<hr>";
 
 try {
-    // Verificar si las columnas ya existen
-    $checkQuery = "SHOW COLUMNS FROM products LIKE 'meta_title'";
-    $stmt = $pdo->query($checkQuery);
-    $exists = $stmt->rowCount() > 0;
+    $columnsToAdd = [
+        'meta_title' => [
+            'sql' => "ALTER TABLE products ADD COLUMN meta_title VARCHAR(60) DEFAULT NULL AFTER description",
+            'label' => 'meta_title (SEO)',
+            'after' => 'description'
+        ],
+        'meta_description' => [
+            'sql' => "ALTER TABLE products ADD COLUMN meta_description VARCHAR(160) DEFAULT NULL AFTER meta_title",
+            'label' => 'meta_description (SEO)',
+            'after' => 'meta_title'
+        ],
+        'status' => [
+            'sql' => "ALTER TABLE products ADD COLUMN status VARCHAR(20) DEFAULT 'active' AFTER meta_description",
+            'label' => 'status (Estado del producto)',
+            'after' => 'meta_description'
+        ],
+        'is_active' => [
+            'sql' => "ALTER TABLE products ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER status",
+            'label' => 'is_active (Activo/Inactivo)',
+            'after' => 'status'
+        ]
+    ];
     
-    if ($exists) {
-        echo "<p style='color: orange;'>⚠️ La columna <strong>meta_title</strong> ya existe.</p>";
-    } else {
-        echo "<p>➕ Agregando columna <strong>meta_title</strong>...</p>";
-        $pdo->exec("ALTER TABLE products ADD COLUMN meta_title VARCHAR(60) DEFAULT NULL AFTER description");
-        echo "<p style='color: green;'>✅ Columna <strong>meta_title</strong> agregada correctamente.</p>";
+    // No agregar created_at y updated_at si ya existen (probablemente ya están)
+    $timestampColumns = ['created_at', 'updated_at'];
+    foreach ($timestampColumns as $col) {
+        $check = $pdo->query("SHOW COLUMNS FROM products LIKE '{$col}'");
+        if ($check->rowCount() === 0) {
+            if ($col === 'created_at') {
+                $columnsToAdd[$col] = [
+                    'sql' => "ALTER TABLE products ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+                    'label' => 'created_at (Fecha de creación)',
+                    'after' => 'is_active'
+                ];
+            } else {
+                $columnsToAdd[$col] = [
+                    'sql' => "ALTER TABLE products ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+                    'label' => 'updated_at (Fecha de actualización)',
+                    'after' => 'created_at'
+                ];
+            }
+        }
     }
     
-    // Verificar meta_description
-    $checkQuery = "SHOW COLUMNS FROM products LIKE 'meta_description'";
-    $stmt = $pdo->query($checkQuery);
-    $exists = $stmt->rowCount() > 0;
-    
-    if ($exists) {
-        echo "<p style='color: orange;'>⚠️ La columna <strong>meta_description</strong> ya existe.</p>";
-    } else {
-        echo "<p>➕ Agregando columna <strong>meta_description</strong>...</p>";
-        $pdo->exec("ALTER TABLE products ADD COLUMN meta_description VARCHAR(160) DEFAULT NULL AFTER meta_title");
-        echo "<p style='color: green;'>✅ Columna <strong>meta_description</strong> agregada correctamente.</p>";
+    foreach ($columnsToAdd as $columnName => $config) {
+        // Verificar si la columna ya existe
+        $checkQuery = "SHOW COLUMNS FROM products LIKE '{$columnName}'";
+        $stmt = $pdo->query($checkQuery);
+        $exists = $stmt->rowCount() > 0;
+        
+        if ($exists) {
+            echo "<p style='color: orange;'>⚠️ La columna <strong>{$config['label']}</strong> ya existe.</p>";
+        } else {
+            echo "<p>➕ Agregando columna <strong>{$config['label']}</strong>...</p>";
+            $pdo->exec($config['sql']);
+            echo "<p style='color: green;'>✅ Columna <strong>{$config['label']}</strong> agregada correctamente.</p>";
+        }
     }
     
     echo "<hr>";
