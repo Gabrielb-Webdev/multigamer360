@@ -2,6 +2,11 @@
 $page_title = 'Dashboard';
 require_once 'inc/header.php';
 
+// Verificar que $pdo esté disponible
+if (!isset($pdo)) {
+    die('Error: No se pudo conectar a la base de datos. Variable $pdo no disponible.');
+}
+
 // Inicializar variables por defecto
 $total_products = 0;
 $low_stock_products = 0;
@@ -12,41 +17,34 @@ $recent_orders = [];
 
 // Obtener estadísticas básicas
 try {
-    // Debug: Verificar conexión
-    error_log("Dashboard: Verificando estadísticas...");
-    
-    // Productos - contar todos primero
-    $stmt = $pdo->query("SELECT COUNT(*) as total, 
-                         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-                         SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive,
-                         SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft
-                         FROM products");
-    $product_stats = $stmt->fetch();
-    $total_products = (int)($product_stats['active'] ?? 0);
-    
-    error_log("Dashboard: Total productos: " . $product_stats['total'] . ", Activos: " . $total_products);
+    // Productos activos - consulta simple y directa
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE status = ?");
+    $stmt->execute(['active']);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $total_products = (int)($result['total'] ?? 0);
     
     // Productos con stock bajo
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE stock <= 10 AND status = 'active'");
-    $result = $stmt->fetch();
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE stock <= ? AND status = ?");
+    $stmt->execute([10, 'active']);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $low_stock_products = (int)($result['total'] ?? 0);
+    
+    // Usuarios registrados
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM users WHERE is_active = ?");
+    $stmt->execute([1]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $total_users = (int)($result['total'] ?? 0);
     
     // Órdenes pendientes - verificar si la tabla existe
     try {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM orders WHERE status = 'pending'");
-        $result = $stmt->fetch();
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM orders WHERE status = ?");
+        $stmt->execute(['pending']);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $pending_orders = (int)($result['total'] ?? 0);
     } catch (PDOException $e) {
-        error_log("Dashboard: Error en tabla orders: " . $e->getMessage());
+        // Tabla orders no existe, es normal si no se ha creado aún
         $pending_orders = 0;
     }
-    
-    // Usuarios registrados
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE is_active = 1");
-    $result = $stmt->fetch();
-    $total_users = (int)($result['total'] ?? 0);
-    
-    error_log("Dashboard: Total usuarios: " . $total_users);
     
     // Ventas del mes actual
     try {
@@ -57,9 +55,11 @@ try {
             AND YEAR(created_at) = YEAR(CURRENT_DATE())
             AND status IN ('completed', 'processing')
         ");
-        $monthly_stats = $stmt->fetch();
+        $monthly_stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$monthly_stats) {
+            $monthly_stats = ['orders' => 0, 'revenue' => 0];
+        }
     } catch (PDOException $e) {
-        error_log("Dashboard: Error en estadísticas mensuales: " . $e->getMessage());
         $monthly_stats = ['orders' => 0, 'revenue' => 0];
     }
     
@@ -67,28 +67,38 @@ try {
     try {
         $stmt = $pdo->query("
             SELECT o.id, o.total, o.status, o.created_at, 
-                   CONCAT(u.first_name, ' ', u.last_name) as customer_name
+                   CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) as customer_name
             FROM orders o
             LEFT JOIN users u ON o.user_id = u.id
             ORDER BY o.created_at DESC
             LIMIT 5
         ");
-        $recent_orders = $stmt->fetchAll();
+        $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!$recent_orders) {
+            $recent_orders = [];
+        }
     } catch (PDOException $e) {
-        error_log("Dashboard: Error obteniendo últimas órdenes: " . $e->getMessage());
         $recent_orders = [];
     }
     
 } catch (PDOException $e) {
-    error_log("Dashboard: Error general: " . $e->getMessage());
-    $total_products = 0;
-    $low_stock_products = 0;
-    $pending_orders = 0;
-    $total_users = 0;
-    $monthly_stats = ['orders' => 0, 'revenue' => 0];
-    $recent_orders = [];
+    // Error crítico - mostrar mensaje
+    error_log("Dashboard Error: " . $e->getMessage());
+    $error_message = "Error al cargar estadísticas: " . $e->getMessage();
 }
 ?>
+
+<?php if (isset($error_message)): ?>
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Error:</strong> <?php echo htmlspecialchars($error_message); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row">
     <!-- Stats Cards -->
