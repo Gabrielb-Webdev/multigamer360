@@ -447,10 +447,15 @@ try {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-3" id="bulkStatusMessage">¿Está seguro de que desea cambiar el estado?</p>
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Se cambiarán <strong><span id="bulkStatusCount">0</span> producto(s)</strong> al estado: <strong id="bulkStatusName"></strong>
+                <div class="text-center mb-3">
+                    <i class="fas fa-edit fa-3x mb-3" id="bulkStatusIcon"></i>
+                    <p class="mb-0" id="bulkStatusMessage">¿Está seguro de que desea cambiar el estado?</p>
+                </div>
+                <div class="bg-light border rounded p-3">
+                    <p class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Se cambiarán <strong id="bulkStatusCount">0</strong> producto(s) al estado: <strong id="bulkStatusName"></strong>
+                    </p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -476,15 +481,17 @@ try {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-3">
-                    <i class="fas fa-trash-alt me-2"></i>
-                    ¿Está seguro de que desea eliminar <strong id="bulkDeleteCount">0</strong> producto(s)?
-                </p>
-                <div class="alert alert-danger mb-0">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    <strong>¡ADVERTENCIA! Esta acción no se puede deshacer.</strong>
-                    <br>Para cada producto se eliminarán:
-                    <ul class="mb-0 mt-2">
+                <div class="text-center mb-4">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h5>¿Está seguro de que desea eliminar <strong id="bulkDeleteCount">0</strong> producto(s)?</h5>
+                </div>
+                <div class="bg-danger bg-opacity-10 border border-danger rounded p-3">
+                    <h6 class="text-danger mb-2">
+                        <i class="fas fa-exclamation-circle me-2"></i>¡ADVERTENCIA!
+                    </h6>
+                    <p class="mb-2"><strong>Esta acción no se puede deshacer.</strong></p>
+                    <p class="mb-1">Para cada producto se eliminarán:</p>
+                    <ul class="mb-0 small">
                         <li>El producto y toda su información</li>
                         <li>Todas las imágenes asociadas</li>
                         <li>Referencias en carritos y wishlists</li>
@@ -715,18 +722,28 @@ function bulkChangeStatus(newStatus) {
     // Actualizar el modal
     const modal = document.getElementById('bulkStatusModal');
     const header = modal.querySelector('#bulkStatusHeader');
+    const icon = modal.querySelector('#bulkStatusIcon');
     const message = modal.querySelector('#bulkStatusMessage');
     const count = modal.querySelector('#bulkStatusCount');
     const statusName = modal.querySelector('#bulkStatusName');
     const confirmBtn = modal.querySelector('#confirmBulkStatusBtn');
+    const closeBtn = header.querySelector('.btn-close');
     
-    // Cambiar colores del header
+    // Cambiar colores del header y botón close
     header.className = `modal-header bg-${config.color} text-white`;
+    if (config.color === 'warning') {
+        closeBtn.className = 'btn-close'; // Negro para fondo amarillo
+    } else {
+        closeBtn.className = 'btn-close btn-close-white';
+    }
+    
+    // Actualizar ícono grande
+    icon.className = `fas fa-${config.icon} fa-3x mb-3 text-${config.color}`;
     
     // Actualizar contenido
     count.textContent = ids.length;
     statusName.textContent = config.name;
-    message.innerHTML = `<i class="fas fa-${config.icon} me-2"></i>¿Está seguro de que desea cambiar el estado de <strong>${ids.length}</strong> producto(s) a <strong>${config.name}</strong>?`;
+    message.innerHTML = `¿Está seguro de que desea cambiar el estado de <strong>${ids.length}</strong> producto(s) a <strong>${config.name}</strong>?`;
     
     // Configurar el botón de confirmación
     confirmBtn.className = `btn btn-${config.color}`;
