@@ -19,6 +19,18 @@
                 }
             });
         }
+        
+        // Efecto de sombra en navbar al hacer scroll
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar.sticky-top');
+            if (navbar) {
+                if (window.scrollY > 10) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+        });
     </script>
     
     <?php if (isset($additional_scripts)): ?>

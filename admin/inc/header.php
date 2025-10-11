@@ -19,8 +19,8 @@ require_once 'auth.php';
     <meta name="csrf-token" content="<?php echo $csrf_token; ?>">
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <!-- Navbar Sticky -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.php">
                 <i class="fas fa-gamepad me-2"></i>

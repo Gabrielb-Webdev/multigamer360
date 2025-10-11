@@ -1,4 +1,18 @@
 /* Admin Panel Styles */
+
+/* Navbar Sticky */
+.navbar.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Sombra más pronunciada cuando hace scroll */
+.navbar.sticky-top.scrolled {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
 body {
     font-size: 0.875rem;
 }
