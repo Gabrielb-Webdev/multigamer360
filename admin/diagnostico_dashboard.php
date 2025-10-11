@@ -98,13 +98,12 @@ try {
 // Paso 3: Verificar PRODUCTOS
 echo "<h2>📦 Paso 3: Análisis de Productos</h2>";
 try {
-    // Contar por estado
+    // Contar por estado (is_active)
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-            SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive,
-            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft
+            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive
         FROM products
     ");
     $product_stats = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -112,28 +111,28 @@ try {
     echo "<table>";
     echo "<tr><th>Estado</th><th>Cantidad</th></tr>";
     echo "<tr><td>Total</td><td><strong>{$product_stats['total']}</strong></td></tr>";
-    echo "<tr style='background: #d4edda;'><td>Activos</td><td><strong>{$product_stats['active']}</strong></td></tr>";
-    echo "<tr><td>Inactivos</td><td>{$product_stats['inactive']}</td></tr>";
-    echo "<tr><td>Borradores</td><td>{$product_stats['draft']}</td></tr>";
+    echo "<tr style='background: #d4edda;'><td>Activos (is_active=1)</td><td><strong>{$product_stats['active']}</strong></td></tr>";
+    echo "<tr><td>Inactivos (is_active=0)</td><td>{$product_stats['inactive']}</td></tr>";
     echo "</table>";
     
     if ($product_stats['total'] > 0) {
         echo "<div class='success'>✅ Hay {$product_stats['total']} productos en la base de datos</div>";
         
         // Mostrar algunos productos
-        $stmt = $pdo->query("SELECT id, name, status, stock, price FROM products ORDER BY id DESC LIMIT 5");
+        $stmt = $pdo->query("SELECT id, name, is_active, stock_quantity, price FROM products ORDER BY id DESC LIMIT 5");
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         echo "<h3>Últimos 5 productos:</h3>";
         echo "<table>";
-        echo "<tr><th>ID</th><th>Nombre</th><th>Estado</th><th>Stock</th><th>Precio</th></tr>";
+        echo "<tr><th>ID</th><th>Nombre</th><th>Activo</th><th>Stock</th><th>Precio</th></tr>";
         foreach ($products as $p) {
-            $bg = $p['status'] == 'active' ? 'background: #d4edda;' : '';
+            $bg = $p['is_active'] == 1 ? 'background: #d4edda;' : '';
+            $active_text = $p['is_active'] == 1 ? '✅ Activo' : '❌ Inactivo';
             echo "<tr style='$bg'>";
             echo "<td>{$p['id']}</td>";
             echo "<td>{$p['name']}</td>";
-            echo "<td><strong>{$p['status']}</strong></td>";
-            echo "<td>{$p['stock']}</td>";
+            echo "<td><strong>{$active_text}</strong></td>";
+            echo "<td>{$p['stock_quantity']}</td>";
             echo "<td>\${$p['price']}</td>";
             echo "</tr>";
         }
@@ -180,12 +179,12 @@ echo "<h2>🎯 Paso 5: Probar Consultas Exactas del Dashboard</h2>";
 
 echo "<h3>Consulta 1: Productos Activos</h3>";
 try {
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE status = 'active'");
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE is_active = 1");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $total_products = (int)($result['total'] ?? 0);
     
     echo "<div class='info'>📊 Resultado: <strong>$total_products</strong> productos activos</div>";
-    echo "<code>SELECT COUNT(*) as total FROM products WHERE status = 'active'</code>";
+    echo "<code>SELECT COUNT(*) as total FROM products WHERE is_active = 1</code>";
 } catch (Exception $e) {
     echo "<div class='error'>❌ Error: " . htmlspecialchars($e->getMessage()) . "</div>";
 }

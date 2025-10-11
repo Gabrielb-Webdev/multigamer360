@@ -17,15 +17,15 @@ $recent_orders = [];
 
 // Obtener estadísticas básicas
 try {
-    // Productos activos - consulta simple y directa
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE status = ?");
-    $stmt->execute(['active']);
+    // Productos activos - usar is_active en lugar de status
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE is_active = ?");
+    $stmt->execute([1]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $total_products = (int)($result['total'] ?? 0);
     
-    // Productos con stock bajo
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE stock <= ? AND status = ?");
-    $stmt->execute([10, 'active']);
+    // Productos con stock bajo - usar stock_quantity en lugar de stock
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE stock_quantity <= ? AND is_active = ?");
+    $stmt->execute([10, 1]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $low_stock_products = (int)($result['total'] ?? 0);
     
