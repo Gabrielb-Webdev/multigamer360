@@ -375,6 +375,41 @@ try {
     </div>
 </div>
 
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">¿Está seguro de que desea eliminar este producto?</p>
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Esta acción no se puede deshacer.</strong>
+                    <br>Se eliminarán:
+                    <ul class="mb-0 mt-2">
+                        <li>El producto y toda su información</li>
+                        <li>Todas las imágenes asociadas</li>
+                        <li>Referencias en carritos y wishlists</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Eliminar Producto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // CSRF Token disponible globalmente
 const AdminPanel = {
@@ -450,67 +485,106 @@ document.querySelectorAll('tbody input[type="checkbox"]').forEach(checkbox => {
     checkbox.addEventListener('change', updateBulkActionVisibility);
 });
 
-// Eliminar producto individual
+// Variable para almacenar el ID del producto a eliminar
+let productToDelete = null;
+let deleteModal = null;
+
+// Inicializar modal al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    // Configurar botón de confirmación del modal
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (productToDelete !== null) {
+            executeDelete(productToDelete);
+            deleteModal.hide();
+            productToDelete = null;
+        }
+    });
+});
+
+// Función para mostrar el modal de confirmación
 function deleteProduct(id) {
-    if (confirm('¿Está seguro de que desea eliminar este producto?')) {
-        // Obtener token CSRF con múltiples métodos de fallback
-        let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (!csrfToken) {
-            csrfToken = AdminPanel.csrfToken;
-        }
-        if (!csrfToken && window.csrf_token) {
-            csrfToken = window.csrf_token;
-        }
-        
-        console.log('=== DELETE PRODUCT DEBUG ===');
-        console.log('CSRF Token being sent:', csrfToken);
-        console.log('Product ID:', id);
-        console.log('AdminPanel object:', AdminPanel);
-        
-        if (!csrfToken) {
-            alert('Error: No se pudo obtener el token CSRF');
-            return;
-        }
-        
-        // Usar GET con parámetros URL para evitar problemas con métodos HTTP bloqueados
-        const deleteUrl = `api/delete_product.php?id=${encodeURIComponent(id)}&csrf_token=${encodeURIComponent(csrfToken)}`;
-        
-        console.log('Delete URL:', deleteUrl);
-        
-        fetch(deleteUrl, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Error response text:', text);
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-            if (data.success) {
-                alert('Producto eliminado correctamente');
-                location.reload();
-            } else {
-                alert(data.message || 'Error al eliminar producto');
-                if (data.debug) {
-                    console.log('Debug info:', data.debug);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error de conexión: ' + error.message);
-        });
+    productToDelete = id;
+    deleteModal.show();
+}
+
+// Función que ejecuta la eliminación real
+function executeDelete(id) {
+    // Mostrar indicador de carga
+    const loadingHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const originalHTML = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = loadingHTML;
+    confirmBtn.disabled = true;
+    
+    // Obtener token CSRF
+    let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        csrfToken = AdminPanel.csrfToken;
     }
+    if (!csrfToken && window.csrfToken) {
+        csrfToken = window.csrfToken;
+    }
+    
+    console.log('=== DELETE PRODUCT DEBUG ===');
+    console.log('Product ID:', id);
+    console.log('CSRF Token:', csrfToken);
+    
+    if (!csrfToken) {
+        alert('Error: No se pudo obtener el token CSRF');
+        confirmBtn.innerHTML = originalHTML;
+        confirmBtn.disabled = false;
+        return;
+    }
+    
+    // Usar POST con FormData
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('csrf_token', csrfToken);
+    
+    fetch('api/delete_product.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.log('Error response:', text);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        confirmBtn.innerHTML = originalHTML;
+        confirmBtn.disabled = false;
+        
+        if (data.success) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alert.style.cssText = 'top: 80px; right: 20px; z-index: 9999;';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${data.message || 'Producto eliminado correctamente'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert(data.message || 'Error al eliminar producto');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        confirmBtn.innerHTML = originalHTML;
+        confirmBtn.disabled = false;
+        alert('Error de conexión: ' + error.message);
+    });
 }
 
 // Eliminar productos seleccionados

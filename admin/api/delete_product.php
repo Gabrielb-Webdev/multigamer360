@@ -6,10 +6,10 @@ require_once '../../config/database.php';
 header('Content-Type: application/json');
 
 try {
-    // Solo permitir método GET
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    // Permitir métodos GET y POST
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
-        echo json_encode(['success' => false, 'message' => 'Solo método GET permitido']);
+        echo json_encode(['success' => false, 'message' => 'Solo métodos GET y POST permitidos']);
         exit;
     }
 
@@ -26,8 +26,8 @@ try {
     }
 
     // Debug: Log the request details
-    error_log("DELETE request received via GET - User ID: " . ($_SESSION['user_id'] ?? 'none') . ", Role Level: " . ($_SESSION['user_role_level'] ?? 'none'));
-    error_log("GET parameters: " . json_encode($_GET));
+    error_log("DELETE request received via " . $_SERVER['REQUEST_METHOD'] . " - User ID: " . ($_SESSION['user_id'] ?? 'none') . ", Role Level: " . ($_SESSION['user_role_level'] ?? 'none'));
+    error_log("Request parameters: " . json_encode($_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET));
 
     // Verificar permisos primero
     $hasPermissions = hasPermission('products', 'delete');
@@ -40,8 +40,8 @@ try {
         exit;
     }
 
-    // Verificar token CSRF
-    $csrf_token = $_GET['csrf_token'] ?? '';
+    // Verificar token CSRF (de POST o GET)
+    $csrf_token = $_SERVER['REQUEST_METHOD'] === 'POST' ? ($_POST['csrf_token'] ?? '') : ($_GET['csrf_token'] ?? '');
     error_log("Session CSRF token: " . ($_SESSION['csrf_token'] ?? 'none'));
     error_log("Received CSRF token: " . $csrf_token);
 
@@ -52,15 +52,16 @@ try {
         exit;
     }
 
-    // Obtener IDs de productos a eliminar
+    // Obtener IDs de productos a eliminar (de POST o GET)
     $product_ids = [];
+    $request_data = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
     
-    if (!empty($_GET['id'])) {
+    if (!empty($request_data['id'])) {
         // Eliminar un producto
-        $product_ids = [intval($_GET['id'])];
-    } elseif (!empty($_GET['ids'])) {
+        $product_ids = [intval($request_data['id'])];
+    } elseif (!empty($request_data['ids'])) {
         // Eliminar múltiples productos (IDs separados por comas)
-        $ids = explode(',', $_GET['ids']);
+        $ids = explode(',', $request_data['ids']);
         $product_ids = array_map('intval', $ids);
     } else {
         echo json_encode(['success' => false, 'message' => 'ID(s) de producto requerido(s)']);
