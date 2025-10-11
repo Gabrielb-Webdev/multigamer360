@@ -191,10 +191,11 @@ try {
     <!-- Alertas -->
     <?php if ($low_stock_products > 0): ?>
     <div class="col-12 mb-4">
-        <div class="alert alert-warning border-left-warning" role="alert">
+        <div class="alert alert-warning alert-dismissible fade show alert-permanent border-left-warning" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
             <strong>Atención:</strong> Hay <?php echo $low_stock_products; ?> productos con stock bajo (≤10 unidades).
             <a href="products.php?low_stock=1" class="alert-link">Ver productos</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     </div>
     <?php endif; ?>

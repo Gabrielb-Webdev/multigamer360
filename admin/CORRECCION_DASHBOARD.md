@@ -71,6 +71,35 @@ $stmt->execute([10, 1]);
    - Corregidas las consultas de prueba
    - Ahora usa las columnas correctas
 
+3. **`admin/CORRECCION_DASHBOARD.md`** - Documentación de cambios
+
+## 🐛 Problemas Adicionales Resueltos
+
+### Alert de Stock Bajo se Cerraba Automáticamente
+
+**Problema:** El mensaje "Hay 3 productos con stock bajo" desaparecía después de 5 segundos.
+
+**Causa:** El archivo `admin/assets/js/admin.js` contiene código que cierra automáticamente todos los alerts después de 5 segundos, excepto aquellos con la clase `alert-permanent`.
+
+**Solución:** Se agregaron las clases necesarias al alert de stock bajo:
+- `alert-dismissible` - Permite cerrar manualmente
+- `fade show` - Animación de Bootstrap
+- `alert-permanent` - Evita el cierre automático
+- Se agregó botón X para cerrar manualmente
+
+```html
+<!-- ANTES: Se cerraba automáticamente después de 5 segundos -->
+<div class="alert alert-warning border-left-warning" role="alert">
+    ...
+</div>
+
+<!-- DESPUÉS: Permanece visible hasta que el usuario lo cierre -->
+<div class="alert alert-warning alert-dismissible fade show alert-permanent border-left-warning" role="alert">
+    ...
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+```
+
 ## 🚀 Instrucciones de Despliegue
 
 ### Paso 1: Subir Archivos
