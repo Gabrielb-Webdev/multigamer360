@@ -77,14 +77,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Generar SKU si no se proporciona
-        $sku = !empty($_POST['sku']) ? $_POST['sku'] : generateSKU($_POST['name']);
+        // Generar SKU si no se proporciona (ahora con verificación automática de unicidad)
+        $sku = !empty($_POST['sku']) ? $_POST['sku'] : generateSKU($_POST['name'], $pdo);
         
-        // Verificar SKU único
-        $sku_check = $pdo->prepare("SELECT id FROM products WHERE sku = ?");
-        $sku_check->execute([$sku]);
-        if ($sku_check->fetch()) {
-            throw new Exception('El SKU ya existe');
+        // Verificar SKU único (solo si el usuario lo proporcionó manualmente)
+        if (!empty($_POST['sku'])) {
+            $sku_check = $pdo->prepare("SELECT id FROM products WHERE sku = ?");
+            $sku_check->execute([$sku]);
+            if ($sku_check->fetch()) {
+                throw new Exception('El SKU ya existe. Por favor, use otro SKU o déjelo vacío para generar uno automáticamente.');
+            }
         }
         
         // Generar slug
@@ -183,9 +185,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Funciones auxiliares
-function generateSKU($title) {
-    $sku = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $title), 0, 8));
-    return $sku . '-' . rand(1000, 9999);
+function generateSKU($title, $pdo = null) {
+    // Extraer caracteres alfanuméricos del título
+    $clean = preg_replace('/[^a-zA-Z0-9]/', '', $title);
+    
+    // Tomar hasta 10 caracteres del título (más que antes)
+    $prefix = strtoupper(substr($clean, 0, 10));
+    
+    // Si el prefijo es muy corto, rellenar
+    if (strlen($prefix) < 4) {
+        $prefix = str_pad($prefix, 4, 'X');
+    }
+    
+    // Generar sufijo con timestamp parcial + random
+    // Esto asegura unicidad casi garantizada
+    $timestamp = substr(time(), -4); // Últimos 4 dígitos del timestamp
+    $random = rand(10, 99); // 2 dígitos random
+    
+    $sku = $prefix . '-' . $timestamp . $random;
+    
+    // Si tenemos acceso a PDO, verificar que sea único
+    if ($pdo !== null) {
+        $attempts = 0;
+        while ($attempts < 10) { // Máximo 10 intentos
+            $check = $pdo->prepare("SELECT id FROM products WHERE sku = ?");
+            $check->execute([$sku]);
+            
+            if ($check->rowCount() === 0) {
+                // SKU único encontrado
+                break;
+            }
+            
+            // SKU duplicado, generar uno nuevo
+            $random = rand(10, 99);
+            $sku = $prefix . '-' . $timestamp . $random;
+            $attempts++;
+        }
+        
+        // Si después de 10 intentos sigue duplicado, agregar microsegundos
+        if ($attempts >= 10) {
+            $micro = substr(microtime(true) * 10000, -4);
+            $sku = $prefix . '-' . $micro;
+        }
+    }
+    
+    return $sku;
 }
 
 function generateSlug($text) {
@@ -754,12 +798,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Auto-generar SKU
+    // Auto-generar SKU (mejorado para mayor unicidad)
     document.getElementById('name').addEventListener('blur', function() {
         const skuField = document.getElementById('sku');
         if (!skuField.value && this.value) {
-            const sku = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8);
-            skuField.value = sku + '-' + Math.floor(Math.random() * 9000 + 1000);
+            // Limpiar y tomar hasta 10 caracteres
+            let prefix = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 10);
+            
+            // Rellenar si es muy corto
+            if (prefix.length < 4) {
+                prefix = prefix.padEnd(4, 'X');
+            }
+            
+            // Generar sufijo con timestamp + random
+            const timestamp = String(Date.now()).slice(-4); // Últimos 4 dígitos del timestamp
+            const random = Math.floor(Math.random() * 90 + 10); // 2 dígitos random (10-99)
+            
+            skuField.value = prefix + '-' + timestamp + random;
         }
     });
 });
