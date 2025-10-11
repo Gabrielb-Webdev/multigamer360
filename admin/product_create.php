@@ -167,7 +167,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
         
         $_SESSION['success'] = 'Producto creado correctamente';
-        header('Location: product_edit.php?id=' . $product_id);
+        $_SESSION['product_id'] = $product_id;
+        $_SESSION['product_name'] = $_POST['name'];
+        $_SESSION['show_success_modal'] = true;
+        header('Location: product_create.php');
         exit;
         
     } catch (Exception $e) {
@@ -760,5 +763,62 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- Modal de Éxito -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-success">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="successModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>¡Producto Creado Exitosamente!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="mb-3">Producto guardado correctamente</h4>
+                <p class="text-muted mb-0">
+                    <strong id="productNameDisplay"></strong>
+                </p>
+                <p class="text-muted small">ID: <span id="productIdDisplay"></span></p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <a href="#" id="editProductBtn" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Editar Producto
+                </a>
+                <a href="products.php" class="btn btn-outline-secondary">
+                    <i class="fas fa-list me-2"></i>Ver Lista de Productos
+                </a>
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="window.location.reload()">
+                    <i class="fas fa-plus me-2"></i>Crear Otro Producto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php if (isset($_SESSION['show_success_modal']) && $_SESSION['show_success_modal']): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Llenar datos del modal
+    document.getElementById('productNameDisplay').textContent = '<?php echo addslashes($_SESSION['product_name'] ?? ''); ?>';
+    document.getElementById('productIdDisplay').textContent = '<?php echo $_SESSION['product_id'] ?? ''; ?>';
+    document.getElementById('editProductBtn').href = 'product_edit.php?id=<?php echo $_SESSION['product_id'] ?? ''; ?>';
+    
+    // Mostrar modal
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    successModal.show();
+    
+    // Limpiar sesión después de mostrar
+    <?php 
+    unset($_SESSION['show_success_modal']); 
+    unset($_SESSION['product_name']); 
+    unset($_SESSION['product_id']); 
+    ?>
+});
+</script>
+<?php endif; ?>
 
 <?php require_once 'inc/footer.php'; ?>
