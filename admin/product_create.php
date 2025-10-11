@@ -166,15 +166,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $pdo->commit();
         
-        // Guardar en sesión y redirigir
+        // NO redirigir - quedarse en la misma página
         $_SESSION['product_created'] = true;
         $_SESSION['product_id'] = $product_id;
         $_SESSION['product_name'] = $_POST['name'];
         
-        // Redirigir con parámetros GET también como respaldo
-        $product_name_encoded = urlencode($_POST['name']);
-        header('Location: product_create.php?success=1&pid=' . $product_id . '&pname=' . $product_name_encoded);
-        exit;
+        // NO usar header redirect - la página continuará cargando normalmente
+        // y el modal se mostrará automáticamente
         
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -849,13 +847,18 @@ if ($showModal):
                 const modal = new bootstrap.Modal(modalEl);
                 modal.show();
                 
+                // Prevenir reenvío del formulario al recargar (PRG pattern)
+                if (window.history.replaceState) {
+                    window.history.replaceState(null, null, window.location.href);
+                }
+                
                 // Limpiar sesión via AJAX después de mostrar
                 fetch('clear_product_session.php')
                     .then(r => r.json())
-                    .then(data => console.log('Session cleaned:', data))
-                    .catch(e => console.error('Error cleaning session:', e));
+                    .then(data => console.log('✅ Session cleaned:', data))
+                    .catch(e => console.error('❌ Error cleaning session:', e));
                 
-                // Limpiar URL cuando se cierre
+                // Limpiar URL cuando se cierre el modal
                 modalEl.addEventListener('hidden.bs.modal', function() {
                     if (window.history.replaceState) {
                         window.history.replaceState({}, document.title, 'product_create.php');
@@ -863,7 +866,7 @@ if ($showModal):
                 });
             }
         } catch(e) {
-            console.error('Error al mostrar modal:', e);
+            console.error('❌ Error al mostrar modal:', e);
         }
     }
     
