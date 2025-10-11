@@ -465,6 +465,45 @@ try {
     </div>
 </div>
 
+<!-- Modal de Confirmación de Eliminación en Masa -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="bulkDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación en Masa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">
+                    <i class="fas fa-trash-alt me-2"></i>
+                    ¿Está seguro de que desea eliminar <strong id="bulkDeleteCount">0</strong> producto(s)?
+                </p>
+                <div class="alert alert-danger mb-0">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>¡ADVERTENCIA! Esta acción no se puede deshacer.</strong>
+                    <br>Para cada producto se eliminarán:
+                    <ul class="mb-0 mt-2">
+                        <li>El producto y toda su información</li>
+                        <li>Todas las imágenes asociadas</li>
+                        <li>Referencias en carritos y wishlists</li>
+                        <li>Todas las reseñas y valoraciones</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmBulkDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Eliminar Todo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // CSRF Token disponible globalmente
 const AdminPanel = {
@@ -779,45 +818,95 @@ function bulkDelete() {
     }
     
     const ids = Array.from(selected).map(cb => cb.value);
+    
+    // Actualizar el modal con la cantidad de productos
+    const count = document.getElementById('bulkDeleteCount');
+    count.textContent = ids.length;
+    
+    // Configurar el botón de confirmación
+    const confirmBtn = document.getElementById('confirmBulkDeleteBtn');
+    confirmBtn.onclick = function() {
+        executeBulkDelete(ids);
+    };
+    
+    // Mostrar el modal
+    const modal = document.getElementById('bulkDeleteModal');
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+function executeBulkDelete(ids) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('bulkDeleteModal'));
+    const confirmBtn = document.getElementById('confirmBulkDeleteBtn');
+    const originalBtnText = confirmBtn.innerHTML;
+    
+    // Deshabilitar el botón y mostrar estado de carga
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Eliminando...';
+    
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || AdminPanel.csrfToken;
     
-    if (confirm(`¿Está seguro de que desea eliminar ${ids.length} producto(s)?`)) {
-        // Usar GET con parámetros URL para eliminación en lote
-        const idsString = ids.join(',');
-        const deleteUrl = `api/delete_product.php?ids=${encodeURIComponent(idsString)}&csrf_token=${encodeURIComponent(csrfToken)}`;
+    // Usar POST con FormData para mejor manejo de sesión
+    const formData = new FormData();
+    formData.append('ids', ids.join(','));
+    formData.append('csrf_token', csrfToken);
+    
+    console.log('Bulk delete:', {
+        ids: ids,
+        csrf: csrfToken
+    });
+    
+    fetch('api/delete_product.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Bulk delete response status:', response.status);
         
-        console.log('Bulk delete URL:', deleteUrl);
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }).catch(() => {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
         
-        fetch(deleteUrl, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            console.log('Bulk delete response status:', response.status);
+        if (data.success) {
+            // Cerrar modal
+            modal.hide();
             
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('Bulk delete error response text:', text);
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert(`${ids.length} producto(s) eliminado(s) correctamente`);
+            // Mostrar notificación de éxito
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${ids.length} producto(s) eliminado(s) correctamente
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            // Recargar la página después de 1 segundo
+            setTimeout(() => {
                 location.reload();
-            } else {
-                alert(data.message || 'Error al eliminar productos');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error de conexión: ' + error.message);
-        });
-    }
+            }, 1000);
+        } else {
+            throw new Error(data.message || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar productos: ' + error.message);
+        
+        // Restaurar el botón
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalBtnText;
+    });
 }
 </script>
 
