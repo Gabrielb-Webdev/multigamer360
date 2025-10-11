@@ -1,9 +1,43 @@
 <?php
-// No llamar session_start() aquí porque auth.php ya lo hace
-require_once '../inc/auth.php';
+/**
+ * API para eliminar productos
+ * No usar auth.php porque redirecciona, aquí manejamos la autenticación manualmente
+ */
+
+// Configurar sesión antes de iniciarla
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_samesite', 'Lax');
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once '../../config/database.php';
 
+// Funciones auxiliares
+function hasPermission($resource, $action) {
+    if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
+        return true;
+    }
+    return false;
+}
+
+function verifyCSRFToken($token) {
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
 header('Content-Type: application/json');
+
+// Debug: Mostrar estado de la sesión
+error_log("=== DELETE PRODUCT SESSION DEBUG ===");
+error_log("Session ID: " . session_id());
+error_log("Session Status: " . session_status());
+error_log("Session User ID: " . ($_SESSION['user_id'] ?? 'NOT SET'));
+error_log("Session User Role: " . ($_SESSION['user_role'] ?? 'NOT SET'));
+error_log("Session Is Admin: " . ($_SESSION['is_admin'] ?? 'NOT SET'));
+error_log("All Session Data: " . print_r($_SESSION, true));
 
 try {
     // Permitir métodos GET y POST
@@ -13,10 +47,25 @@ try {
         exit;
     }
 
-    // Verificar autenticación
-    if (!isset($_SESSION['user_id']) || $_SESSION['user_role_level'] < 60) {
+    // Verificar autenticación básica
+    if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'No autorizado - Sesión no iniciada',
+            'debug' => 'session_user_id_not_set'
+        ]);
+        exit;
+    }
+    
+    // Verificar que sea administrador
+    if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'No autorizado - No es administrador',
+            'debug' => 'not_admin'
+        ]);
         exit;
     }
     
