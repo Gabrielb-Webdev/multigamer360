@@ -4,10 +4,6 @@
  * Formulario exclusivo para la creación de nuevos productos
  */
 
-// Debug temporal - comentar en producción
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 $product_id = null;
 $is_edit = false;
 $page_title = 'Nuevo Producto';
@@ -812,14 +808,13 @@ $showModal = false;
 $modalProductId = 0;
 $modalProductName = '';
 
-// Opción 1: Verificar SESSION
+// Opción 1: Verificar SESSION (NO limpiar todavía)
 if (!empty($_SESSION['product_created'])) {
     $showModal = true;
     $modalProductId = isset($_SESSION['product_id']) ? intval($_SESSION['product_id']) : 0;
     $modalProductName = isset($_SESSION['product_name']) ? $_SESSION['product_name'] : '';
     
-    // Limpiar inmediatamente
-    unset($_SESSION['product_created'], $_SESSION['product_id'], $_SESSION['product_name']);
+    // NO limpiar aquí - se limpiará después de mostrar el modal
 }
 // Opción 2: Verificar GET como respaldo
 elseif (!empty($_GET['success']) && $_GET['success'] == '1' && !empty($_GET['pid'])) {
@@ -854,6 +849,13 @@ if ($showModal):
                 const modal = new bootstrap.Modal(modalEl);
                 modal.show();
                 
+                // Limpiar sesión via AJAX después de mostrar
+                fetch('clear_product_session.php')
+                    .then(r => r.json())
+                    .then(data => console.log('Session cleaned:', data))
+                    .catch(e => console.error('Error cleaning session:', e));
+                
+                // Limpiar URL cuando se cierre
                 modalEl.addEventListener('hidden.bs.modal', function() {
                     if (window.history.replaceState) {
                         window.history.replaceState({}, document.title, 'product_create.php');
