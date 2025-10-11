@@ -273,11 +273,15 @@ function generateSlug($text) {
                                 <input type="file" class="form-control" id="images" name="images[]"
                                        multiple accept="image/jpeg,image/png,image/webp,image/jpg">
                                 <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Formatos: JPG, PNG, WebP. Máximo 5MB por imagen. La primera imagen será la portada.
+                                    <i class="fas fa-info-circle"></i> Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.
                                 </div>
                             </div>
                             
-                            <!-- Vista previa simple -->
+                            <div class="alert alert-info" id="drag-drop-info" style="display: none;">
+                                <i class="fas fa-hand-rock"></i> <strong>Arrastra las imágenes</strong> para cambiar el orden. La primera imagen será la portada.
+                            </div>
+                            
+                            <!-- Vista previa con drag & drop -->
                             <div id="image-preview" class="row g-3"></div>
                         </div>
                     </div>
@@ -478,18 +482,48 @@ function generateSlug($text) {
     </div>
 </div>
 
+<!-- SortableJS para Drag & Drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+/* Estilos para drag & drop */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f8f9fa;
+}
+
+.sortable-chosen {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+}
+
+.sortable-image-item {
+    transition: transform 0.2s;
+}
+
+.sortable-image-item:hover {
+    transform: translateY(-5px);
+}
+</style>
+
 <script>
-// JavaScript simplificado para creación
+// JavaScript para creación con Drag & Drop
 document.addEventListener('DOMContentLoaded', function() {
     // Array para acumular archivos seleccionados
     let selectedFiles = [];
+    let sortableInstance = null;
     
-    // Vista previa de imágenes (acumulativa)
+    // Vista previa de imágenes (acumulativa con drag & drop)
     const imagesInput = document.getElementById('images');
+    const preview = document.getElementById('image-preview');
+    const dragInfo = document.getElementById('drag-drop-info');
+    
     if (imagesInput) {
         imagesInput.addEventListener('change', function(e) {
-            const preview = document.getElementById('image-preview');
-            
             // Agregar nuevos archivos al array existente
             const newFiles = Array.from(this.files);
             newFiles.forEach(file => {
@@ -498,74 +532,117 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Limpiar vista previa y regenerarla con TODOS los archivos
-            preview.innerHTML = '';
+            // Regenerar vista previa
+            renderImagePreview();
             
-            selectedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-3';
-                    col.innerHTML = `
-                        <div class="card border-success">
-                            <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
-                                <small>#${index + 1}</small>
-                                <button type="button" class="btn btn-sm btn-close btn-close-white" 
-                                        onclick="removePreviewImage(${index})" aria-label="Eliminar"></button>
-                            </div>
-                            <img src="${e.target.result}" class="card-img-top" 
-                                 style="height: 150px; object-fit: cover;" alt="Vista previa">
-                            <div class="card-body p-2 text-center">
-                                ${index === 0 ? '<span class="badge bg-warning"><i class="fas fa-star"></i> Portada</span>' : '<span class="badge bg-secondary">Extra</span>'}
-                            </div>
-                        </div>
-                    `;
-                    preview.appendChild(col);
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            // NO limpiar el input - permite seguir agregando
             console.log('Total de imágenes seleccionadas:', selectedFiles.length);
+        });
+    }
+    
+    function renderImagePreview() {
+        preview.innerHTML = '';
+        
+        if (selectedFiles.length === 0) {
+            dragInfo.style.display = 'none';
+            return;
+        }
+        
+        // Mostrar info de drag & drop
+        dragInfo.style.display = 'block';
+        
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 sortable-image-item';
+                col.dataset.index = index;
+                col.innerHTML = `
+                    <div class="card border-success h-100" style="cursor: move;">
+                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
+                            <small><i class="fas fa-grip-vertical"></i> #${index + 1}</small>
+                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                                    onclick="removePreviewImage(${index})" aria-label="Eliminar"></button>
+                        </div>
+                        <img src="${e.target.result}" class="card-img-top" 
+                             style="height: 150px; object-fit: cover;" alt="Vista previa">
+                        <div class="card-body p-2 text-center">
+                            ${index === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Extra</span>'}
+                        </div>
+                    </div>
+                `;
+                preview.appendChild(col);
+                
+                // Inicializar SortableJS después de agregar todas las imágenes
+                if (index === selectedFiles.length - 1) {
+                    initSortable();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function initSortable() {
+        // Destruir instancia anterior si existe
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        // Crear nueva instancia de Sortable
+        sortableInstance = new Sortable(preview, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: '.card', // Toda la card es arrastrable
+            onEnd: function(evt) {
+                // Reordenar el array de archivos según el nuevo orden
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+                
+                // Mover elemento en el array
+                const movedFile = selectedFiles.splice(oldIndex, 1)[0];
+                selectedFiles.splice(newIndex, 0, movedFile);
+                
+                console.log('Imagen movida de posición', oldIndex, '→', newIndex);
+                
+                // Actualizar números y badges
+                updateImageNumbers();
+            }
+        });
+    }
+    
+    function updateImageNumbers() {
+        const items = preview.querySelectorAll('.sortable-image-item');
+        items.forEach((item, index) => {
+            // Actualizar número
+            const numberSpan = item.querySelector('.card-header small');
+            numberSpan.innerHTML = `<i class="fas fa-grip-vertical"></i> #${index + 1}`;
+            
+            // Actualizar badge (portada solo para el primero)
+            const badgeDiv = item.querySelector('.card-body');
+            if (index === 0) {
+                badgeDiv.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>';
+            } else {
+                badgeDiv.innerHTML = '<span class="badge bg-secondary">Extra</span>';
+            }
+            
+            // Actualizar data-index
+            item.dataset.index = index;
+            
+            // Actualizar onclick del botón eliminar
+            const closeBtn = item.querySelector('.btn-close');
+            closeBtn.setAttribute('onclick', `removePreviewImage(${index})`);
         });
     }
     
     // Función global para eliminar imagen de vista previa
     window.removePreviewImage = function(index) {
         selectedFiles.splice(index, 1);
-        
-        // Regenerar vista previa
-        const preview = document.getElementById('image-preview');
-        preview.innerHTML = '';
-        
-        selectedFiles.forEach((file, idx) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const col = document.createElement('div');
-                col.className = 'col-md-3';
-                col.innerHTML = `
-                    <div class="card border-success">
-                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
-                            <small>#${idx + 1}</small>
-                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
-                                    onclick="removePreviewImage(${idx})" aria-label="Eliminar"></button>
-                        </div>
-                        <img src="${e.target.result}" class="card-img-top" 
-                             style="height: 150px; object-fit: cover;" alt="Vista previa">
-                        <div class="card-body p-2 text-center">
-                            ${idx === 0 ? '<span class="badge bg-warning"><i class="fas fa-star"></i> Portada</span>' : '<span class="badge bg-secondary">Extra</span>'}
-                        </div>
-                    </div>
-                `;
-                preview.appendChild(col);
-            };
-            reader.readAsDataURL(file);
-        });
-        
+        renderImagePreview();
         console.log('Imágenes restantes:', selectedFiles.length);
     };
     
-    // Antes de enviar el formulario, actualizar el input con todos los archivos
+    // Antes de enviar el formulario, actualizar el input con todos los archivos en el orden correcto
     const form = document.getElementById('product-form');
     if (form) {
         form.addEventListener('submit', function(e) {
@@ -574,7 +651,8 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedFiles.forEach(file => dt.items.add(file));
             imagesInput.files = dt.files;
             
-            console.log('Enviando formulario con', selectedFiles.length, 'imágenes');
+            console.log('Enviando formulario con', selectedFiles.length, 'imágenes en orden:', 
+                        selectedFiles.map((f, i) => `#${i+1}: ${f.name}`));
         });
     }
     
