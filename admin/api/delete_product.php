@@ -79,7 +79,7 @@ try {
         
         // Primero obtener imágenes para eliminar archivos físicos
         try {
-            $images_stmt = $pdo->prepare("SELECT filename FROM product_images WHERE product_id IN ($placeholders)");
+            $images_stmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id IN ($placeholders)");
             $images_stmt->execute($product_ids);
             $images = $images_stmt->fetchAll(PDO::FETCH_COLUMN);
         } catch (PDOException $e) {

@@ -69,10 +69,11 @@ try {
     // Obtener productos
     $query = "
         SELECT p.*, c.name as category_name, b.name as brand_name,
-               p.image_url as main_image
+               pi.image_url as main_image
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
         WHERE $where_clause
         ORDER BY p.created_at DESC
         LIMIT $per_page OFFSET $offset
