@@ -4,6 +4,10 @@
  * Formulario exclusivo para la creación de nuevos productos
  */
 
+// Debug temporal - comentar en producción
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 $product_id = null;
 $is_edit = false;
 $page_title = 'Nuevo Producto';
@@ -803,58 +807,68 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <?php 
-// Verificar si se creó un producto (usar SESSION como principal y GET como respaldo)
+// Verificar si se creó un producto
 $showModal = false;
-$productId = 0;
-$productName = '';
+$modalProductId = 0;
+$modalProductName = '';
 
-if (isset($_SESSION['product_created']) && $_SESSION['product_created']) {
+// Opción 1: Verificar SESSION
+if (!empty($_SESSION['product_created'])) {
     $showModal = true;
-    $productId = $_SESSION['product_id'] ?? 0;
-    $productName = $_SESSION['product_name'] ?? '';
+    $modalProductId = isset($_SESSION['product_id']) ? intval($_SESSION['product_id']) : 0;
+    $modalProductName = isset($_SESSION['product_name']) ? $_SESSION['product_name'] : '';
     
-    // Limpiar sesión inmediatamente
-    unset($_SESSION['product_created']);
-    unset($_SESSION['product_id']);
-    unset($_SESSION['product_name']);
-} elseif (isset($_GET['success']) && $_GET['success'] == '1' && isset($_GET['pid'])) {
+    // Limpiar inmediatamente
+    unset($_SESSION['product_created'], $_SESSION['product_id'], $_SESSION['product_name']);
+}
+// Opción 2: Verificar GET como respaldo
+elseif (!empty($_GET['success']) && $_GET['success'] == '1' && !empty($_GET['pid'])) {
     $showModal = true;
-    $productId = intval($_GET['pid']);
-    $productName = urldecode($_GET['pname'] ?? '');
+    $modalProductId = intval($_GET['pid']);
+    $modalProductName = !empty($_GET['pname']) ? urldecode($_GET['pname']) : 'Producto';
 }
 
-if ($showModal): ?>
+// Si hay que mostrar el modal
+if ($showModal):
+    $modalProductNameJS = json_encode($modalProductName, JSON_HEX_QUOT | JSON_HEX_TAG);
+?>
 <script>
-// Ejecutar inmediatamente sin esperar DOMContentLoaded
 (function() {
-    // Esperar solo a que Bootstrap esté listo
-    function showSuccessModal() {
-        if (typeof bootstrap !== 'undefined') {
-            // Llenar datos del modal
-            document.getElementById('productNameDisplay').textContent = <?php echo json_encode($productName); ?>;
-            document.getElementById('productIdDisplay').textContent = '<?php echo $productId; ?>';
-            document.getElementById('editProductBtn').href = 'product_edit.php?id=<?php echo $productId; ?>';
+    function initModal() {
+        if (typeof bootstrap === 'undefined') {
+            setTimeout(initModal, 50);
+            return;
+        }
+        
+        try {
+            const nameEl = document.getElementById('productNameDisplay');
+            const idEl = document.getElementById('productIdDisplay');
+            const editBtn = document.getElementById('editProductBtn');
+            const modalEl = document.getElementById('successModal');
             
-            // Mostrar modal inmediatamente
-            const modalElement = document.getElementById('successModal');
-            const successModal = new bootstrap.Modal(modalElement);
-            successModal.show();
-            
-            // Limpiar URL cuando se cierre el modal
-            modalElement.addEventListener('hidden.bs.modal', function() {
-                window.history.replaceState({}, document.title, 'product_create.php');
-            });
-        } else {
-            // Si Bootstrap no está listo, esperar 100ms y reintentar
-            setTimeout(showSuccessModal, 100);
+            if (nameEl && idEl && editBtn && modalEl) {
+                nameEl.textContent = <?php echo $modalProductNameJS; ?>;
+                idEl.textContent = '<?php echo $modalProductId; ?>';
+                editBtn.href = 'product_edit.php?id=<?php echo $modalProductId; ?>';
+                
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                
+                modalEl.addEventListener('hidden.bs.modal', function() {
+                    if (window.history.replaceState) {
+                        window.history.replaceState({}, document.title, 'product_create.php');
+                    }
+                });
+            }
+        } catch(e) {
+            console.error('Error al mostrar modal:', e);
         }
     }
     
-    // Iniciar inmediatamente
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', showSuccessModal);
+        document.addEventListener('DOMContentLoaded', initModal);
     } else {
-        showSuccessModal();
+        initModal();
     }
 })();
 </script>
