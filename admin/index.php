@@ -2,46 +2,85 @@
 $page_title = 'Dashboard';
 require_once 'inc/header.php';
 
+// Inicializar variables por defecto
+$total_products = 0;
+$low_stock_products = 0;
+$pending_orders = 0;
+$total_users = 0;
+$monthly_stats = ['orders' => 0, 'revenue' => 0];
+$recent_orders = [];
+
 // Obtener estadísticas básicas
 try {
-    // Productos
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE status = 'active'");
-    $total_products = $stmt->fetch()['total'];
+    // Debug: Verificar conexión
+    error_log("Dashboard: Verificando estadísticas...");
+    
+    // Productos - contar todos primero
+    $stmt = $pdo->query("SELECT COUNT(*) as total, 
+                         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+                         SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive,
+                         SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft
+                         FROM products");
+    $product_stats = $stmt->fetch();
+    $total_products = (int)($product_stats['active'] ?? 0);
+    
+    error_log("Dashboard: Total productos: " . $product_stats['total'] . ", Activos: " . $total_products);
     
     // Productos con stock bajo
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE stock <= 10 AND status = 'active'");
-    $low_stock_products = $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    $low_stock_products = (int)($result['total'] ?? 0);
     
-    // Órdenes pendientes
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM orders WHERE status = 'pending'");
-    $pending_orders = $stmt->fetch()['total'];
+    // Órdenes pendientes - verificar si la tabla existe
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM orders WHERE status = 'pending'");
+        $result = $stmt->fetch();
+        $pending_orders = (int)($result['total'] ?? 0);
+    } catch (PDOException $e) {
+        error_log("Dashboard: Error en tabla orders: " . $e->getMessage());
+        $pending_orders = 0;
+    }
     
     // Usuarios registrados
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM users WHERE is_active = 1");
-    $total_users = $stmt->fetch()['total'];
+    $result = $stmt->fetch();
+    $total_users = (int)($result['total'] ?? 0);
+    
+    error_log("Dashboard: Total usuarios: " . $total_users);
     
     // Ventas del mes actual
-    $stmt = $pdo->query("
-        SELECT COUNT(*) as orders, COALESCE(SUM(total), 0) as revenue 
-        FROM orders 
-        WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) 
-        AND YEAR(created_at) = YEAR(CURRENT_DATE())
-        AND status IN ('completed', 'processing')
-    ");
-    $monthly_stats = $stmt->fetch();
+    try {
+        $stmt = $pdo->query("
+            SELECT COUNT(*) as orders, COALESCE(SUM(total), 0) as revenue 
+            FROM orders 
+            WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) 
+            AND YEAR(created_at) = YEAR(CURRENT_DATE())
+            AND status IN ('completed', 'processing')
+        ");
+        $monthly_stats = $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log("Dashboard: Error en estadísticas mensuales: " . $e->getMessage());
+        $monthly_stats = ['orders' => 0, 'revenue' => 0];
+    }
     
     // Últimas órdenes
-    $stmt = $pdo->query("
-        SELECT o.id, o.total, o.status, o.created_at, 
-               CONCAT(u.first_name, ' ', u.last_name) as customer_name
-        FROM orders o
-        LEFT JOIN users u ON o.user_id = u.id
-        ORDER BY o.created_at DESC
-        LIMIT 5
-    ");
-    $recent_orders = $stmt->fetchAll();
+    try {
+        $stmt = $pdo->query("
+            SELECT o.id, o.total, o.status, o.created_at, 
+                   CONCAT(u.first_name, ' ', u.last_name) as customer_name
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.id
+            ORDER BY o.created_at DESC
+            LIMIT 5
+        ");
+        $recent_orders = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Dashboard: Error obteniendo últimas órdenes: " . $e->getMessage());
+        $recent_orders = [];
+    }
     
 } catch (PDOException $e) {
+    error_log("Dashboard: Error general: " . $e->getMessage());
     $total_products = 0;
     $low_stock_products = 0;
     $pending_orders = 0;
