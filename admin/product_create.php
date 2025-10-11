@@ -61,10 +61,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Validar datos requeridos
-        $required_fields = ['name', 'description', 'price_pesos', 'stock_quantity', 'category_id'];
-        foreach ($required_fields as $field) {
+        $required_fields = [
+            'name' => 'Nombre del producto',
+            'description' => 'Descripción',
+            'price_pesos' => 'Precio en pesos',
+            'stock_quantity' => 'Cantidad en stock',
+            'category_id' => 'Categoría',
+            'brand_id' => 'Marca',
+            'console_id' => 'Consola/Plataforma'
+        ];
+        
+        foreach ($required_fields as $field => $label) {
             if (empty($_POST[$field]) && $_POST[$field] !== '0') {
-                throw new Exception("El campo {$field} es requerido");
+                throw new Exception("El campo '{$label}' es obligatorio");
             }
         }
         
@@ -95,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'discount_percentage' => !empty($_POST['discount_percentage']) ? floatval($_POST['discount_percentage']) : 0.00,
             'stock_quantity' => intval($_POST['stock_quantity']),
             'category_id' => intval($_POST['category_id']),
-            'brand_id' => !empty($_POST['brand_id']) ? intval($_POST['brand_id']) : null,
-            'console_id' => !empty($_POST['console_id']) ? intval($_POST['console_id']) : null,
+            'brand_id' => intval($_POST['brand_id']),
+            'console_id' => intval($_POST['console_id']),
             'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
             'meta_title' => trim($_POST['meta_title'] ?? ''),
             'meta_description' => trim($_POST['meta_description'] ?? ''),
@@ -411,9 +420,9 @@ function generateSlug($text) {
                             </div>
                             
                             <div class="mb-3">
-                                <label for="brand_id" class="form-label">Marca</label>
-                                <select class="form-select" id="brand_id" name="brand_id">
-                                    <option value="">Sin marca</option>
+                                <label for="brand_id" class="form-label">Marca *</label>
+                                <select class="form-select" id="brand_id" name="brand_id" required>
+                                    <option value="">Seleccionar marca</option>
                                     <?php foreach ($brands as $brand): ?>
                                         <option value="<?php echo $brand['id']; ?>">
                                             <?php echo htmlspecialchars($brand['name']); ?>
@@ -423,9 +432,9 @@ function generateSlug($text) {
                             </div>
                             
                             <div class="mb-3">
-                                <label for="console_id" class="form-label">Consola / Plataforma</label>
-                                <select class="form-select" id="console_id" name="console_id">
-                                    <option value="">Sin consola</option>
+                                <label for="console_id" class="form-label">Consola / Plataforma *</label>
+                                <select class="form-select" id="console_id" name="console_id" required>
+                                    <option value="">Seleccionar consola</option>
                                     <?php foreach ($consoles as $console): ?>
                                         <option value="<?php echo $console['id']; ?>">
                                             <?php echo htmlspecialchars($console['name']); ?>
