@@ -738,13 +738,13 @@ document.querySelectorAll('.role-select').forEach(select => {
         }
         
         const roleNames = {
-            'administrador': '👑 Administrador',
-            'colaborador': '🤝 Colaborador',
-            'moderador': '🛡️ Moderador',
-            'cliente': '🛒 Cliente'
+            'administrador': 'Administrador',
+            'colaborador': 'Colaborador',
+            'moderador': 'Moderador',
+            'cliente': 'Cliente'
         };
         
-        const message = `¿Cambiar rol de ${roleNames[currentRole]} a ${roleNames[newRole]}?`;
+        const message = '¿Cambiar rol de ' + roleNames[currentRole] + ' a ' + roleNames[newRole] + '?';
         
         Utils.confirm(message, () => {
             fetch('api/users.php', {

@@ -111,7 +111,7 @@ try {
             COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock,
             COUNT(CASE WHEN stock_quantity <= 10 AND stock_quantity > 0 THEN 1 END) as low_stock,
             COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock,
-            SUM(stock_quantity * price) as inventory_value
+            SUM(stock_quantity * COALESCE(price_pesos, 0)) as inventory_value
         FROM products 
         WHERE is_active = 1
     ")->fetch();
