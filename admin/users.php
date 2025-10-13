@@ -727,26 +727,28 @@ function bulkDelete() {
 }
 
 // Cambiar rol de usuario con dropdown
-document.querySelectorAll('.role-select').forEach(select => {
+document.querySelectorAll('.role-select').forEach(function(select) {
     select.addEventListener('change', function() {
-        const userId = this.dataset.userId;
-        const currentRole = this.dataset.currentRole;
-        const newRole = this.value;
+        var userId = this.dataset.userId;
+        var currentRole = this.dataset.currentRole;
+        var newRole = this.value;
         
         if (currentRole === newRole) {
             return;
         }
         
-        const roleNames = {
+        var roleNames = {
             administrador: 'Administrador',
             colaborador: 'Colaborador',
             moderador: 'Moderador',
             cliente: 'Cliente'
         };
         
-        const message = 'Cambiar rol de ' + roleNames[currentRole] + ' a ' + roleNames[newRole] + '?';
+        var msg = 'Cambiar rol de ' + roleNames[currentRole] + ' a ' + roleNames[newRole];
         
-        Utils.confirm(message, function() {
+        var selectElement = this;
+        
+        Utils.confirm(msg, function() {
             fetch('api/users.php', {
                 method: 'PUT',
                 headers: {
@@ -759,28 +761,29 @@ document.querySelectorAll('.role-select').forEach(select => {
                     csrf_token: AdminPanel.csrfToken
                 })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
                 if (data.success) {
                     Utils.showToast('Rol actualizado correctamente', 'success');
-                    this.dataset.currentRole = newRole;
+                    selectElement.dataset.currentRole = newRole;
                     location.reload();
                 } else {
                     Utils.showToast(data.message || 'Error al actualizar rol', 'danger');
-                    this.value = currentRole;
+                    selectElement.value = currentRole;
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error('Error:', error);
-                Utils.showToast('Error de conexión', 'danger');
-                this.value = currentRole;
+                Utils.showToast('Error de conexion', 'danger');
+                selectElement.value = currentRole;
             });
         }, function() {
-            // Cancelado - restaurar valor anterior
-            this.value = currentRole;
+            selectElement.value = currentRole;
         });
     });
-}
+});
 </script>
 
 <?php require_once 'inc/footer.php'; ?>
