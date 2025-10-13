@@ -148,20 +148,10 @@ $products_stmt = $pdo->query("
     ORDER BY p.name
 ");
 $products = $products_stmt->fetchAll();
-?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Reseñas - Admin MultiGamer360</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="assets/css/admin.css" rel="stylesheet">
-</head>
-<body>
-    <?php include 'inc/header.php'; ?>
+$page_title = "Gestión de Reseñas";
+require_once 'inc/header.php';
+?>
     
     <div class="container-fluid">
         <div class="row">
@@ -437,7 +427,6 @@ $products = $products_stmt->fetchAll();
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function showResponseModal(reviewId, currentResponse) {
             document.getElementById('responseReviewId').value = reviewId;
@@ -459,5 +448,5 @@ $products = $products_stmt->fetchAll();
             }
         }
     </script>
-</body>
-</html>
+
+<?php require_once 'inc/footer.php'; ?>

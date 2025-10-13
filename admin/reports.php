@@ -16,16 +16,9 @@
  * - Gráficos interactivos y exportación
  */
 
-// Verificar sesión de administrador
-session_start();
-require_once '../config/database.php';
-require_once '../includes/functions.php';
+require_once 'inc/auth.php';
 
-// Verificar si el usuario es administrador
-if (!isLoggedIn() || !isAdmin()) {
-    header('Location: ../login.php');
-    exit();
-}
+$userManager = new UserManager($pdo);
 
 // Obtener datos para el dashboard
 try {
@@ -113,33 +106,27 @@ function getTrendIcon($trend) {
         default: return '<i class="fas fa-minus text-warning"></i>';
     }
 }
+
+$page_title = "Reportes y Analíticas";
+require_once 'inc/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes y Analíticas - Admin MultiGamer360</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .dashboard-card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .dashboard-card:hover {
-            transform: translateY(-2px);
-        }
-        .kpi-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+<style>
+    .dashboard-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+    }
+    .kpi-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
         }
         .kpi-value {
             font-size: 2.5rem;
@@ -210,57 +197,24 @@ function getTrendIcon($trend) {
             padding: 20px;
         }
     </style>
-</head>
-<body class="bg-light">
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-2 sidebar">
-            <div class="text-center text-white mb-4">
-                <h4><i class="fas fa-chart-line"></i> Reportes</h4>
+        <?php include 'inc/sidebar.php'; ?>
+        
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-chart-line me-2"></i>Reportes y Analíticas</h1>
             </div>
-            <nav class="nav flex-column">
-                <a class="nav-link active" data-section="dashboard">
-                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                </a>
-                <a class="nav-link" data-section="sales">
-                    <i class="fas fa-chart-bar me-2"></i> Ventas
-                </a>
-                <a class="nav-link" data-section="financial">
-                    <i class="fas fa-dollar-sign me-2"></i> Financiero
-                </a>
-                <a class="nav-link" data-section="products">
-                    <i class="fas fa-box me-2"></i> Productos
-                </a>
-                <a class="nav-link" data-section="inventory">
-                    <i class="fas fa-warehouse me-2"></i> Inventario
-                </a>
-                <a class="nav-link" data-section="customers">
-                    <i class="fas fa-users me-2"></i> Clientes
-                </a>
-                <a class="nav-link" data-section="analytics">
-                    <i class="fas fa-chart-pie me-2"></i> Analíticas
-                </a>
-                <hr class="text-white">
-                <a href="dashboard.php" class="nav-link">
-                    <i class="fas fa-arrow-left me-2"></i> Volver al Panel
-                </a>
-            </nav>
-        </div>
-
-        <!-- Contenido Principal -->
-        <div class="col-md-10 content-area">
             
-            <!-- Dashboard Section -->
-            <div id="dashboard-section" class="content-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard de Reportes</h2>
-                    <div>
-                        <button class="btn btn-primary me-2" onclick="exportData('pdf')">
-                            <i class="fas fa-file-pdf"></i> Exportar PDF
-                        </button>
-                        <button class="btn btn-success" onclick="exportData('excel')">
+            <!-- Dashboard de Reportes -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard de Reportes</h2>
+                <div>
+                    <button class="btn btn-primary me-2" onclick="exportData('pdf')">
+                        <i class="fas fa-file-pdf"></i> Exportar PDF
+                    </button>
+                    <button class="btn btn-success" onclick="exportData('excel')">
                             <i class="fas fa-file-excel"></i> Exportar Excel
                         </button>
                     </div>
@@ -830,5 +784,4 @@ setInterval(function() {
 }, 300000); // 5 minutos
 </script>
 
-</body>
-</html>
+<?php require_once 'inc/footer.php'; ?>
