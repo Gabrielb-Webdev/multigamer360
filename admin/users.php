@@ -546,6 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof TableManager !== 'undefined') {
         TableManager.setupBulkActions('.table');
     }
+}); // Fin DOMContentLoaded
 
 // Alternar estado de usuario
 function toggleUserStatus(userId, activate) {
@@ -779,7 +780,7 @@ document.querySelectorAll('.role-select').forEach(select => {
             this.value = currentRole;
         });
     });
-}); // Fin DOMContentLoaded
+}
 </script>
 
 <?php require_once 'inc/footer.php'; ?>

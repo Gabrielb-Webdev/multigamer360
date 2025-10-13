@@ -41,12 +41,15 @@ if ($brand) {
     $params[] = $brand;
 }
 
+// Usar 10 como nivel mínimo de stock (min_stock_level no existe en la BD)
+$min_stock_threshold = 10;
+
 if ($stock_status === 'low') {
-    $where_conditions[] = "p.stock_quantity <= p.min_stock_level";
+    $where_conditions[] = "p.stock_quantity <= $min_stock_threshold";
 } elseif ($stock_status === 'out') {
     $where_conditions[] = "p.stock_quantity = 0";
 } elseif ($stock_status === 'good') {
-    $where_conditions[] = "p.stock_quantity > p.min_stock_level";
+    $where_conditions[] = "p.stock_quantity > $min_stock_threshold";
 }
 
 $where_clause = implode(' AND ', $where_conditions);
@@ -71,14 +74,15 @@ try {
                b.name as brand_name,
                CASE 
                    WHEN p.stock_quantity = 0 THEN 'Agotado'
-                   WHEN p.stock_quantity <= p.min_stock_level THEN 'Stock Bajo'
+                   WHEN p.stock_quantity <= 10 THEN 'Stock Bajo'
                    ELSE 'Stock Normal'
                END as stock_status,
                CASE 
                    WHEN p.stock_quantity = 0 THEN 'danger'
-                   WHEN p.stock_quantity <= p.min_stock_level THEN 'warning'
+                   WHEN p.stock_quantity <= 10 THEN 'warning'
                    ELSE 'success'
-               END as stock_color
+               END as stock_color,
+               10 as min_stock_level
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
@@ -86,7 +90,7 @@ try {
         ORDER BY 
             CASE 
                 WHEN p.stock_quantity = 0 THEN 1
-                WHEN p.stock_quantity <= p.min_stock_level THEN 2
+                WHEN p.stock_quantity <= 10 THEN 2
                 ELSE 3
             END,
             p.name ASC
@@ -99,14 +103,14 @@ try {
     
     $total_pages = ceil($total_products / $per_page);
     
-    // Estadísticas de inventario
+    // Estadísticas de inventario (usando 10 como nivel mínimo de stock)
     $stats = $pdo->query("
         SELECT 
             COUNT(*) as total_products,
             SUM(stock_quantity) as total_stock,
             COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock,
-            COUNT(CASE WHEN stock_quantity <= min_stock_level AND stock_quantity > 0 THEN 1 END) as low_stock,
-            COUNT(CASE WHEN stock_quantity > min_stock_level THEN 1 END) as good_stock,
+            COUNT(CASE WHEN stock_quantity <= 10 AND stock_quantity > 0 THEN 1 END) as low_stock,
+            COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock,
             SUM(stock_quantity * price) as inventory_value
         FROM products 
         WHERE is_active = 1
