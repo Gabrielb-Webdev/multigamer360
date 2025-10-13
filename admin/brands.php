@@ -60,15 +60,17 @@ try {
     
     $total_pages = ceil($total_brands / $per_page);
     
-    // Estadísticas
+    // Estadísticas (sin is_featured por ahora)
     $stats = $pdo->query("
         SELECT 
             COUNT(*) as total_brands,
             COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_brands,
-            COUNT(CASE WHEN is_featured = 1 THEN 1 END) as featured_brands,
             AVG((SELECT COUNT(*) FROM products WHERE brand_id = brands.id)) as avg_products_per_brand
         FROM brands
     ")->fetch();
+    
+    // Agregar campo featured_brands con valor 0
+    $stats['featured_brands'] = 0;
     
 } catch (PDOException $e) {
     $_SESSION['error'] = 'Error al cargar marcas: ' . $e->getMessage();
@@ -308,12 +310,12 @@ try {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($brand['is_featured']): ?>
+                                <?php if (isset($brand['is_featured']) && $brand['is_featured']): ?>
                                     <span class="badge bg-warning">
                                         <i class="fas fa-star"></i> Destacada
                                     </span>
                                 <?php else: ?>
-                                    <span class="text-muted">-</span>
+                                    <span class="text-muted">N/A</span>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -397,8 +399,12 @@ try {
 </div>
 
 <script>
-// Configurar selección múltiple
-TableManager.setupBulkActions('.table');
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar selección múltiple
+    if (typeof TableManager !== 'undefined') {
+        TableManager.setupBulkActions('.table');
+    }
+});
 
 // Eliminar marca
 function deleteBrand(brandId) {

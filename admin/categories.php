@@ -36,6 +36,9 @@ if ($status !== '') {
     $params[] = $status;
 }
 
+// Nota: La columna parent_id no existe en la tabla categories actualmente
+// Si se necesita, agregar: ALTER TABLE categories ADD COLUMN parent_id INT NULL;
+/*
 if ($parent_id !== '') {
     if ($parent_id === '0') {
         $where_conditions[] = "c.parent_id IS NULL";
@@ -44,6 +47,7 @@ if ($parent_id !== '') {
         $params[] = $parent_id;
     }
 }
+*/
 
 $where_clause = implode(' AND ', $where_conditions);
 
@@ -54,16 +58,13 @@ try {
     $count_stmt->execute($params);
     $total_categories = $count_stmt->fetch()['total'];
     
-    // Obtener categorías con información de padre e hijos
+    // Obtener categorías (sin relación padre-hijo por ahora)
     $query = "
-        SELECT c.*, 
-               p.name as parent_name,
-               (SELECT COUNT(*) FROM categories child WHERE child.parent_id = c.id) as children_count,
+        SELECT c.*,
                (SELECT COUNT(*) FROM products prod WHERE prod.category_id = c.id) as products_count
         FROM categories c
-        LEFT JOIN categories p ON c.parent_id = p.id
         WHERE $where_clause
-        ORDER BY c.sort_order ASC, c.name ASC
+        ORDER BY c.name ASC
         LIMIT $per_page OFFSET $offset
     ";
     
@@ -71,24 +72,22 @@ try {
     $stmt->execute($params);
     $categories = $stmt->fetchAll();
     
-    // Obtener categorías padre para filtros
-    $parent_categories = $pdo->query("
-        SELECT id, name FROM categories 
-        WHERE parent_id IS NULL AND is_active = 1 
-        ORDER BY name
-    ")->fetchAll();
+    // No hay categorías padre por ahora
+    $parent_categories = [];
     
     $total_pages = ceil($total_categories / $per_page);
     
-    // Estadísticas
+    // Estadísticas (sin parent_id)
     $stats = $pdo->query("
         SELECT 
             COUNT(*) as total_categories,
-            COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_categories,
-            COUNT(CASE WHEN parent_id IS NULL THEN 1 END) as parent_categories,
-            COUNT(CASE WHEN parent_id IS NOT NULL THEN 1 END) as child_categories
+            COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_categories
         FROM categories
     ")->fetch();
+    
+    // Agregar campos faltantes con valores 0
+    $stats['parent_categories'] = 0;
+    $stats['child_categories'] = 0;
     
 } catch (PDOException $e) {
     $_SESSION['error'] = 'Error al cargar categorías: ' . $e->getMessage();
@@ -436,8 +435,12 @@ try {
 </div>
 
 <script>
-// Configurar selección múltiple
-TableManager.setupBulkActions('.table');
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar selección múltiple
+    if (typeof TableManager !== 'undefined') {
+        TableManager.setupBulkActions('.table');
+    }
+});
 
 // Eliminar categoría
 function deleteCategory(categoryId) {

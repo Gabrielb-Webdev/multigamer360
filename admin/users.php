@@ -80,14 +80,16 @@ try {
             COUNT(*) as total_users,
             COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_users,
             COUNT(CASE WHEN role = 'administrador' THEN 1 END) as admin_users,
-            COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as new_today,
-            COUNT(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as active_30_days
+            COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as new_today
         FROM users u 
         WHERE $where_clause
     ";
     $stats_stmt = $pdo->prepare($stats_query);
     $stats_stmt->execute($params);
     $stats = $stats_stmt->fetch();
+    
+    // Agregar campo active_30_days con valor 0 ya que last_login no existe aún
+    $stats['active_30_days'] = 0;
     
     // Obtener roles únicos
     $roles_stmt = $pdo->query("SELECT DISTINCT role FROM users WHERE role IS NOT NULL ORDER BY role");
@@ -411,7 +413,7 @@ try {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($user['last_login']): ?>
+                                <?php if (isset($user['last_login']) && $user['last_login']): ?>
                                     <div>
                                         <?php 
                                         $last_login = strtotime($user['last_login']);
@@ -427,7 +429,7 @@ try {
                                         <br><small class="text-muted"><?php echo date('H:i', $last_login); ?></small>
                                     </div>
                                 <?php else: ?>
-                                    <span class="text-muted">Nunca</span>
+                                    <span class="text-muted">N/A</span>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -536,12 +538,14 @@ try {
         width: 50%;
         margin-bottom: 1rem;
     }
-}
 </style>
 
 <script>
-// Configurar selección múltiple
-TableManager.setupBulkActions('.table');
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar selección múltiple
+    if (typeof TableManager !== 'undefined') {
+        TableManager.setupBulkActions('.table');
+    }
 
 // Alternar estado de usuario
 function toggleUserStatus(userId, activate) {
@@ -775,7 +779,7 @@ document.querySelectorAll('.role-select').forEach(select => {
             this.value = currentRole;
         });
     });
-});
+}); // Fin DOMContentLoaded
 </script>
 
 <?php require_once 'inc/footer.php'; ?>

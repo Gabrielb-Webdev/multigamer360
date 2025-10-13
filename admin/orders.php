@@ -472,8 +472,41 @@ try {
 </div>
 
 <script>
-// Configurar selección múltiple
-TableManager.setupBulkActions('.table');
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar selección múltiple
+    if (typeof TableManager !== 'undefined') {
+        TableManager.setupBulkActions('.table');
+    }
+    
+    // Auto-refresh cada 30 segundos si hay pedidos pendientes
+    if (<?php echo $stats['pending_orders']; ?> > 0) {
+        setInterval(function() {
+            // Solo refresh automático si no hay filtros activos
+            if (!window.location.search || window.location.search === '?') {
+                const notification = document.createElement('div');
+                notification.className = 'toast-container position-fixed top-0 end-0 p-3';
+                notification.innerHTML = `
+                    <div class="toast align-items-center text-white bg-primary border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-sync-alt me-2"></i>
+                                Verificando nuevos pedidos...
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                const toast = new bootstrap.Toast(notification.querySelector('.toast'));
+                toast.show();
+                
+                setTimeout(() => {
+                    refreshOrders();
+                }, 2000);
+            }
+        }, 30000);
+    }
+}); // Fin DOMContentLoaded
 
 // Actualizar estado de pedido individual
 function updateOrderStatus(orderId, status) {
@@ -575,36 +608,6 @@ function exportOrders() {
 // Imprimir pedido
 function printOrder(orderId) {
     window.open(`order_print.php?id=${orderId}`, '_blank', 'width=800,height=600');
-}
-
-// Auto-refresh cada 30 segundos si hay pedidos pendientes
-if (<?php echo $stats['pending_orders']; ?> > 0) {
-    setInterval(function() {
-        // Solo refresh automático si no hay filtros activos
-        if (!window.location.search || window.location.search === '?') {
-            const notification = document.createElement('div');
-            notification.className = 'toast-container position-fixed top-0 end-0 p-3';
-            notification.innerHTML = `
-                <div class="toast" role="alert">
-                    <div class="toast-header">
-                        <i class="fas fa-sync-alt text-primary me-2"></i>
-                        <strong class="me-auto">Actualizando</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                    </div>
-                    <div class="toast-body">
-                        Verificando nuevos pedidos...
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(notification);
-            const toast = new bootstrap.Toast(notification.querySelector('.toast'));
-            toast.show();
-            
-            setTimeout(() => {
-                refreshOrders();
-            }, 2000);
-        }
-    }, 30000);
 }
 </script>
 
