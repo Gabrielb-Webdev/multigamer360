@@ -738,15 +738,15 @@ document.querySelectorAll('.role-select').forEach(select => {
         }
         
         const roleNames = {
-            'administrador': 'Administrador',
-            'colaborador': 'Colaborador',
-            'moderador': 'Moderador',
-            'cliente': 'Cliente'
+            administrador: 'Administrador',
+            colaborador: 'Colaborador',
+            moderador: 'Moderador',
+            cliente: 'Cliente'
         };
         
         const message = 'Cambiar rol de ' + roleNames[currentRole] + ' a ' + roleNames[newRole] + '?';
         
-        Utils.confirm(message, () => {
+        Utils.confirm(message, function() {
             fetch('api/users.php', {
                 method: 'PUT',
                 headers: {
@@ -775,7 +775,7 @@ document.querySelectorAll('.role-select').forEach(select => {
                 Utils.showToast('Error de conexión', 'danger');
                 this.value = currentRole;
             });
-        }, () => {
+        }, function() {
             // Cancelado - restaurar valor anterior
             this.value = currentRole;
         });
