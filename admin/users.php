@@ -744,7 +744,7 @@ document.querySelectorAll('.role-select').forEach(select => {
             'cliente': 'Cliente'
         };
         
-        const message = '¿Cambiar rol de ' + roleNames[currentRole] + ' a ' + roleNames[newRole] + '?';
+        const message = 'Cambiar rol de ' + roleNames[currentRole] + ' a ' + roleNames[newRole] + '?';
         
         Utils.confirm(message, () => {
             fetch('api/users.php', {
