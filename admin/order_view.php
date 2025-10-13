@@ -21,7 +21,7 @@ if (!hasPermission('orders', 'read')) {
 try {
     // Obtener información del pedido
     $order_stmt = $pdo->prepare("
-        SELECT o.*, u.username, u.email as user_email, u.phone as user_phone
+        SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as username, u.email as user_email, u.phone as user_phone
         FROM orders o
         LEFT JOIN users u ON o.user_id = u.id
         WHERE o.id = ?
@@ -58,7 +58,7 @@ try {
     
     // Obtener notas
     $notes_stmt = $pdo->prepare("
-        SELECT on.*, u.username as admin_name
+        SELECT on.*, CONCAT(u.first_name, ' ', u.last_name) as admin_name
         FROM order_notes on
         LEFT JOIN users u ON on.admin_id = u.id
         WHERE on.order_id = ?

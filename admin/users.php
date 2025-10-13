@@ -25,9 +25,8 @@ $where_conditions = ['1=1'];
 $params = [];
 
 if ($search) {
-    $where_conditions[] = "(u.username LIKE ? OR u.email LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
+    $where_conditions[] = "(u.email LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
     $search_term = "%$search%";
-    $params[] = $search_term;
     $params[] = $search_term;
     $params[] = $search_term;
     $params[] = $search_term;

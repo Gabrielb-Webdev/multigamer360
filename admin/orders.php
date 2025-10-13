@@ -65,7 +65,7 @@ try {
     
     // Obtener pedidos
     $query = "
-        SELECT o.*, u.username, u.email as user_email,
+        SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as username, u.email as user_email,
                (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as items_count
         FROM orders o
         LEFT JOIN users u ON o.user_id = u.id
