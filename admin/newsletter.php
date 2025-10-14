@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
             try {
                 $stmt = $pdo->prepare("
-                    INSERT INTO newsletter_subscribers (email, first_name, last_name, source) 
-                    VALUES (?, ?, ?, 'manual')
+                    INSERT INTO newsletter_subscribers (email, first_name, last_name) 
+                    VALUES (?, ?, ?)
                     ON DUPLICATE KEY UPDATE 
                     first_name = VALUES(first_name), 
                     last_name = VALUES(last_name),
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     elseif ($action === 'unsubscribe') {
         $subscriber_id = $_POST['subscriber_id'];
-        $stmt = $pdo->prepare("UPDATE newsletter_subscribers SET status = 'unsubscribed', unsubscribed_at = NOW() WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE newsletter_subscribers SET status = 'unsubscribed' WHERE id = ?");
         $stmt->execute([$subscriber_id]);
         $_SESSION['success'] = "Suscriptor dado de baja";
     }
