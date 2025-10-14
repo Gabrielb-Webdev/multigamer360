@@ -14,7 +14,7 @@
  * Fecha: 2025-10-14
  */
 
-$page_title = 'Dashboard Principal';
+$page_title = '';
 require_once 'inc/header.php';
 
 try {
