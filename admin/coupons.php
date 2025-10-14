@@ -1,4 +1,10 @@
 <?php
+// Activar reporte de errores para debug (REMOVER en producción)
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // No mostrar en pantalla
+ini_set('log_errors', 1); // Guardar en log
+ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
+
 require_once 'inc/auth.php';
 
 // $userManager ya está disponible desde auth.php
@@ -10,20 +16,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create') {
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO coupons (code, description, type, value, minimum_amount, maximum_discount, usage_limit, starts_at, expires_at, is_active) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
             $stmt->execute([
                 strtoupper($_POST['code']),
+                $_POST['name'],
                 $_POST['description'],
                 $_POST['type'],
                 $_POST['value'],
                 $_POST['minimum_amount'] ?: 0,
                 $_POST['maximum_discount'] ?: null,
                 $_POST['usage_limit'] ?: null,
-                $_POST['starts_at'],
-                $_POST['expires_at'] ?: null,
+                $_POST['per_user_limit'] ?: 1,
+                $_POST['start_date'],
+                $_POST['end_date'] ?: null,
                 isset($_POST['is_active']) ? 1 : 0
             ]);
             
@@ -79,9 +87,16 @@ if ($type) {
 }
 
 $sql .= " ORDER BY created_at DESC";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$coupons = $stmt->fetchAll();
+
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $coupons = $stmt->fetchAll();
+} catch (PDOException $e) {
+    error_log("Error en coupons.php: " . $e->getMessage());
+    $coupons = [];
+    $error_msg = "Error al cargar los cupones. Por favor, contacta al administrador.";
+}
 
 $page_title = "Gestión de Cupones";
 require_once 'inc/header.php';
