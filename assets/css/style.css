@@ -276,7 +276,7 @@ body.navbar-only {
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: #1A1A1A !important;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -293,7 +293,7 @@ body.navbar-only {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     padding: 1.5rem;
     padding-left: 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: #1A1A1A !important;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
