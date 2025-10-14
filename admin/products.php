@@ -1,5 +1,5 @@
 <?php
-$page_title = 'Gestión de Productos';
+$page_title = 'Gestión de Productos e Inventario';
 $page_actions = '<a href="product_create.php" class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo Producto</a>';
 
 require_once 'inc/header.php';
@@ -16,7 +16,7 @@ $search = $_GET['search'] ?? '';
 $category = $_GET['category'] ?? '';
 $brand = $_GET['brand'] ?? '';
 $status = $_GET['status'] ?? '';
-$low_stock = isset($_GET['low_stock']) ? true : false;
+$stock_status = $_GET['stock_status'] ?? '';
 $page = max(1, intval($_GET['page'] ?? 1));
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
@@ -53,8 +53,13 @@ if ($status) {
     // 'draft' se ignora por ahora ya que no hay columna específica
 }
 
-if ($low_stock) {
-    $where_conditions[] = "p.stock_quantity <= 10";
+// Filtro por estado de stock
+if ($stock_status === 'low') {
+    $where_conditions[] = "p.stock_quantity <= 10 AND p.stock_quantity > 0";
+} elseif ($stock_status === 'out') {
+    $where_conditions[] = "p.stock_quantity = 0";
+} elseif ($stock_status === 'good') {
+    $where_conditions[] = "p.stock_quantity > 10";
 }
 
 $where_clause = implode(' AND ', $where_conditions);
@@ -66,10 +71,33 @@ try {
     $count_stmt->execute($params);
     $total_products = $count_stmt->fetch()['total'];
     
+    // Estadísticas de inventario (usando 10 como nivel mínimo de stock)
+    $stats = $pdo->query("
+        SELECT 
+            COUNT(*) as total_products,
+            SUM(stock_quantity) as total_stock,
+            COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock,
+            COUNT(CASE WHEN stock_quantity <= 10 AND stock_quantity > 0 THEN 1 END) as low_stock,
+            COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock,
+            SUM(stock_quantity * COALESCE(price, 0)) as inventory_value
+        FROM products 
+        WHERE is_active = 1
+    ")->fetch();
+    
     // Obtener productos
     $query = "
         SELECT p.*, c.name as category_name, b.name as brand_name,
-               pi.image_url as main_image
+               pi.image_url as main_image,
+               CASE 
+                   WHEN p.stock_quantity = 0 THEN 'Agotado'
+                   WHEN p.stock_quantity <= 10 THEN 'Stock Bajo'
+                   ELSE 'Stock Normal'
+               END as stock_status,
+               CASE 
+                   WHEN p.stock_quantity = 0 THEN 'danger'
+                   WHEN p.stock_quantity <= 10 THEN 'warning'
+                   ELSE 'success'
+               END as stock_color
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
@@ -100,8 +128,108 @@ try {
     $brands = [];
     $total_products = 0;
     $total_pages = 1;
+    $stats = ['total_products' => 0, 'total_stock' => 0, 'out_of_stock' => 0, 'low_stock' => 0, 'good_stock' => 0, 'inventory_value' => 0];
 }
 ?>
+
+<!-- Estadísticas de inventario -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Total Productos</h6>
+                        <h4 class="mb-0"><?php echo number_format($stats['total_products']); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-boxes fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Stock Total</h6>
+                        <h4 class="mb-0"><?php echo number_format($stats['total_stock']); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-warehouse fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Stock Normal</h6>
+                        <h4 class="mb-0 text-success"><?php echo number_format($stats['good_stock']); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Stock Bajo</h6>
+                        <h4 class="mb-0 text-warning"><?php echo number_format($stats['low_stock']); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card border-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Agotado</h6>
+                        <h4 class="mb-0 text-danger"><?php echo number_format($stats['out_of_stock']); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-times-circle fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card border-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">Valor Inventario</h6>
+                        <h4 class="mb-0"><?php echo '$' . number_format($stats['inventory_value'], 2); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x text-dark"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Filtros -->
 <div class="card mb-4">
@@ -146,19 +274,17 @@ try {
                     <option value="">Todos</option>
                     <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Activo</option>
                     <option value="inactive" <?php echo $status === 'inactive' ? 'selected' : ''; ?>>Inactivo</option>
-                    <option value="draft" <?php echo $status === 'draft' ? 'selected' : ''; ?>>Borrador</option>
                 </select>
             </div>
             
             <div class="col-md-2">
-                <label for="low_stock" class="form-label">Stock Bajo</label>
-                <div class="form-check mt-2">
-                    <input class="form-check-input" type="checkbox" id="low_stock" name="low_stock" 
-                           value="1" <?php echo $low_stock ? 'checked' : ''; ?>>
-                    <label class="form-check-label" for="low_stock">
-                        ≤ 10 unidades
-                    </label>
-                </div>
+                <label for="stock_status" class="form-label">Estado Stock</label>
+                <select class="form-select" id="stock_status" name="stock_status">
+                    <option value="">Todos</option>
+                    <option value="good" <?php echo $stock_status === 'good' ? 'selected' : ''; ?>>Stock Normal</option>
+                    <option value="low" <?php echo $stock_status === 'low' ? 'selected' : ''; ?>>Stock Bajo</option>
+                    <option value="out" <?php echo $stock_status === 'out' ? 'selected' : ''; ?>>Agotado</option>
+                </select>
             </div>
             
             <div class="col-md-1">
@@ -257,8 +383,10 @@ try {
                             <th>Marca</th>
                             <th>Precio</th>
                             <th>Stock</th>
+                            <th>Stock Mín.</th>
                             <th>Estado</th>
-                            <th width="120">Acciones</th>
+                            <th>Valor</th>
+                            <th width="150">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -304,12 +432,12 @@ try {
                                 <strong>$<?php echo number_format($product['price'], 0); ?></strong>
                             </td>
                             <td>
-                                <?php
-                                $stock_class = $product['stock_quantity'] <= 10 ? 'text-danger' : ($product['stock_quantity'] <= 20 ? 'text-warning' : 'text-success');
-                                ?>
-                                <span class="<?php echo $stock_class; ?>">
+                                <span class="badge bg-<?php echo $product['stock_color']; ?>">
                                     <?php echo number_format($product['stock_quantity']); ?>
                                 </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">10</span>
                             </td>
                             <td>
                                 <?php
@@ -319,12 +447,23 @@ try {
                                 <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
                             </td>
                             <td>
+                                <strong>$<?php echo number_format($product['stock_quantity'] * $product['price'], 0); ?></strong>
+                            </td>
+                            <td>
                                 <div class="btn-group" role="group">
                                     <a href="../product-details.php?id=<?php echo $product['id']; ?>" 
                                        class="btn btn-sm btn-outline-info" target="_blank"
                                        data-bs-toggle="tooltip" title="Ver en sitio">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    
+                                    <?php if (hasPermission('inventory', 'update')): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-warning" 
+                                            onclick="showAdjustStockModal(<?php echo $product['id']; ?>, '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>', <?php echo $product['stock_quantity']; ?>)"
+                                            data-bs-toggle="tooltip" title="Ajustar Stock">
+                                        <i class="fas fa-box"></i>
+                                    </button>
+                                    <?php endif; ?>
                                     
                                     <?php if (hasPermission('products', 'update')): ?>
                                     <a href="product_edit.php?id=<?php echo $product['id']; ?>" 
@@ -925,6 +1064,175 @@ function executeBulkDelete(ids) {
         confirmBtn.innerHTML = originalBtnText;
     });
 }
+
+// Función para mostrar modal de ajuste de stock
+function showAdjustStockModal(productId, productName, currentStock) {
+    document.getElementById('adjust_product_id').value = productId;
+    document.getElementById('adjust_product_name').textContent = productName;
+    document.getElementById('current_stock').value = currentStock;
+    
+    // Limpiar formulario
+    document.getElementById('adjustStockForm').reset();
+    document.getElementById('adjust_product_id').value = productId;
+    document.getElementById('current_stock').value = currentStock;
+    
+    calculateResultingStock();
+    
+    new bootstrap.Modal(document.getElementById('adjustStockModal')).show();
+}
+
+// Calcular stock resultante
+function calculateResultingStock() {
+    const currentStock = parseInt(document.getElementById('current_stock').value) || 0;
+    const adjustmentType = document.getElementById('adjustment_type').value;
+    const adjustmentQuantity = parseInt(document.getElementById('adjustment_quantity').value) || 0;
+    
+    let resultingStock = currentStock;
+    
+    if (adjustmentType === 'increase') {
+        resultingStock = currentStock + adjustmentQuantity;
+    } else if (adjustmentType === 'decrease') {
+        resultingStock = Math.max(0, currentStock - adjustmentQuantity);
+    } else if (adjustmentType === 'set') {
+        resultingStock = adjustmentQuantity;
+    }
+    
+    document.getElementById('resulting_stock').textContent = resultingStock;
+}
+
+// Event listeners para cálculo automático
+document.addEventListener('DOMContentLoaded', function() {
+    const adjustTypeElem = document.getElementById('adjustment_type');
+    const adjustQtyElem = document.getElementById('adjustment_quantity');
+    
+    if (adjustTypeElem) {
+        adjustTypeElem.addEventListener('change', calculateResultingStock);
+    }
+    if (adjustQtyElem) {
+        adjustQtyElem.addEventListener('input', calculateResultingStock);
+    }
+    
+    // Enviar formulario de ajuste
+    const adjustStockForm = document.getElementById('adjustStockForm');
+    if (adjustStockForm) {
+        adjustStockForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('api/inventory.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                    alert.style.zIndex = '9999';
+                    alert.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        Stock ajustado correctamente
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.body.appendChild(alert);
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('adjustStockModal')).hide();
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert('Error: ' + (data.message || 'Error al ajustar stock'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            });
+        });
+    }
+});
 </script>
+
+<!-- Modal Ajustar Stock -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="fas fa-box me-2"></i>Ajustar Stock
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustStockForm">
+                    <input type="hidden" id="adjust_product_id" name="product_id">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Producto</label>
+                        <div id="adjust_product_name" class="form-control-plaintext fw-bold"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="current_stock" class="form-label">Stock Actual</label>
+                                <input type="number" class="form-control" id="current_stock" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="adjustment_type" class="form-label">Tipo de Ajuste</label>
+                                <select class="form-select" id="adjustment_type" name="adjustment_type" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="increase">Incrementar (+)</option>
+                                    <option value="decrease">Disminuir (-)</option>
+                                    <option value="set">Establecer cantidad exacta</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustment_quantity" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="adjustment_quantity" name="adjustment_quantity" min="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustment_reason" class="form-label">Motivo del Ajuste</label>
+                        <select class="form-select" id="adjustment_reason" name="adjustment_reason" required>
+                            <option value="">Seleccionar motivo...</option>
+                            <option value="purchase">Compra de inventario</option>
+                            <option value="sale">Venta</option>
+                            <option value="return">Devolución</option>
+                            <option value="damage">Producto dañado</option>
+                            <option value="theft">Robo/Pérdida</option>
+                            <option value="correction">Corrección de inventario</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustment_notes" class="form-label">Notas (opcional)</label>
+                        <textarea class="form-control" id="adjustment_notes" name="adjustment_notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Stock resultante:</strong> <span id="resulting_stock">0</span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="adjustStockForm" class="btn btn-warning">
+                    <i class="fas fa-check me-2"></i>Aplicar Ajuste
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once 'inc/footer.php'; ?>
