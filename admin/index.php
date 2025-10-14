@@ -299,7 +299,7 @@ try {
 <!-- Encabezado -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard Principal</h2>
+        <h2><i class="fas fa-tachometer-alt text-primary"></i> https://teal-fish-507993.hostingersite.com/admin/index.php</h2>
         <p class="text-muted mb-0">Resumen completo en tiempo real • <?php echo date('d/m/Y H:i'); ?></p>
     </div>
 </div>

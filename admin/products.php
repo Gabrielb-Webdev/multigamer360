@@ -477,14 +477,6 @@ try {
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     
-                                    <?php if (hasPermission('inventory', 'update')): ?>
-                                    <button type="button" class="btn btn-sm btn-outline-warning" 
-                                            onclick="showAdjustStockModal(<?php echo $product['id']; ?>, '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>', <?php echo $product['stock_quantity']; ?>)"
-                                            data-bs-toggle="tooltip" title="Ajustar Stock">
-                                        <i class="fas fa-box"></i>
-                                    </button>
-                                    <?php endif; ?>
-                                    
                                     <?php if (hasPermission('products', 'update')): ?>
                                     <a href="product_edit.php?id=<?php echo $product['id']; ?>" 
                                        class="btn btn-sm btn-outline-primary"

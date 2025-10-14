@@ -102,8 +102,7 @@ if ($_POST) {
         'confirm_password' => $_POST['confirm_password'] ?? '',
         'first_name' => trim($_POST['first_name'] ?? ''),
         'last_name' => trim($_POST['last_name'] ?? ''),
-        'phone' => trim($_POST['phone'] ?? ''),
-        'birth_date' => trim($_POST['birth_date'] ?? '')
+        'phone' => trim($_POST['phone'] ?? '')
     ];
     
     // Validar confirmación de contraseña
@@ -876,21 +875,6 @@ if ($_POST) {
                            placeholder="tu@email.com" 
                            value="<?php echo htmlspecialchars($data['email'] ?? ''); ?>" 
                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
-                </div>
-
-                <!-- Fecha de Nacimiento (Opcional) -->
-                <div class="form-group">
-                    <label for="birth_date" class="form-label">
-                        <i class="fas fa-birthday-cake me-2"></i>Fecha de Nacimiento <span class="text-muted">(Opcional)</span>
-                    </label>
-                    <input type="date" class="form-control" id="birth_date" name="birth_date" 
-                           value="<?php echo htmlspecialchars($data['birth_date'] ?? ''); ?>"
-                           max="<?php echo date('Y-m-d'); ?>"
-                           min="<?php echo date('Y-m-d', strtotime('-120 years')); ?>"
-                           autocomplete="off">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>Te enviaremos una sorpresa en tu cumpleaños
-                    </small>
                 </div>
 
                 <!-- Contraseña -->
