@@ -132,7 +132,7 @@ try {
             p.sku,
             COUNT(oi.id) as times_sold,
             SUM(oi.quantity) as units_sold,
-            SUM(oi.subtotal) as revenue
+            SUM(oi.total_price) as revenue
         FROM order_items oi
         INNER JOIN products p ON oi.product_id = p.id
         INNER JOIN orders o ON oi.order_id = o.id

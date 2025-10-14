@@ -78,11 +78,31 @@ try {
             SUM(stock_quantity) as total_stock,
             COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock,
             COUNT(CASE WHEN stock_quantity <= 10 AND stock_quantity > 0 THEN 1 END) as low_stock,
-            COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock,
-            SUM(stock_quantity * COALESCE(price_pesos, 0)) as inventory_value
+            COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock
         FROM products 
         WHERE is_active = 1
     ")->fetch();
+    
+    // Calcular valores de inventario por separado (en código PHP)
+    $inventory_query = $pdo->query("
+        SELECT 
+            stock_quantity,
+            COALESCE(price_pesos, 0) as price_pesos,
+            COALESCE(price_dollars, 0) as price_dollars
+        FROM products 
+        WHERE is_active = 1
+    ");
+    
+    $inventory_value_ars = 0;
+    $inventory_value_usd = 0;
+    
+    while ($row = $inventory_query->fetch()) {
+        $inventory_value_ars += $row['stock_quantity'] * $row['price_pesos'];
+        $inventory_value_usd += $row['stock_quantity'] * $row['price_dollars'];
+    }
+    
+    $stats['inventory_value_ars'] = $inventory_value_ars;
+    $stats['inventory_value_usd'] = $inventory_value_usd;
     
     // Obtener productos
     $query = "
@@ -215,15 +235,31 @@ try {
     </div>
     
     <div class="col-md-2">
-        <div class="card border-dark">
-            <div class="card-body">
+        <div class="card border-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body text-white">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title text-muted mb-2">Valor Inventario</h6>
-                        <h4 class="mb-0"><?php echo '$' . number_format($stats['inventory_value'], 2); ?></h4>
+                        <h6 class="card-title mb-2 opacity-75">Valor Total ARS</h6>
+                        <h4 class="mb-0">$<?php echo number_format($stats['inventory_value_ars'], 0); ?></h4>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-dollar-sign fa-2x text-dark"></i>
+                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card border-dark" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="card-body text-white">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title mb-2 opacity-75">Valor Total USD</h6>
+                        <h4 class="mb-0">$<?php echo number_format($stats['inventory_value_usd'], 2); ?></h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -381,11 +417,11 @@ try {
                             <th>SKU</th>
                             <th>Categoría</th>
                             <th>Marca</th>
-                            <th>Precio</th>
+                            <th>Precio ARS</th>
+                            <th>Precio USD</th>
                             <th>Stock</th>
                             <th>Stock Mín.</th>
                             <th>Estado</th>
-                            <th>Valor</th>
                             <th width="150">Acciones</th>
                         </tr>
                     </thead>
@@ -429,7 +465,10 @@ try {
                                 <?php echo htmlspecialchars($product['brand_name'] ?? 'Sin marca'); ?>
                             </td>
                             <td>
-                                <strong>$<?php echo number_format($product['price_pesos'], 0); ?></strong>
+                                <strong class="text-primary">$<?php echo number_format($product['price_pesos'], 0); ?></strong>
+                            </td>
+                            <td>
+                                <strong class="text-success">$<?php echo number_format($product['price_dollars'], 2); ?></strong>
                             </td>
                             <td>
                                 <span class="badge bg-<?php echo $product['stock_color']; ?>">
@@ -445,9 +484,6 @@ try {
                                 $status_text = $product['is_active'] ? 'Activo' : 'Inactivo';
                                 ?>
                                 <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-                            </td>
-                            <td>
-                                <strong>$<?php echo number_format($product['stock_quantity'] * $product['price_pesos'], 0); ?></strong>
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
