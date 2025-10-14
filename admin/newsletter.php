@@ -8,28 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'send_campaign') {
-        // Crear nueva campaña
-        $name = trim($_POST['campaign_name']);
-        $subject = trim($_POST['subject']);
-        $template_id = $_POST['template_id'];
-        $recipient_type = $_POST['recipient_type'];
-        
-        if (!empty($name) && !empty($subject) && !empty($template_id)) {
-            try {
-                $stmt = $pdo->prepare("
-                    INSERT INTO email_campaigns (name, subject, template_id, recipient_type, created_by, status) 
-                    VALUES (?, ?, ?, ?, ?, 'draft')
-                ");
-                $stmt->execute([$name, $subject, $template_id, $recipient_type, $_SESSION['user_id']]);
-                
-                $campaign_id = $pdo->lastInsertId();
-                $_SESSION['success'] = "Campaña creada exitosamente (ID: $campaign_id)";
-            } catch (Exception $e) {
-                $_SESSION['error'] = "Error al crear campaña: " . $e->getMessage();
-            }
-        } else {
-            $_SESSION['error'] = "Todos los campos son requeridos";
-        }
+        // NOTA: Funcionalidad desactivada - tabla email_campaigns no existe
+        $_SESSION['error'] = "Función de campañas no disponible. Por favor, crea la tabla email_campaigns.";
     }
     elseif ($action === 'add_subscriber') {
         $email = trim($_POST['email']);
@@ -74,15 +54,13 @@ $stats_stmt = $pdo->query("
 ");
 $subscriber_stats = $stats_stmt->fetch();
 
-$campaign_stats_stmt = $pdo->query("
-    SELECT 
-        COUNT(*) as total_campaigns,
-        COUNT(CASE WHEN status = 'sent' OR status = 'completed' THEN 1 END) as sent_campaigns,
-        COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_campaigns,
-        COALESCE(SUM(emails_sent), 0) as total_emails_sent
-    FROM email_campaigns
-");
-$campaign_stats = $campaign_stats_stmt->fetch();
+// Inicializar estadísticas de campañas vacías (tabla no existe aún)
+$campaign_stats = [
+    'total_campaigns' => 0,
+    'sent_campaigns' => 0,
+    'draft_campaigns' => 0,
+    'total_emails_sent' => 0
+];
 
 // Obtener suscriptores
 $search = $_GET['search'] ?? '';
@@ -108,19 +86,9 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $subscribers = $stmt->fetchAll();
 
-// Obtener plantillas
-$templates_stmt = $pdo->query("SELECT * FROM email_templates WHERE is_active = 1 ORDER BY name");
-$templates = $templates_stmt->fetchAll();
-
-// Obtener campañas recientes
-$recent_campaigns_stmt = $pdo->query("
-    SELECT c.*, u.email as created_by_email 
-    FROM email_campaigns c
-    LEFT JOIN users u ON c.created_by = u.id
-    ORDER BY c.created_at DESC 
-    LIMIT 10
-");
-$recent_campaigns = $recent_campaigns_stmt->fetchAll();
+// Plantillas y campañas vacías (tablas no existen aún)
+$templates = [];
+$recent_campaigns = [];
 
 $page_title = "Email Marketing";
 $page_actions = '
