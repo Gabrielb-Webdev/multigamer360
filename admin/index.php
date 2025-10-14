@@ -26,8 +26,8 @@ try {
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total), 0) as total_sales,
-            COALESCE(AVG(total), 0) as avg_order_value
+            COALESCE(SUM(total_amount), 0) as total_sales,
+            COALESCE(AVG(total_amount), 0) as avg_order_value
         FROM orders 
         WHERE DATE(created_at) = CURDATE()
         AND status != 'cancelled'
@@ -38,7 +38,7 @@ try {
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total), 0) as total_sales
+            COALESCE(SUM(total_amount), 0) as total_sales
         FROM orders 
         WHERE DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
         AND status != 'cancelled'
@@ -151,8 +151,8 @@ try {
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total), 0) as total_sales,
-            COALESCE(AVG(total), 0) as avg_order
+            COALESCE(SUM(total_amount), 0) as total_sales,
+            COALESCE(AVG(total_amount), 0) as avg_order
         FROM orders 
         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         AND status != 'cancelled'
@@ -454,7 +454,7 @@ try {
 <!-- Alertas y Top Productos -->
 <div class="row">
     <!-- Alertas -->
-    <div class="col-md-4">
+    <div class="col-md-6 mb-4">
         <div class="section-title">
             <i class="fas fa-exclamation-triangle text-warning"></i>
             Alertas Importantes
@@ -513,29 +513,10 @@ try {
             <i class="fas fa-check-circle"></i> ¡No hay alertas pendientes! Todo está en orden.
         </div>
         <?php endif; ?>
-        
-        <!-- Acceso rápido -->
-        <div class="mt-4">
-            <div class="section-title">
-                <i class="fas fa-link text-primary"></i>
-                Accesos Rápidos
-            </div>
-            <div class="d-grid gap-2">
-                <a href="products.php" class="btn btn-outline-primary">
-                    <i class="fas fa-boxes"></i> Gestionar Productos
-                </a>
-                <a href="orders.php" class="btn btn-outline-success">
-                    <i class="fas fa-shopping-cart"></i> Ver Órdenes
-                </a>
-                <a href="users.php" class="btn btn-outline-info">
-                    <i class="fas fa-users"></i> Ver Clientes
-                </a>
-            </div>
-        </div>
     </div>
     
     <!-- Top 10 Productos -->
-    <div class="col-md-8">
+    <div class="col-md-6 mb-4">
         <div class="section-title">
             <i class="fas fa-star text-warning"></i>
             Top 10 Productos (Última Semana)
