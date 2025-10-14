@@ -1,7 +1,7 @@
 <?php
 require_once 'inc/auth.php';
 
-$userManager = new UserManager($pdo);
+// $userManager ya está disponible desde auth.php
 
 // Directorio de uploads
 $upload_dir = '../uploads/';

@@ -18,7 +18,7 @@
 
 require_once 'inc/auth.php';
 
-$userManager = new UserManager($pdo);
+// $userManager ya está disponible desde auth.php
 
 // Obtener datos para el dashboard
 try {
