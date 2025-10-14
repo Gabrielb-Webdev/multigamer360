@@ -51,6 +51,13 @@ body {
     text-align: center;
 }
 
+.sidebar-heading {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
 main {
     margin-top: 56px;
 }

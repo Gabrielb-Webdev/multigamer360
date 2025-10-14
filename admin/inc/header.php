@@ -14,7 +14,7 @@ require_once 'auth.php';
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Admin CSS -->
-    <link href="assets/css/admin.css?v=1.2" rel="stylesheet">
+    <link href="assets/css/admin.css?v=1.3" rel="stylesheet">
     
     <meta name="csrf-token" content="<?php echo $csrf_token; ?>">
 </head>
@@ -72,14 +72,14 @@ require_once 'auth.php';
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>" href="index.php">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
                         
                         <?php if (hasPermission('products', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo strpos($_SERVER['PHP_SELF'], 'product') !== false ? 'active' : ''; ?>" href="products.php">
-                                <i class="fas fa-box"></i> Productos
+                                <i class="fas fa-box me-2"></i>Productos
                             </a>
                         </li>
                         <?php endif; ?>
@@ -87,7 +87,7 @@ require_once 'auth.php';
                         <?php if (hasPermission('orders', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo strpos($_SERVER['PHP_SELF'], 'order') !== false ? 'active' : ''; ?>" href="orders.php">
-                                <i class="fas fa-shopping-cart"></i> Pedidos
+                                <i class="fas fa-shopping-cart me-2"></i>Órdenes
                             </a>
                         </li>
                         <?php endif; ?>
@@ -95,7 +95,7 @@ require_once 'auth.php';
                         <?php if (hasPermission('users', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : ''; ?>" href="users.php">
-                                <i class="fas fa-users"></i> Usuarios
+                                <i class="fas fa-users me-2"></i>Usuarios
                             </a>
                         </li>
                         <?php endif; ?>
@@ -103,7 +103,7 @@ require_once 'auth.php';
                         <?php if (hasPermission('categories', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'categories.php' ? 'active' : ''; ?>" href="categories.php">
-                                <i class="fas fa-tags"></i> Categorías
+                                <i class="fas fa-tags me-2"></i>Categorías
                             </a>
                         </li>
                         <?php endif; ?>
@@ -111,7 +111,7 @@ require_once 'auth.php';
                         <?php if (hasPermission('brands', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'brands.php' ? 'active' : ''; ?>" href="brands.php">
-                                <i class="fas fa-trademark"></i> Marcas
+                                <i class="fas fa-award me-2"></i>Marcas
                             </a>
                         </li>
                         <?php endif; ?>
@@ -119,7 +119,7 @@ require_once 'auth.php';
                         <?php if (hasPermission('inventory', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'inventory.php' ? 'active' : ''; ?>" href="inventory.php">
-                                <i class="fas fa-warehouse"></i> Inventario
+                                <i class="fas fa-warehouse me-2"></i>Inventario
                             </a>
                         </li>
                         <?php endif; ?>
@@ -127,23 +127,41 @@ require_once 'auth.php';
                         <?php if (hasPermission('coupons', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'coupons.php' ? 'active' : ''; ?>" href="coupons.php">
-                                <i class="fas fa-ticket-alt"></i> Cupones
+                                <i class="fas fa-ticket-alt me-2"></i>Cupones
                             </a>
                         </li>
                         <?php endif; ?>
-                        
+                    </ul>
+                    
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Marketing</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
                         <?php if (hasPermission('reviews', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'reviews.php' ? 'active' : ''; ?>" href="reviews.php">
-                                <i class="fas fa-star"></i> Reseñas
+                                <i class="fas fa-star me-2"></i>Reseñas
                             </a>
                         </li>
                         <?php endif; ?>
                         
+                        <?php if (hasPermission('newsletter', 'read')): ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'newsletter.php' ? 'active' : ''; ?>" href="newsletter.php">
+                                <i class="fas fa-envelope me-2"></i>Newsletter
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                    </ul>
+                    
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Reportes</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
                         <?php if (hasPermission('reports', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : ''; ?>" href="reports.php">
-                                <i class="fas fa-chart-bar"></i> Reportes
+                                <i class="fas fa-chart-bar me-2"></i>Analíticas
                             </a>
                         </li>
                         <?php endif; ?>
@@ -151,34 +169,13 @@ require_once 'auth.php';
                         <?php if (hasPermission('settings', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>" href="settings.php">
-                                <i class="fas fa-cog"></i> Configuración
+                                <i class="fas fa-cog me-2"></i>Configuración
                             </a>
                         </li>
                         <?php endif; ?>
-                        
-                        <?php if (hasPermission('media', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'media.php' ? 'active' : ''; ?>" href="media.php">
-                                <i class="fas fa-images"></i> Medios
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <?php if (hasPermission('coupons', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'coupons.php' ? 'active' : ''; ?>" href="coupons.php">
-                                <i class="fas fa-percentage"></i> Cupones
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <?php if (hasPermission('reports', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : ''; ?>" href="reports.php">
-                                <i class="fas fa-chart-bar"></i> Reportes
-                            </a>
-                        </li>
-                        <?php endif; ?>
+                    </ul>
+                </div>
+            </nav>
                         
                         <?php if (hasPermission('settings', 'read')): ?>
                         <li class="nav-item">
