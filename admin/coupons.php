@@ -101,16 +101,84 @@ try {
 $page_title = "Gestión de Cupones";
 require_once 'inc/header.php';
 ?>
+
+<style>
+    /* Estilos específicos para la página de cupones */
+    .coupon-code {
+        font-family: 'Courier New', monospace;
+        background-color: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        color: #e83e8c;
+        border: 1px solid #dee2e6;
+    }
+    
+    .coupon-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .coupon-table td {
+        vertical-align: middle;
+    }
+    
+    .progress {
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .btn-group-actions {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .btn-group-actions .btn {
+        padding: 4px 8px;
+        font-size: 0.875rem;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        font-weight: 500;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .page-header h1 {
+        margin: 0;
+        color: white;
+    }
+    
+    .page-header .btn {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+</style>
     
     <div class="container-fluid">
         <div class="row">
             <?php include 'inc/sidebar.php'; ?>
             
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2"><i class="fas fa-ticket-alt me-2"></i>Gestión de Cupones</h1>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCouponModal">
-                        <i class="fas fa-plus me-1"></i>Crear Cupón
+                <!-- Header mejorado -->
+                <div class="page-header d-flex justify-content-between align-items-center mt-3">
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-ticket-alt me-2"></i>Gestión de Cupones
+                    </h1>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createCouponModal">
+                        <i class="fas fa-plus me-2"></i>Crear Cupón
                     </button>
                 </div>
 
@@ -163,71 +231,90 @@ require_once 'inc/header.php';
                 </div>
 
                 <!-- Tabla de cupones -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Lista de Cupones (<?php echo count($coupons); ?>)</h5>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2 text-primary"></i>
+                            Lista de Cupones 
+                            <span class="badge bg-primary ms-2"><?php echo count($coupons); ?></span>
+                        </h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
+                            <table class="table table-hover coupon-table mb-0">
+                                <thead>
                                     <tr>
-                                        <th>Código</th>
+                                        <th style="width: 120px;">Código</th>
                                         <th>Nombre</th>
-                                        <th>Tipo</th>
-                                        <th>Valor</th>
-                                        <th>Usos</th>
-                                        <th>Estado</th>
-                                        <th>Vigencia</th>
-                                        <th>Acciones</th>
+                                        <th style="width: 100px;">Tipo</th>
+                                        <th style="width: 120px;">Valor</th>
+                                        <th style="width: 100px;">Usos</th>
+                                        <th style="width: 100px;">Estado</th>
+                                        <th style="width: 140px;">Vigencia</th>
+                                        <th style="width: 180px;" class="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($coupons as $coupon): ?>
                                         <tr>
                                             <td>
-                                                <code class="bg-light p-1 rounded"><?php echo $coupon['code']; ?></code>
+                                                <span class="coupon-code"><?php echo htmlspecialchars($coupon['code']); ?></span>
                                             </td>
                                             <td>
-                                                <strong><?php echo htmlspecialchars($coupon['name']); ?></strong>
-                                                <?php if ($coupon['description']): ?>
-                                                    <br><small class="text-muted"><?php echo htmlspecialchars($coupon['description']); ?></small>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($coupon['type'] === 'percentage'): ?>
-                                                    <span class="badge bg-info">Porcentaje</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-success">Monto Fijo</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($coupon['type'] === 'percentage'): ?>
-                                                    <strong><?php echo $coupon['value']; ?>%</strong>
-                                                    <?php if ($coupon['maximum_discount']): ?>
-                                                        <br><small class="text-muted">Máx: $<?php echo number_format($coupon['maximum_discount'], 2); ?></small>
+                                                <div>
+                                                    <strong class="d-block"><?php echo htmlspecialchars($coupon['name']); ?></strong>
+                                                    <?php if ($coupon['description']): ?>
+                                                        <small class="text-muted"><?php echo htmlspecialchars(substr($coupon['description'], 0, 50)); ?><?php echo strlen($coupon['description']) > 50 ? '...' : ''; ?></small>
                                                     <?php endif; ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <?php if ($coupon['type'] === 'percentage'): ?>
+                                                    <span class="badge bg-info text-white">
+                                                        <i class="fas fa-percent me-1"></i>Porcentaje
+                                                    </span>
                                                 <?php else: ?>
-                                                    <strong>$<?php echo number_format($coupon['value'], 2); ?></strong>
-                                                <?php endif; ?>
-                                                <?php if ($coupon['minimum_amount'] > 0): ?>
-                                                    <br><small class="text-muted">Mín: $<?php echo number_format($coupon['minimum_amount'], 2); ?></small>
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-dollar-sign me-1"></i>Monto Fijo
+                                                    </span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
-                                                <?php echo $coupon['used_count']; ?>
-                                                <?php if ($coupon['usage_limit']): ?>
-                                                    / <?php echo $coupon['usage_limit']; ?>
-                                                    <?php 
-                                                    $usage_percent = ($coupon['used_count'] / $coupon['usage_limit']) * 100;
-                                                    $progress_class = $usage_percent > 80 ? 'bg-danger' : ($usage_percent > 60 ? 'bg-warning' : 'bg-success');
-                                                    ?>
-                                                    <div class="progress mt-1" style="height: 4px;">
-                                                        <div class="progress-bar <?php echo $progress_class; ?>" style="width: <?php echo $usage_percent; ?>%"></div>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <small class="text-muted">/ Ilimitado</small>
-                                                <?php endif; ?>
+                                                <div>
+                                                    <?php if ($coupon['type'] === 'percentage'): ?>
+                                                        <strong class="text-info"><?php echo number_format($coupon['value'], 0); ?>%</strong>
+                                                        <?php if ($coupon['maximum_discount']): ?>
+                                                            <br><small class="text-muted">Máx: $<?php echo number_format($coupon['maximum_discount'], 2); ?></small>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <strong class="text-success">$<?php echo number_format($coupon['value'], 2); ?></strong>
+                                                    <?php endif; ?>
+                                                    <?php if ($coupon['minimum_amount'] > 0): ?>
+                                                        <br><small class="text-muted">Mín: $<?php echo number_format($coupon['minimum_amount'], 2); ?></small>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong><?php echo $coupon['used_count']; ?></strong>
+                                                    <?php if ($coupon['usage_limit']): ?>
+                                                        <span class="text-muted">/ <?php echo $coupon['usage_limit']; ?></span>
+                                                        <?php 
+                                                        $usage_percent = ($coupon['usage_limit'] > 0) ? ($coupon['used_count'] / $coupon['usage_limit']) * 100 : 0;
+                                                        $progress_class = $usage_percent > 80 ? 'bg-danger' : ($usage_percent > 60 ? 'bg-warning' : 'bg-success');
+                                                        ?>
+                                                        <div class="progress mt-1">
+                                                            <div class="progress-bar <?php echo $progress_class; ?>" 
+                                                                 role="progressbar" 
+                                                                 style="width: <?php echo $usage_percent; ?>%"
+                                                                 aria-valuenow="<?php echo $usage_percent; ?>" 
+                                                                 aria-valuemin="0" 
+                                                                 aria-valuemax="100"></div>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <br><small class="text-muted">Ilimitado</small>
+                                                    <?php endif; ?>
+                                                </div>
                                             </td>
                                             <td>
                                                 <?php
@@ -237,54 +324,76 @@ require_once 'inc/header.php';
                                                 
                                                 switch ($coupon['status_text']) {
                                                     case 'active':
-                                                        $status_class = 'bg-success';
-                                                        $status_icon = 'fas fa-check-circle';
+                                                        $status_class = 'success';
+                                                        $status_icon = 'check-circle';
                                                         $status_text = 'Activo';
                                                         break;
                                                     case 'inactive':
-                                                        $status_class = 'bg-secondary';
-                                                        $status_icon = 'fas fa-pause-circle';
+                                                        $status_class = 'secondary';
+                                                        $status_icon = 'pause-circle';
                                                         $status_text = 'Inactivo';
                                                         break;
                                                     case 'expired':
-                                                        $status_class = 'bg-danger';
-                                                        $status_icon = 'fas fa-times-circle';
+                                                        $status_class = 'danger';
+                                                        $status_icon = 'times-circle';
                                                         $status_text = 'Expirado';
                                                         break;
                                                     case 'scheduled':
-                                                        $status_class = 'bg-warning';
-                                                        $status_icon = 'fas fa-clock';
+                                                        $status_class = 'warning';
+                                                        $status_icon = 'clock';
                                                         $status_text = 'Programado';
                                                         break;
                                                 }
                                                 ?>
-                                                <span class="badge <?php echo $status_class; ?>">
-                                                    <i class="<?php echo $status_icon; ?> me-1"></i><?php echo $status_text; ?>
+                                                <span class="badge bg-<?php echo $status_class; ?> d-inline-flex align-items-center">
+                                                    <i class="fas fa-<?php echo $status_icon; ?> me-1"></i>
+                                                    <?php echo $status_text; ?>
                                                 </span>
                                             </td>
                                             <td>
-                                                <small>
-                                                    <strong>Inicio:</strong> <?php echo date('d/m/Y', strtotime($coupon['start_date'])); ?><br>
-                                                    <strong>Fin:</strong> 
-                                                    <?php echo $coupon['end_date'] ? date('d/m/Y', strtotime($coupon['end_date'])) : 'Sin límite'; ?>
-                                                </small>
+                                                <div style="font-size: 0.875rem;">
+                                                    <div>
+                                                        <i class="fas fa-play text-success me-1"></i>
+                                                        <strong>Inicio:</strong> 
+                                                        <span class="text-muted"><?php echo date('d/m/Y', strtotime($coupon['start_date'])); ?></span>
+                                                    </div>
+                                                    <div class="mt-1">
+                                                        <i class="fas fa-stop text-danger me-1"></i>
+                                                        <strong>Fin:</strong> 
+                                                        <span class="text-muted">
+                                                            <?php echo $coupon['end_date'] ? date('d/m/Y', strtotime($coupon['end_date'])) : 'Sin límite'; ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <button class="btn btn-sm btn-outline-info" onclick="viewCouponDetails(<?php echo $coupon['id']; ?>)" title="Ver detalles">
+                                            <td class="text-center">
+                                                <div class="btn-group-actions">
+                                                    <button class="btn btn-sm btn-info" 
+                                                            onclick="viewCouponDetails(<?php echo $coupon['id']; ?>)" 
+                                                            title="Ver detalles"
+                                                            data-bs-toggle="tooltip">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-outline-warning" onclick="editCoupon(<?php echo $coupon['id']; ?>)" title="Editar">
+                                                    <button class="btn btn-sm btn-warning" 
+                                                            onclick="editCoupon(<?php echo $coupon['id']; ?>)" 
+                                                            title="Editar"
+                                                            data-bs-toggle="tooltip">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <form method="POST" style="display: inline;">
+                                                    <form method="POST" style="display: inline;" onsubmit="return confirm('¿Cambiar el estado de este cupón?');">
                                                         <input type="hidden" name="action" value="toggle_status">
                                                         <input type="hidden" name="coupon_id" value="<?php echo $coupon['id']; ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Cambiar estado">
-                                                            <i class="fas fa-toggle-<?php echo $coupon['is_active'] ? 'on' : 'off'; ?>"></i>
+                                                        <button type="submit" 
+                                                                class="btn btn-sm <?php echo $coupon['is_active'] ? 'btn-secondary' : 'btn-success'; ?>" 
+                                                                title="<?php echo $coupon['is_active'] ? 'Desactivar' : 'Activar'; ?>"
+                                                                data-bs-toggle="tooltip">
+                                                            <i class="fas fa-power-off"></i>
                                                         </button>
                                                     </form>
-                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCoupon(<?php echo $coupon['id']; ?>, '<?php echo htmlspecialchars($coupon['code']); ?>')" title="Eliminar">
+                                                    <button class="btn btn-sm btn-danger" 
+                                                            onclick="deleteCoupon(<?php echo $coupon['id']; ?>, '<?php echo htmlspecialchars($coupon['code'], ENT_QUOTES); ?>')" 
+                                                            title="Eliminar"
+                                                            data-bs-toggle="tooltip">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -294,9 +403,12 @@ require_once 'inc/header.php';
                                     
                                     <?php if (empty($coupons)): ?>
                                         <tr>
-                                            <td colspan="8" class="text-center py-4">
-                                                <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
-                                                <p class="text-muted">No se encontraron cupones</p>
+                                            <td colspan="8" class="text-center py-5">
+                                                <div class="py-4">
+                                                    <i class="fas fa-ticket-alt fa-4x text-muted mb-3 d-block"></i>
+                                                    <h5 class="text-muted">No se encontraron cupones</h5>
+                                                    <p class="text-muted">Crea tu primer cupón haciendo clic en el botón "Crear Cupón"</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endif; ?>
@@ -465,6 +577,23 @@ require_once 'inc/header.php';
         // Inicializar campos al cargar
         document.addEventListener('DOMContentLoaded', function() {
             toggleDiscountFields();
+            
+            // Inicializar tooltips de Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Animación suave para las tarjetas
+            document.querySelectorAll('.card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            });
         });
     </script>
 
