@@ -5,6 +5,11 @@
  * Para crear nuevos productos, usar product_create.php
  */
 
+$is_edit = true;
+$page_title = 'Editar Producto';
+
+require_once 'inc/header.php';
+
 // Verificar que se proporcionó un ID
 $product_id = $_GET['id'] ?? null;
 
@@ -13,11 +18,6 @@ if (empty($product_id)) {
     header('Location: products.php');
     exit;
 }
-
-$is_edit = true;
-$page_title = 'Editar Producto';
-
-require_once 'inc/header.php';
 
 // Verificar permisos de edición
 if (!hasPermission('products', 'update')) {
@@ -215,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
         
         $_SESSION['success'] = 'Producto actualizado correctamente';
-        header('Location: product_edit.php?id=' . $product_id);
+        header('Location: products.php');
         exit;
         
     } catch (Exception $e) {
@@ -1056,50 +1056,29 @@ if (nameInputForSku) {
 const productForm = document.getElementById('product-form');
 if (productForm) {
     productForm.addEventListener('submit', function(e) {
-    const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
-    const isOnSale = document.getElementById('is_on_sale').checked;
-    const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
-    
-    // Validar porcentaje de descuento si está en oferta
-    if (isOnSale && (discountPercentage < 0 || discountPercentage > 100)) {
-        e.preventDefault();
-        alert('El porcentaje de descuento debe estar entre 0 y 100');
-        document.getElementById('discount_percentage').focus();
-        return false;
-    }
-    
-    // Validar que tenga al menos una categoría
-    if (!document.getElementById('category_id').value) {
-        e.preventDefault();
-        alert('Debe seleccionar una categoría');
-        document.getElementById('category_id').focus();
-        return false;
-    }
-    
-    // Si hay imágenes pendientes en modo edición, subirlas primero
-    if (pendingImageFiles.length > 0) {
-        e.preventDefault();
+        const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
+        const isOnSale = document.getElementById('is_on_sale').checked;
+        const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
         
-        const submitButton = this.querySelector('button[type="submit"]');
-        const originalText = submitButton.innerHTML;
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo imágenes...';
+        // Validar porcentaje de descuento si está en oferta
+        if (isOnSale && (discountPercentage < 0 || discountPercentage > 100)) {
+            e.preventDefault();
+            alert('El porcentaje de descuento debe estar entre 0 y 100');
+            document.getElementById('discount_percentage').focus();
+            return false;
+        }
         
-        uploadPendingImages()
-            .then(() => {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando producto...';
-                // Continuar con el envío del formulario
-                productForm.submit();
-            })
-            .catch(error => {
-                alert('Error al subir imágenes: ' + error.message);
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-            });
+        // Validar que tenga al menos una categoría
+        if (!document.getElementById('category_id').value) {
+            e.preventDefault();
+            alert('Debe seleccionar una categoría');
+            document.getElementById('category_id').focus();
+            return false;
+        }
         
-        return false;
-    }
-});
+        // Permitir que el formulario se envíe normalmente
+        console.log('✅ Formulario válido, enviando...');
+    });
 }
 
 // ============================================
