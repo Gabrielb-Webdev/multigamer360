@@ -23,12 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$name, $subject, $template_id, $recipient_type, $_SESSION['user_id']]);
                 
                 $campaign_id = $pdo->lastInsertId();
-                $success_msg = "Campaña creada exitosamente (ID: $campaign_id)";
+                $_SESSION['success'] = "Campaña creada exitosamente (ID: $campaign_id)";
             } catch (Exception $e) {
-                $error_msg = "Error al crear campaña: " . $e->getMessage();
+                $_SESSION['error'] = "Error al crear campaña: " . $e->getMessage();
             }
         } else {
-            $error_msg = "Todos los campos son requeridos";
+            $_SESSION['error'] = "Todos los campos son requeridos";
         }
     }
     elseif ($action === 'add_subscriber') {
@@ -47,19 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     status = 'active'
                 ");
                 $stmt->execute([$email, $first_name, $last_name]);
-                $success_msg = "Suscriptor agregado exitosamente";
+                $_SESSION['success'] = "Suscriptor agregado exitosamente";
             } catch (Exception $e) {
-                $error_msg = "Error al agregar suscriptor";
+                $_SESSION['error'] = "Error al agregar suscriptor";
             }
         } else {
-            $error_msg = "Email inválido";
+            $_SESSION['error'] = "Email inválido";
         }
     }
     elseif ($action === 'unsubscribe') {
         $subscriber_id = $_POST['subscriber_id'];
         $stmt = $pdo->prepare("UPDATE newsletter_subscribers SET status = 'unsubscribed', unsubscribed_at = NOW() WHERE id = ?");
         $stmt->execute([$subscriber_id]);
-        $success_msg = "Suscriptor dado de baja";
+        $_SESSION['success'] = "Suscriptor dado de baja";
     }
 }
 
@@ -136,20 +136,6 @@ $page_actions = '
 require_once 'inc/header.php';
 ?>
     
-                <?php if (isset($success_msg)): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?php echo $success_msg; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (isset($error_msg)): ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?php echo $error_msg; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <?php endif; ?>
-
                 <!-- Estadísticas -->
                 <div class="row mb-4">
                     <div class="col-md-3">

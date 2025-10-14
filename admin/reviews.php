@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Actualizar estadísticas del producto
         updateProductStats($pdo, $_POST['product_id']);
-        $success_msg = "Reseña aprobada exitosamente";
+        $_SESSION['success'] = "Reseña aprobada exitosamente";
     } 
     elseif ($action === 'reject') {
         $review_id = $_POST['review_id'];
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Actualizar estadísticas del producto
         updateProductStats($pdo, $_POST['product_id']);
-        $success_msg = "Reseña rechazada";
+        $_SESSION['success'] = "Reseña rechazada";
     }
     elseif ($action === 'delete') {
         $review_id = $_POST['review_id'];
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Actualizar estadísticas del producto
         updateProductStats($pdo, $product_id);
-        $success_msg = "Reseña eliminada exitosamente";
+        $_SESSION['success'] = "Reseña eliminada exitosamente";
     }
     elseif ($action === 'respond') {
         $review_id = $_POST['review_id'];
@@ -47,9 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE id = ?
             ");
             $stmt->execute([$response, $_SESSION['user_id'], $review_id]);
-            $success_msg = "Respuesta agregada exitosamente";
+            $_SESSION['success'] = "Respuesta agregada exitosamente";
         } else {
-            $error_msg = "La respuesta no puede estar vacía";
+            $_SESSION['error'] = "La respuesta no puede estar vacía";
         }
     }
 }
@@ -153,20 +153,6 @@ $page_title = "Gestión de Reseñas";
 require_once 'inc/header.php';
 ?>
     
-                <?php if (isset($success_msg)): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?php echo $success_msg; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (isset($error_msg)): ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?php echo $error_msg; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <?php endif; ?>
-
                 <!-- Estadísticas -->
                 <div class="row mb-4">
                     <div class="col-md-3">
