@@ -348,10 +348,18 @@ function generateSlug($text) {
                                 <i class="fas fa-images me-2"></i>Imágenes Actuales
                                 <span class="badge bg-primary"><?php echo count($product_images); ?></span>
                             </h6>
-                            <div class="row g-3 mb-3">
+                            <p class="text-muted small mb-3">
+                                <i class="fas fa-arrows-alt-v text-info me-1"></i> Usa las flechas ↑↓ para cambiar el orden. La primera imagen es la portada.
+                            </p>
+                            <div class="row g-3 mb-3" id="images-grid">
                                 <?php foreach ($product_images as $index => $image): ?>
-                                <div class="col-md-3">
-                                    <div class="card h-100">
+                                <div class="col-md-3 image-item" data-image-id="<?php echo $image['id']; ?>">
+                                    <div class="card h-100 position-relative">
+                                        <!-- Badge de orden -->
+                                        <div class="position-absolute top-0 start-0 p-2" style="z-index: 10;">
+                                            <span class="badge bg-dark bg-opacity-75">#<?php echo $index + 1; ?></span>
+                                        </div>
+                                        
                                         <?php if ($index === 0): ?>
                                         <div class="position-absolute top-0 end-0 p-2" style="z-index: 10;">
                                             <span class="badge bg-warning text-dark">
@@ -359,10 +367,29 @@ function generateSlug($text) {
                                             </span>
                                         </div>
                                         <?php endif; ?>
+                                        
                                         <img src="../uploads/products/<?php echo htmlspecialchars($image['image_url'] ?? $image['filename'] ?? ''); ?>" 
                                              class="card-img-top" style="height: 180px; object-fit: cover;"
                                              alt="Imagen del producto">
-                                        <div class="card-body p-2 text-center">
+                                        
+                                        <div class="card-body p-2">
+                                            <!-- Botones de reordenamiento -->
+                                            <div class="btn-group w-100 mb-2" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                        onclick="moveImage(<?php echo $image['id']; ?>, 'up')"
+                                                        <?php echo $index === 0 ? 'disabled' : ''; ?>
+                                                        title="Mover arriba">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                        onclick="moveImage(<?php echo $image['id']; ?>, 'down')"
+                                                        <?php echo $index === count($product_images) - 1 ? 'disabled' : ''; ?>
+                                                        title="Mover abajo">
+                                                    <i class="fas fa-arrow-down"></i>
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Botón eliminar -->
                                             <button type="button" class="btn btn-sm btn-outline-danger w-100" 
                                                     onclick="deleteProductImage(<?php echo $image['id']; ?>)">
                                                 <i class="fas fa-trash"></i> Eliminar
@@ -787,6 +814,117 @@ window.deleteProductImage = function(imageId) {
         alert('Error de conexión al eliminar imagen');
     });
 };
+
+// ============================================
+// REORDENAR IMÁGENES CON FLECHAS
+// ============================================
+
+window.moveImage = function(imageId, direction) {
+    const container = document.getElementById('images-grid');
+    const items = Array.from(container.querySelectorAll('.image-item'));
+    const currentItem = items.find(item => item.dataset.imageId == imageId);
+    
+    if (!currentItem) {
+        console.error('Imagen no encontrada');
+        return;
+    }
+    
+    const currentIndex = items.indexOf(currentItem);
+    let newIndex;
+    
+    if (direction === 'up' && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+    } else if (direction === 'down' && currentIndex < items.length - 1) {
+        newIndex = currentIndex + 1;
+    } else {
+        return; // No se puede mover
+    }
+    
+    console.log(`🔄 Moviendo imagen ${currentIndex + 1} → ${newIndex + 1}`);
+    
+    // Intercambiar elementos en el DOM
+    if (direction === 'up') {
+        container.insertBefore(currentItem, items[newIndex]);
+    } else {
+        container.insertBefore(currentItem, items[newIndex].nextSibling);
+    }
+    
+    // Actualizar badges y botones
+    updateImageOrderUI();
+    
+    // Guardar nuevo orden en servidor
+    saveImageOrder();
+};
+
+function updateImageOrderUI() {
+    const items = document.querySelectorAll('.image-item');
+    items.forEach((item, index) => {
+        // Actualizar badge de número
+        const badge = item.querySelector('.badge.bg-dark');
+        if (badge) {
+            badge.textContent = `#${index + 1}`;
+        }
+        
+        // Actualizar badge de portada
+        const portadaBadge = item.querySelector('.badge.bg-warning');
+        if (index === 0) {
+            if (!portadaBadge) {
+                const newBadge = document.createElement('div');
+                newBadge.className = 'position-absolute top-0 end-0 p-2';
+                newBadge.style.zIndex = '10';
+                newBadge.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> Portada</span>';
+                item.querySelector('.card').appendChild(newBadge);
+            }
+        } else {
+            if (portadaBadge) {
+                portadaBadge.parentElement.remove();
+            }
+        }
+        
+        // Actualizar botones de flecha
+        const upBtn = item.querySelector('button[title="Mover arriba"]');
+        const downBtn = item.querySelector('button[title="Mover abajo"]');
+        
+        if (upBtn) upBtn.disabled = (index === 0);
+        if (downBtn) downBtn.disabled = (index === items.length - 1);
+    });
+    
+    console.log('✓ UI actualizada');
+}
+
+function saveImageOrder() {
+    const items = document.querySelectorAll('.image-item');
+    const imageOrder = [];
+    
+    items.forEach((item, index) => {
+        imageOrder.push({
+            id: item.dataset.imageId,
+            order: index + 1
+        });
+    });
+    
+    console.log('💾 Guardando orden:', imageOrder);
+    
+    fetch('api/update_image_order.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            product_id: <?php echo $product_id; ?>,
+            order: imageOrder
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Orden guardado');
+        } else {
+            console.error('❌ Error al guardar orden:', data.message);
+        }
+    })
+    .catch(error => console.error('❌ Error de red:', error));
+}
 
 // ============================================
 // PRECIOS Y DESCUENTOS POR PORCENTAJE

@@ -15,7 +15,8 @@ if (!hasPermission('products', 'update')) {
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
-$images = $data['images'] ?? [];
+$product_id = $data['product_id'] ?? null;
+$images = $data['order'] ?? $data['images'] ?? []; // Soportar ambos formatos
 
 if (empty($images)) {
     echo json_encode(['success' => false, 'message' => 'No se recibieron imágenes']);
@@ -25,10 +26,12 @@ if (empty($images)) {
 try {
     $pdo->beginTransaction();
     
-    $stmt = $pdo->prepare("UPDATE product_images SET display_order = ? WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE product_images SET display_order = ?, is_primary = ? WHERE id = ?");
     
-    foreach ($images as $image) {
-        $stmt->execute([$image['order'], $image['id']]);
+    foreach ($images as $index => $image) {
+        // La primera imagen (orden 1) es la principal
+        $is_primary = ($image['order'] == 1) ? 1 : 0;
+        $stmt->execute([$image['order'], $is_primary, $image['id']]);
     }
     
     $pdo->commit();
