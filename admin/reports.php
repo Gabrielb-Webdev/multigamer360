@@ -188,7 +188,6 @@ require_once 'inc/header.php';
         .sidebar {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             min-height: 100vh;
-            padding-top: 20px;
         }
     
         .sidebar .nav-link i {
