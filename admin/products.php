@@ -79,7 +79,7 @@ try {
             COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock,
             COUNT(CASE WHEN stock_quantity <= 10 AND stock_quantity > 0 THEN 1 END) as low_stock,
             COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock,
-            SUM(stock_quantity * COALESCE(price, 0)) as inventory_value
+            SUM(stock_quantity * COALESCE(price_pesos, 0)) as inventory_value
         FROM products 
         WHERE is_active = 1
     ")->fetch();
@@ -429,7 +429,7 @@ try {
                                 <?php echo htmlspecialchars($product['brand_name'] ?? 'Sin marca'); ?>
                             </td>
                             <td>
-                                <strong>$<?php echo number_format($product['price'], 0); ?></strong>
+                                <strong>$<?php echo number_format($product['price_pesos'], 0); ?></strong>
                             </td>
                             <td>
                                 <span class="badge bg-<?php echo $product['stock_color']; ?>">
@@ -447,7 +447,7 @@ try {
                                 <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
                             </td>
                             <td>
-                                <strong>$<?php echo number_format($product['stock_quantity'] * $product['price'], 0); ?></strong>
+                                <strong>$<?php echo number_format($product['stock_quantity'] * $product['price_pesos'], 0); ?></strong>
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
