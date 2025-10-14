@@ -329,7 +329,7 @@ require_once 'inc/header.php';
                         <div class="card-body">
                             <div class="alert alert-warning">
                                 <i class="fas fa-lightbulb me-2"></i>
-                                <strong>Consejo:</strong> Puede agregar, eliminar o reorganizar las imágenes. La primera imagen será la portada del producto.
+                                <strong>Consejo:</strong> Arrastra las imágenes para cambiar el orden. La primera imagen será la portada del producto.
                             </div>
                             
                             <div class="mb-3">
@@ -345,68 +345,8 @@ require_once 'inc/header.php';
                                 <i class="fas fa-hand-rock"></i> <strong>Arrastra las imágenes</strong> para cambiar el orden. La primera imagen será la portada.
                             </div>
                             
-                            <!-- Vista previa de imágenes existentes -->
-                            <?php if (!empty($product_images)): ?>
-                            <h6 class="mb-3">
-                                <i class="fas fa-images me-2"></i>Imágenes Actuales
-                                <span class="badge bg-primary"><?php echo count($product_images); ?></span>
-                            </h6>
-                            <p class="text-muted small mb-3">
-                                <i class="fas fa-arrows-alt-v text-info me-1"></i> Usa las flechas ↑↓ para cambiar el orden. La primera imagen es la portada.
-                            </p>
-                            <div class="row g-3 mb-3" id="images-grid">
-                                <?php foreach ($product_images as $index => $image): ?>
-                                <div class="col-md-3 image-item" data-image-id="<?php echo $image['id']; ?>">
-                                    <div class="card h-100 position-relative">
-                                        <!-- Badge de orden -->
-                                        <div class="position-absolute top-0 start-0 p-2" style="z-index: 10;">
-                                            <span class="badge bg-dark bg-opacity-75">#<?php echo $index + 1; ?></span>
-                                        </div>
-                                        
-                                        <?php if ($index === 0): ?>
-                                        <div class="position-absolute top-0 end-0 p-2" style="z-index: 10;">
-                                            <span class="badge bg-warning text-dark">
-                                                <i class="fas fa-star"></i> Portada
-                                            </span>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <img src="../uploads/products/<?php echo htmlspecialchars($image['image_url'] ?? $image['filename'] ?? ''); ?>" 
-                                             class="card-img-top" style="height: 180px; object-fit: cover;"
-                                             alt="Imagen del producto">
-                                        
-                                        <div class="card-body p-2">
-                                            <!-- Botones de reordenamiento -->
-                                            <div class="btn-group w-100 mb-2" role="group">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                                        onclick="moveImage(<?php echo $image['id']; ?>, 'up')"
-                                                        <?php echo $index === 0 ? 'disabled' : ''; ?>
-                                                        title="Mover arriba">
-                                                    <i class="fas fa-arrow-up"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                                        onclick="moveImage(<?php echo $image['id']; ?>, 'down')"
-                                                        <?php echo $index === count($product_images) - 1 ? 'disabled' : ''; ?>
-                                                        title="Mover abajo">
-                                                    <i class="fas fa-arrow-down"></i>
-                                                </button>
-                                            </div>
-                                            
-                                            <!-- Botón eliminar -->
-                                            <button type="button" class="btn btn-sm btn-outline-danger w-100" 
-                                                    onclick="deleteProductImage(<?php echo $image['id']; ?>)">
-                                                <i class="fas fa-trash"></i> Eliminar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <?php else: ?>
-                            <div class="alert alert-info mb-3" id="no-images-alert">
-                                <i class="fas fa-info-circle"></i> Este producto aún no tiene imágenes. Agrega al menos una imagen para tu producto.
-                            </div>
-                            <?php endif; ?>
+                            <!-- Vista previa con drag & drop -->
+                            <div id="image-preview" class="row g-3"></div>
                         </div>
                     </div>
                 </div>
@@ -775,159 +715,307 @@ require_once 'inc/header.php';
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
+
+/* Estilos para Drag & Drop con SortableJS */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f8f9fa;
+}
+
+.sortable-chosen {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+}
+
+.sortable-image-item {
+    transition: transform 0.2s ease;
+}
+
+.sortable-image-item:hover {
+    transform: translateY(-5px);
+}
 </style>
 
-<!-- NO necesitamos SortableJS - Sistema simplificado con botones -->
+<!-- SortableJS para Drag & Drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
 /**
- * SISTEMA DE IMÁGENES SIMPLIFICADO
- * Versión: 3.0.0
- * Solo funcionalidad básica: eliminar imágenes
+ * SISTEMA DE IMÁGENES CON DRAG & DROP
+ * Versión: 4.0.0 - Igual que product_create.php
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Sistema de imágenes simplificado cargado');
-
-// ============================================
-// ELIMINAR IMAGEN
-// ============================================
-
-window.deleteProductImage = function(imageId) {
-    if (!confirm('¿Está seguro de eliminar esta imagen? Esta acción no se puede deshacer.')) return;
+    console.log('🚀 Sistema de imágenes con Drag & Drop cargado');
     
-    fetch('api/delete_product_image.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ image_id: imageId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Recargar la página para reflejar los cambios
-            location.reload();
-        } else {
-            alert('Error al eliminar imagen: ' + (data.message || 'Error desconocido'));
+    // Array para acumular archivos seleccionados (nuevos + existentes)
+    let selectedFiles = [];
+    let existingImages = [];
+    let sortableInstance = null;
+    
+    // Cargar imágenes existentes del producto
+    <?php
+    $existing_images_json = [];
+    if (!empty($product_images)) {
+        foreach ($product_images as $index => $image) {
+            $existing_images_json[] = [
+                'id' => $image['id'],
+                'url' => '../uploads/products/' . htmlspecialchars($image['image_url'] ?? $image['filename'] ?? ''),
+                'is_existing' => true,
+                'order' => $index
+            ];
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión al eliminar imagen');
-    });
-};
-
-// ============================================
-// REORDENAR IMÁGENES CON FLECHAS
-// ============================================
-
-window.moveImage = function(imageId, direction) {
-    const container = document.getElementById('images-grid');
-    const items = Array.from(container.querySelectorAll('.image-item'));
-    const currentItem = items.find(item => item.dataset.imageId == imageId);
-    
-    if (!currentItem) {
-        console.error('Imagen no encontrada');
-        return;
     }
+    ?>
+    existingImages = <?php echo json_encode($existing_images_json); ?>;
     
-    const currentIndex = items.indexOf(currentItem);
-    let newIndex;
+    // Vista previa de imágenes (drag & drop)
+    const imagesInput = document.getElementById('images');
+    const preview = document.getElementById('image-preview');
+    const dragInfo = document.getElementById('drag-drop-info');
     
-    if (direction === 'up' && currentIndex > 0) {
-        newIndex = currentIndex - 1;
-    } else if (direction === 'down' && currentIndex < items.length - 1) {
-        newIndex = currentIndex + 1;
-    } else {
-        return; // No se puede mover
-    }
+    // Renderizar imágenes existentes al cargar
+    renderAllImages();
     
-    console.log(`🔄 Moviendo imagen ${currentIndex + 1} → ${newIndex + 1}`);
-    
-    // Intercambiar elementos en el DOM
-    if (direction === 'up') {
-        container.insertBefore(currentItem, items[newIndex]);
-    } else {
-        container.insertBefore(currentItem, items[newIndex].nextSibling);
-    }
-    
-    // Actualizar badges y botones
-    updateImageOrderUI();
-    
-    // Guardar nuevo orden en servidor
-    saveImageOrder();
-};
-
-function updateImageOrderUI() {
-    const items = document.querySelectorAll('.image-item');
-    items.forEach((item, index) => {
-        // Actualizar badge de número
-        const badge = item.querySelector('.badge.bg-dark');
-        if (badge) {
-            badge.textContent = `#${index + 1}`;
-        }
-        
-        // Actualizar badge de portada
-        const portadaBadge = item.querySelector('.badge.bg-warning');
-        if (index === 0) {
-            if (!portadaBadge) {
-                const newBadge = document.createElement('div');
-                newBadge.className = 'position-absolute top-0 end-0 p-2';
-                newBadge.style.zIndex = '10';
-                newBadge.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> Portada</span>';
-                item.querySelector('.card').appendChild(newBadge);
-            }
-        } else {
-            if (portadaBadge) {
-                portadaBadge.parentElement.remove();
-            }
-        }
-        
-        // Actualizar botones de flecha
-        const upBtn = item.querySelector('button[title="Mover arriba"]');
-        const downBtn = item.querySelector('button[title="Mover abajo"]');
-        
-        if (upBtn) upBtn.disabled = (index === 0);
-        if (downBtn) downBtn.disabled = (index === items.length - 1);
-    });
-    
-    console.log('✓ UI actualizada');
-}
-
-function saveImageOrder() {
-    const items = document.querySelectorAll('.image-item');
-    const imageOrder = [];
-    
-    items.forEach((item, index) => {
-        imageOrder.push({
-            id: item.dataset.imageId,
-            order: index + 1
+    if (imagesInput) {
+        imagesInput.addEventListener('change', function(e) {
+            // Agregar nuevos archivos al array
+            const newFiles = Array.from(this.files);
+            newFiles.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    selectedFiles.push(file);
+                }
+            });
+            
+            // Regenerar vista previa
+            renderAllImages();
+            
+            console.log('Total de imágenes:', existingImages.length + selectedFiles.length);
         });
-    });
+    }
     
-    console.log('💾 Guardando orden:', imageOrder);
-    
-    fetch('api/update_image_order.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            product_id: <?php echo $product_id; ?>,
-            order: imageOrder
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('✅ Orden guardado');
-        } else {
-            console.error('❌ Error al guardar orden:', data.message);
+    function renderAllImages() {
+        preview.innerHTML = '';
+        
+        const totalImages = existingImages.length + selectedFiles.length;
+        
+        if (totalImages === 0) {
+            dragInfo.style.display = 'none';
+            return;
         }
-    })
-    .catch(error => console.error('❌ Error de red:', error));
-}
+        
+        // Mostrar info de drag & drop
+        dragInfo.style.display = 'block';
+        
+        let currentIndex = 0;
+        
+        // Renderizar imágenes existentes primero
+        existingImages.forEach((img, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-md-3 sortable-image-item';
+            col.dataset.index = currentIndex;
+            col.dataset.imageId = img.id;
+            col.dataset.isExisting = 'true';
+            col.innerHTML = `
+                <div class="card border-primary h-100" style="cursor: move;">
+                    <div class="card-header bg-primary text-white py-1 d-flex justify-content-between align-items-center">
+                        <small><i class="fas fa-grip-vertical"></i> #${currentIndex + 1}</small>
+                        <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                                onclick="removeExistingImage(${img.id})" aria-label="Eliminar"></button>
+                    </div>
+                    <img src="${img.url}" class="card-img-top" 
+                         style="height: 150px; object-fit: cover;" alt="Imagen existente">
+                    <div class="card-body p-2 text-center">
+                        ${currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-info">Existente</span>'}
+                    </div>
+                </div>
+            `;
+            preview.appendChild(col);
+            currentIndex++;
+        });
+        
+        // Renderizar imágenes nuevas
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 sortable-image-item';
+                col.dataset.index = currentIndex;
+                col.dataset.isExisting = 'false';
+                col.innerHTML = `
+                    <div class="card border-success h-100" style="cursor: move;">
+                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
+                            <small><i class="fas fa-grip-vertical"></i> #${currentIndex + 1}</small>
+                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                                    onclick="removeNewImage(${index})" aria-label="Eliminar"></button>
+                        </div>
+                        <img src="${e.target.result}" class="card-img-top" 
+                             style="height: 150px; object-fit: cover;" alt="Nueva imagen">
+                        <div class="card-body p-2 text-center">
+                            ${currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Nueva</span>'}
+                        </div>
+                    </div>
+                `;
+                preview.appendChild(col);
+                currentIndex++;
+                
+                // Inicializar Sortable después de agregar la última imagen
+                if (currentIndex === totalImages) {
+                    initSortable();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Si solo hay imágenes existentes, inicializar Sortable inmediatamente
+        if (selectedFiles.length === 0 && existingImages.length > 0) {
+            initSortable();
+        }
+    }
+    
+    function initSortable() {
+        // Destruir instancia anterior si existe
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        // Crear nueva instancia de Sortable
+        sortableInstance = new Sortable(preview, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: '.card',
+            onEnd: function(evt) {
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+                
+                // Reordenar arrays combinados
+                const allItems = [...existingImages, ...selectedFiles];
+                const movedItem = allItems.splice(oldIndex, 1)[0];
+                allItems.splice(newIndex, 0, movedItem);
+                
+                // Separar de nuevo en existentes y nuevas
+                existingImages = allItems.filter(item => item.is_existing);
+                selectedFiles = allItems.filter(item => !item.is_existing);
+                
+                console.log('Imagen movida:', oldIndex, '→', newIndex);
+                updateImageNumbers();
+                
+                // Guardar nuevo orden de existentes en servidor
+                saveImageOrder();
+            }
+        });
+    }
+    
+    function updateImageNumbers() {
+        const items = preview.querySelectorAll('.sortable-image-item');
+        items.forEach((item, index) => {
+            // Actualizar número
+            const numberSpan = item.querySelector('.card-header small');
+            if (numberSpan) {
+                numberSpan.innerHTML = `<i class="fas fa-grip-vertical"></i> #${index + 1}`;
+            }
+            
+            // Actualizar badge (portada solo para el primero)
+            const badgeDiv = item.querySelector('.card-body');
+            if (badgeDiv) {
+                const isExisting = item.dataset.isExisting === 'true';
+                if (index === 0) {
+                    badgeDiv.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>';
+                } else {
+                    badgeDiv.innerHTML = isExisting ? '<span class="badge bg-info">Existente</span>' : '<span class="badge bg-secondary">Nueva</span>';
+                }
+            }
+            
+            // Actualizar data-index
+            item.dataset.index = index;
+        });
+    }
+    
+    function saveImageOrder() {
+        const items = preview.querySelectorAll('.sortable-image-item[data-is-existing="true"]');
+        const imageOrder = [];
+        
+        items.forEach((item, index) => {
+            imageOrder.push({
+                id: item.dataset.imageId,
+                order: index + 1
+            });
+        });
+        
+        if (imageOrder.length === 0) return;
+        
+        console.log('💾 Guardando orden de imágenes existentes');
+        
+        fetch('api/update_image_order.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                product_id: <?php echo $product_id; ?>,
+                order: imageOrder
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Orden guardado');
+            } else {
+                console.error('❌ Error:', data.message);
+            }
+        })
+        .catch(error => console.error('❌ Error de red:', error));
+    }
+    
+    // Eliminar imagen existente
+    window.removeExistingImage = function(imageId) {
+        if (!confirm('¿Eliminar esta imagen? Esta acción no se puede deshacer.')) return;
+        
+        fetch('api/delete_product_image.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_id: imageId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remover del array local
+                existingImages = existingImages.filter(img => img.id !== imageId);
+                renderAllImages();
+                console.log('✅ Imagen eliminada');
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        });
+    };
+    
+    // Eliminar imagen nueva (no subida aún)
+    window.removeNewImage = function(index) {
+        selectedFiles.splice(index, 1);
+        renderAllImages();
+        console.log('Nueva imagen removida. Restantes:', selectedFiles.length);
+    };
+    
+    // Antes de enviar el formulario, actualizar el input con archivos en orden
+    const form = document.getElementById('product-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Crear DataTransfer con archivos en el orden correcto
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imagesInput.files = dt.files;
+            
+            console.log('Enviando', selectedFiles.length, 'imágenes nuevas');
+        });
+    }
 
 // ============================================
 // PRECIOS Y DESCUENTOS POR PORCENTAJE
