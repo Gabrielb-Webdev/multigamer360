@@ -80,9 +80,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- JavaScript Files - Orden optimizado para evitar conflictos -->
-    <script src="assets/js/wishlist-system.js?v=0.1"></script>
-    <script src="assets/js/modern-cart-button.js?v=0.1"></script>
-    <script src="assets/js/main.js?v=0.2"></script>
+    <script src="assets/js/wishlist-system.js?v=0.2"></script>
+    <script src="assets/js/modern-cart-button.js?v=0.2"></script>
+    <script src="assets/js/main.js?v=1.0"></script>
     
     <!-- Verificación de errores y limpieza -->
     <script>
