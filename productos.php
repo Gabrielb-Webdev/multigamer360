@@ -145,6 +145,39 @@ $order_by = $order_options[$_GET['order'] ?? 'newest'] ?? 'p.created_at DESC';
 $filters['order_by'] = $order_by;
 
 // =====================================================
+// INICIALIZAR VARIABLES DE VISTA
+// =====================================================
+
+// Variable para saber si hay filtros dinámicos disponibles
+$dynamicFiltersAvailable = false; // Sistema de filtros estático por ahora
+
+// Detectar si estamos en vista de videojuegos
+$isVideoGamesView = false;
+$currentConsole = null;
+
+// Verificar si hay categoría de videojuegos seleccionada
+if (!empty($appliedFilters['categories'])) {
+    foreach ($availableFilters['categories'] as $cat) {
+        if (in_array($cat['id'], $appliedFilters['categories']) && 
+            (strtolower($cat['slug']) === 'videojuegos' || strtolower($cat['name']) === 'videojuegos')) {
+            $isVideoGamesView = true;
+            break;
+        }
+    }
+}
+
+// Verificar si hay una consola específica seleccionada
+if (!empty($appliedFilters['consoles']) && count($appliedFilters['consoles']) === 1) {
+    $consoleId = $appliedFilters['consoles'][0];
+    foreach ($availableFilters['consoles'] as $console) {
+        if ($console['id'] == $consoleId) {
+            $currentConsole = $console;
+            break;
+        }
+    }
+}
+
+// =====================================================
 // OBTENER DATOS
 // =====================================================
 
