@@ -1,33 +1,37 @@
 <?php
 /**
  * =====================================================
- * DASHBOARD PRINCIPAL UNIFICADO
+ * DASHBOARD DE ANALÍTICAS - PANEL ADMINISTRATIVO
  * =====================================================
  * 
- * Dashboard completo con todas las métricas importantes:
- * - Ventas y órdenes del día
- * - Inventario y stock
- * - Alertas operativas
- * - Top productos de la semana
- * 
- * Versión: 3.0 - Dashboard Unificado
+ * Dashboard operativo simplificado con métricas clave del día
+ * Versión: 2.0 - Simplificado
  * Fecha: 2025-10-14
  */
 
-$page_title = 'Dashboard Principal';
+$page_title = 'Analíticas y Reportes';
+$page_actions = '';
+
 require_once 'inc/header.php';
+
+// Verificar permisos
+if (!hasPermission('reports', 'read')) {
+    $_SESSION['error'] = 'No tiene permisos para ver reportes';
+    header('Location: index.php');
+    exit;
+}
 
 try {
     // ========================================
-    // MÉTRICAS DEL DÍA - VENTAS
+    // MÉTRICAS DEL DÍA
     // ========================================
     
     // Ventas de hoy
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total), 0) as total_sales,
-            COALESCE(AVG(total), 0) as avg_order_value
+            SUM(total) as total_sales,
+            AVG(total) as avg_order_value
         FROM orders 
         WHERE DATE(created_at) = CURDATE()
         AND status != 'cancelled'
@@ -38,7 +42,7 @@ try {
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total), 0) as total_sales
+            SUM(total) as total_sales
         FROM orders 
         WHERE DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
         AND status != 'cancelled'
@@ -56,32 +60,8 @@ try {
     }
     
     // ========================================
-    // MÉTRICAS DE INVENTARIO
+    // ALERTAS IMPORTANTES
     // ========================================
-    
-    // Total productos
-    $stmt = $pdo->query("
-        SELECT COUNT(*) as total
-        FROM products 
-        WHERE is_active = 1
-    ");
-    $total_products = $stmt->fetchColumn();
-    
-    // Stock total
-    $stmt = $pdo->query("
-        SELECT COALESCE(SUM(stock_quantity), 0) as total
-        FROM products 
-        WHERE is_active = 1
-    ");
-    $stock_total = $stmt->fetchColumn();
-    
-    // Valor del inventario
-    $stmt = $pdo->query("
-        SELECT COALESCE(SUM(stock_quantity * price_pesos), 0) as inventory_value
-        FROM products 
-        WHERE is_active = 1
-    ");
-    $inventory_value = $stmt->fetchColumn();
     
     // Stock bajo (≤ 10 unidades)
     $stmt = $pdo->query("
@@ -101,10 +81,6 @@ try {
         AND is_active = 1
     ");
     $out_stock_count = $stmt->fetchColumn();
-    
-    // ========================================
-    // ALERTAS IMPORTANTES
-    // ========================================
     
     // Órdenes pendientes
     $stmt = $pdo->query("
@@ -151,8 +127,8 @@ try {
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total), 0) as total_sales,
-            COALESCE(AVG(total), 0) as avg_order
+            SUM(total) as total_sales,
+            AVG(total) as avg_order
         FROM orders 
         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         AND status != 'cancelled'
@@ -164,16 +140,25 @@ try {
         SELECT COUNT(*) as count
         FROM users 
         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        AND role = 'customer'
     ");
     $new_users = $stmt->fetchColumn();
+    
+    // ========================================
+    // VALOR DEL INVENTARIO
+    // ========================================
+    
+    $stmt = $pdo->query("
+        SELECT SUM(stock_quantity * price_pesos) as inventory_value
+        FROM products 
+        WHERE is_active = 1
+    ");
+    $inventory_value = $stmt->fetchColumn();
     
 } catch (PDOException $e) {
     $_SESSION['error'] = 'Error al cargar datos: ' . $e->getMessage();
     $today_sales = ['total_orders' => 0, 'total_sales' => 0, 'avg_order_value' => 0];
     $yesterday_sales = ['total_orders' => 0, 'total_sales' => 0];
-    $total_products = 0;
-    $stock_total = 0;
-    $inventory_value = 0;
     $low_stock_count = 0;
     $out_stock_count = 0;
     $pending_orders = 0;
@@ -181,6 +166,7 @@ try {
     $top_products = [];
     $week_summary = ['total_orders' => 0, 'total_sales' => 0, 'avg_order' => 0];
     $new_users = 0;
+    $inventory_value = 0;
 }
 ?>
 
@@ -289,25 +275,27 @@ try {
         font-weight: 700;
     }
     
-    .section-divider {
-        margin: 2rem 0 1rem 0;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e9ecef;
+    @media print {
+        .sidebar, .navbar, .btn, .alert-card .btn {
+            display: none !important;
+        }
     }
 </style>
 
 <!-- Encabezado -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard Principal</h2>
-        <p class="text-muted mb-0">Resumen completo en tiempo real • <?php echo date('d/m/Y H:i'); ?></p>
+        <h2><i class="fas fa-chart-line text-primary"></i> Dashboard de Analíticas</h2>
+        <p class="text-muted mb-0">Resumen operativo en tiempo real • <?php echo date('d/m/Y H:i'); ?></p>
+    </div>
+    <div>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
     </div>
 </div>
 
-<!-- Métricas de Ventas -->
-<div class="section-divider">
-    <h5 class="text-muted mb-0"><i class="fas fa-shopping-cart"></i> Ventas del Día</h5>
-</div>
+<!-- Métricas del Día -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card metric-card bg-primary text-white">
@@ -358,58 +346,12 @@ try {
     </div>
     
     <div class="col-md-3">
-        <div class="card metric-card bg-warning text-white">
-            <div class="metric-label">Nuevos Clientes</div>
-            <div class="metric-value">
-                <?php echo number_format($new_users ?? 0); ?>
-            </div>
-            <div class="small opacity-75">Últimos 7 días</div>
-        </div>
-    </div>
-</div>
-
-<!-- Métricas de Inventario -->
-<div class="section-divider">
-    <h5 class="text-muted mb-0"><i class="fas fa-boxes"></i> Estado del Inventario</h5>
-</div>
-<div class="row mb-4">
-    <div class="col-md-3">
         <div class="card metric-card bg-dark text-white">
-            <div class="metric-label">Total Productos</div>
+            <div class="metric-label">Valor Inventario</div>
             <div class="metric-value">
-                <?php echo number_format($total_products ?? 0); ?>
-            </div>
-            <div class="small opacity-75">Activos</div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div class="metric-label text-white">Stock Total</div>
-            <div class="metric-value text-white">
-                <?php echo number_format($stock_total ?? 0); ?>
-            </div>
-            <div class="small text-white opacity-75">Unidades</div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-            <div class="metric-label text-white">Valor Inventario</div>
-            <div class="metric-value text-white">
                 $<?php echo number_format($inventory_value ?? 0, 0); ?>
             </div>
-            <div class="small text-white opacity-75">Total en stock</div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-            <div class="metric-label text-white">Stock Bajo</div>
-            <div class="metric-value text-white">
-                <?php echo number_format($low_stock_count ?? 0); ?>
-            </div>
-            <div class="small text-white opacity-75">≤10 unidades</div>
+            <div class="small opacity-75">Total en stock</div>
         </div>
     </div>
 </div>
@@ -595,6 +537,25 @@ try {
             <i class="fas fa-info-circle"></i> No hay datos de ventas en los últimos 7 días.
         </div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Información adicional -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card bg-light border-0">
+            <div class="card-body text-center py-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-bar text-primary"></i> ¿Necesitas análisis más detallados?
+                </h5>
+                <p class="text-muted mb-3">
+                    Para reportes avanzados, análisis de tendencias, predicciones y dashboards interactivos, considera integrar Microsoft Power BI.
+                </p>
+                <a href="https://powerbi.microsoft.com" target="_blank" class="btn btn-primary">
+                    <i class="fab fa-microsoft"></i> Más información sobre Power BI
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
