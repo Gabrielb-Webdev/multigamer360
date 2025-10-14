@@ -187,22 +187,6 @@ try {
     </div>
     
     <div class="col-md-2">
-        <div class="card border-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title text-muted mb-2">Stock Normal</h6>
-                        <h4 class="mb-0 text-success"><?php echo number_format($stats['good_stock']); ?></h4>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x text-success"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-2">
         <div class="card border-warning">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
