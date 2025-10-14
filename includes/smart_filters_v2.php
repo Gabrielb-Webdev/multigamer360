@@ -198,8 +198,8 @@ class SmartFilters {
      */
     public function getAvailablePriceRange($appliedFilters = []) {
         $sql = "SELECT 
-                    MIN(p.price) as min,
-                    MAX(p.price) as max
+                    MIN(p.price_pesos) as min,
+                    MAX(p.price_pesos) as max
                 FROM products p
                 WHERE p.is_active = TRUE";
         
