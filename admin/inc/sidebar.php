@@ -8,7 +8,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>" href="products.php">
-                    <i class="fas fa-box me-2"></i>Productos
+                    <i class="fas fa-boxes me-2"></i>Productos e Inventario
                 </a>
             </li>
             <li class="nav-item">
@@ -29,11 +29,6 @@
             <li class="nav-item">
                 <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'brands.php' ? 'active' : ''; ?>" href="brands.php">
                     <i class="fas fa-award me-2"></i>Marcas
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'inventory.php' ? 'active' : ''; ?>" href="inventory.php">
-                    <i class="fas fa-warehouse me-2"></i>Inventario
                 </a>
             </li>
             <li class="nav-item">

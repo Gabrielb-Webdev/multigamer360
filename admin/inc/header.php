@@ -79,7 +79,7 @@ require_once 'auth.php';
                         <?php if (hasPermission('products', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo strpos($_SERVER['PHP_SELF'], 'product') !== false ? 'active' : ''; ?>" href="products.php">
-                                <i class="fas fa-box me-2"></i>Productos
+                                <i class="fas fa-boxes me-2"></i>Productos e Inventario
                             </a>
                         </li>
                         <?php endif; ?>
@@ -112,14 +112,6 @@ require_once 'auth.php';
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'brands.php' ? 'active' : ''; ?>" href="brands.php">
                                 <i class="fas fa-award me-2"></i>Marcas
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <?php if (hasPermission('inventory', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'inventory.php' ? 'active' : ''; ?>" href="inventory.php">
-                                <i class="fas fa-warehouse me-2"></i>Inventario
                             </a>
                         </li>
                         <?php endif; ?>

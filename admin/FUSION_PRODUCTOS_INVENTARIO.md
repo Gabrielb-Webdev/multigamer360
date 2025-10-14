@@ -221,7 +221,24 @@ CREATE TABLE inventory_movements (
 ALTER TABLE products ADD COLUMN min_stock_level INT DEFAULT 10;
 ```
 
-3. **Actualizar menú lateral** para combinar o renombrar el ítem de Inventario
+3. **Actualizar menú lateral** para combinar o renombrar el ítem de Inventario ✅ **COMPLETADO**
+
+---
+
+## 🎨 Menú Lateral Actualizado
+
+El menú lateral del dashboard ha sido actualizado:
+
+**Antes:**
+- 📦 Productos
+- 🏪 Inventario
+
+**Después:**
+- 📦 Productos e Inventario (con ícono de cajas múltiples)
+
+**Archivos modificados:**
+- `admin/inc/sidebar.php` - Menú lateral principal
+- `admin/inc/header.php` - Menú del header responsive
 
 ---
 
