@@ -147,24 +147,6 @@ require_once 'inc/header.php';
         padding: 6px 12px;
         font-weight: 500;
     }
-    
-    .page-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    
-    .page-header h1 {
-        margin: 0;
-        color: white;
-    }
-    
-    .page-header .btn {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
 </style>
     
     <div class="container-fluid">
@@ -172,12 +154,12 @@ require_once 'inc/header.php';
             <?php include 'inc/sidebar.php'; ?>
             
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Header mejorado -->
-                <div class="page-header d-flex justify-content-between align-items-center mt-3">
-                    <h1 class="h2 mb-0">
+                <!-- Header sin fondo especial, alineado a la izquierda -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
                         <i class="fas fa-ticket-alt me-2"></i>Gestión de Cupones
                     </h1>
-                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createCouponModal">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCouponModal">
                         <i class="fas fa-plus me-2"></i>Crear Cupón
                     </button>
                 </div>
@@ -195,6 +177,102 @@ require_once 'inc/header.php';
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 <?php endif; ?>
+
+                <!-- Tarjetas de estadísticas -->
+                <div class="row mb-4">
+                    <?php
+                    $totalCoupons = count($coupons);
+                    $activeCoupons = count(array_filter($coupons, fn($c) => $c['is_active'] == 1));
+                    $expiredCoupons = count(array_filter($coupons, fn($c) => strtotime($c['end_date']) < time()));
+                    ?>
+                    
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-primary shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Total Cupones
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $totalCoupons; ?></div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Cupones Activos
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $activeCoupons; ?></div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Cupones Expirados
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $expiredCoupons; ?></div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card border-left-info shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Tasa Activos
+                                        </div>
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col-auto">
+                                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                                    <?php echo $totalCoupons > 0 ? round(($activeCoupons / $totalCoupons) * 100) : 0; ?>%
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="progress progress-sm mr-2">
+                                                    <div class="progress-bar bg-info" role="progressbar" 
+                                                         style="width: <?php echo $totalCoupons > 0 ? round(($activeCoupons / $totalCoupons) * 100) : 0; ?>%" 
+                                                         aria-valuenow="<?php echo $totalCoupons > 0 ? round(($activeCoupons / $totalCoupons) * 100) : 0; ?>" 
+                                                         aria-valuemin="0" aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Filtros -->
                 <div class="card mb-4">

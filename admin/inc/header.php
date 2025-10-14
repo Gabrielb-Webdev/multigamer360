@@ -14,7 +14,7 @@ require_once 'auth.php';
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Admin CSS -->
-    <link href="assets/css/admin.css?v=1.1" rel="stylesheet">
+    <link href="assets/css/admin.css?v=1.2" rel="stylesheet">
     
     <meta name="csrf-token" content="<?php echo $csrf_token; ?>">
 </head>

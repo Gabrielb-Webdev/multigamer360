@@ -226,6 +226,10 @@ main {
     border-left: 0.25rem solid #fd7e14 !important;
 }
 
+.border-left-info {
+    border-left: 0.25rem solid #0dcaf0 !important;
+}
+
 .border-left-danger {
     border-left: 0.25rem solid #dc3545 !important;
 }
@@ -245,4 +249,44 @@ main {
     position: relative;
     height: 300px;
     width: 100%;
+}
+
+/* Utility Classes for Statistics Cards */
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.text-gray-300 {
+    color: #dee2e6 !important;
+}
+
+.text-gray-800 {
+    color: #343a40 !important;
+}
+
+.font-weight-bold {
+    font-weight: 700 !important;
+}
+
+.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.progress-sm {
+    height: 0.5rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem !important;
+}
+
+.mr-3 {
+    margin-right: 1rem !important;
 }
