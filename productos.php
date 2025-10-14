@@ -17,27 +17,43 @@
  */
 
 // =====================================================
+// ACTIVAR REPORTE DE ERRORES (TEMPORAL PARA DEBUG)
+// =====================================================
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
+// =====================================================
 // CONFIGURACIÓN INICIAL
 // =====================================================
 
-// Incluir configuración de sesión
-require_once 'config/session_config.php';
-
-// Inicializar sesión con configuración segura
-$sessionId = initSecureSession();
-// =====================================================
-
-// Incluir archivos necesarios
-require_once 'config/database.php';
-require_once 'includes/auth.php';
-require_once 'includes/product_manager.php';
-require_once 'includes/smart_filters_v2.php'; // ACTUALIZADO: Nueva versión con tablas relacionales
+try {
+    // Incluir configuración de sesión
+    require_once 'config/session_config.php';
+    
+    // Inicializar sesión con configuración segura
+    $sessionId = initSecureSession();
+    // =====================================================
+    
+    // Incluir archivos necesarios
+    require_once 'config/database.php';
+    require_once 'includes/auth.php';
+    require_once 'includes/product_manager.php';
+    require_once 'includes/smart_filters_v2.php'; // ACTUALIZADO: Nueva versión con tablas relacionales
+    
+} catch (Exception $e) {
+    die("Error fatal al cargar archivos: " . $e->getMessage() . "<br>Archivo: " . $e->getFile() . "<br>Línea: " . $e->getLine());
+}
 
 // =====================================================
 // INICIALIZAR SISTEMA DE FILTROS INTELIGENTES V2
 // =====================================================
 
-$smartFilters = new SmartFilters($pdo);
+try {
+    $smartFilters = new SmartFilters($pdo);
+} catch (Exception $e) {
+    die("Error al inicializar SmartFilters: " . $e->getMessage());
+}
 
 // Procesar filtros aplicados desde la URL
 $appliedFilters = [];
