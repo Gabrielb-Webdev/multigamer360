@@ -5,10 +5,8 @@
  * Para crear nuevos productos, usar product_create.php
  */
 
-$is_edit = true;
-$page_title = 'Editar Producto';
-
-require_once 'inc/header.php';
+// Incluir autenticación PRIMERO (sin HTML, pero con sesión y DB)
+require_once 'inc/auth.php';
 
 // Verificar que se proporcionó un ID
 $product_id = $_GET['id'] ?? null;
@@ -242,6 +240,11 @@ function generateSlug($text) {
     $text = strtolower($text);
     return empty($text) ? 'producto-' . time() : $text;
 }
+
+// AHORA SÍ incluir el header (con HTML)
+$is_edit = true;
+$page_title = 'Editar Producto';
+require_once 'inc/header.php';
 ?>
 
 <div class="row">
