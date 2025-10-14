@@ -198,10 +198,6 @@ require_once 'inc/header.php';
         }
     </style>
 
-<div class="container-fluid">
-    <div class="row">
-        <?php include 'inc/sidebar.php'; ?>
-        
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-chart-line me-2"></i>Reportes y Analíticas</h1>
@@ -783,5 +779,6 @@ setInterval(function() {
     // Aquí se podría implementar actualización automática de datos
 }, 300000); // 5 minutos
 </script>
+        </main>
 
 <?php require_once 'inc/footer.php'; ?>

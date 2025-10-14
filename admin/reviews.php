@@ -153,10 +153,6 @@ $page_title = "Gestión de Reseñas";
 require_once 'inc/header.php';
 ?>
     
-    <div class="container-fluid">
-        <div class="row">
-            <?php include 'inc/sidebar.php'; ?>
-            
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-star me-2"></i>Gestión de Reseñas</h1>
@@ -396,8 +392,6 @@ require_once 'inc/header.php';
                     </div>
                 </div>
             </main>
-        </div>
-    </div>
 
     <!-- Modal para responder -->
     <div class="modal fade" id="responseModal" tabindex="-1">
