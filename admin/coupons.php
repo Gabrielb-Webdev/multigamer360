@@ -182,8 +182,8 @@ require_once 'inc/header.php';
                 <div class="row mb-4">
                     <?php
                     $totalCoupons = count($coupons);
-                    $activeCoupons = count(array_filter($coupons, fn($c) => $c['is_active'] == 1));
-                    $expiredCoupons = count(array_filter($coupons, fn($c) => strtotime($c['end_date']) < time()));
+                    $activeCoupons = count(array_filter($coupons, function($c) { return $c['is_active'] == 1; }));
+                    $expiredCoupons = count(array_filter($coupons, function($c) { return $c['end_date'] && strtotime($c['end_date']) < time(); }));
                     ?>
                     
                     <div class="col-xl-3 col-md-6 mb-3">
