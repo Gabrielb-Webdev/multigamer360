@@ -2,6 +2,9 @@
 
 ## Fecha: 13 de Octubre de 2025
 
+> **🌐 SERVIDOR DE PRODUCCIÓN:** https://teal-fish-507993.hostingersite.com/  
+> **📋 Ver guía específica:** [GUIA_IMPLEMENTACION_HOSTINGER.md](GUIA_IMPLEMENTACION_HOSTINGER.md)
+
 ## Problema Detectado
 
 Varias páginas del panel de administración mostraban páginas en blanco o errores 404:
@@ -151,27 +154,46 @@ require_once 'inc/header.php';
 
 ## Instrucciones de Implementación
 
-### Paso 1: Actualizar Base de Datos
+### Paso 1: Actualizar Base de Datos en Hostinger
+1. Acceder a **phpMyAdmin** desde el panel de Hostinger
+2. Seleccionar tu base de datos
+3. Ir a la pestaña **SQL**
+4. Copiar y pegar el contenido del archivo `config/create_media_table.sql`:
+
 ```sql
--- Ejecutar en phpMyAdmin o consola MySQL:
-SOURCE /xampp/htdocs/multigamer360/config/create_media_table.sql;
+CREATE TABLE IF NOT EXISTS `media_files` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `filename` varchar(255) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
+  `file_type` varchar(100) NOT NULL,
+  `file_size` int(11) NOT NULL,
+  `uploaded_by` int(11) DEFAULT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_filename` (`filename`),
+  KEY `idx_uploaded_by` (`uploaded_by`),
+  KEY `idx_file_type` (`file_type`),
+  CONSTRAINT `fk_media_uploaded_by` FOREIGN KEY (`uploaded_by`) 
+    REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-O copiar y pegar el contenido del archivo SQL directamente.
+5. Hacer clic en **Ejecutar**
 
-### Paso 2: Verificar Permisos de Carpeta
-Asegurarse de que la carpeta `uploads/` tenga permisos de escritura:
-```
-/xampp/htdocs/multigamer360/uploads/
-```
+### Paso 2: Verificar Permisos de Carpeta en Hostinger
+1. Acceder al **File Manager** de Hostinger
+2. Navegar a la carpeta `/public_html/uploads/`
+3. Click derecho → **Permisos** (o **Permissions**)
+4. Establecer permisos a **755** o **775**
+5. ✅ Asegurar que tenga permisos de escritura
 
 ### Paso 3: Probar las Páginas
 Acceder a cada página para verificar que funcionen correctamente:
-- http://localhost/multigamer360/admin/coupons.php
-- http://localhost/multigamer360/admin/reviews.php
-- http://localhost/multigamer360/admin/reports.php
-- http://localhost/multigamer360/admin/newsletter.php
-- http://localhost/multigamer360/admin/media.php (nuevo)
+- https://teal-fish-507993.hostingersite.com/admin/coupons.php
+- https://teal-fish-507993.hostingersite.com/admin/reviews.php
+- https://teal-fish-507993.hostingersite.com/admin/reports.php
+- https://teal-fish-507993.hostingersite.com/admin/newsletter.php
+- https://teal-fish-507993.hostingersite.com/admin/media.php (nuevo)
 
 ### Paso 4: Verificar Funcionalidades
 - [ ] Coupons: Crear, editar, eliminar cupones

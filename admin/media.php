@@ -368,12 +368,13 @@ function deleteFile(id, filename) {
 }
 
 function copyUrl(url) {
-    // Crear URL completo
-    const fullUrl = window.location.origin + '/' + url;
+    // Limpiar la ruta relativa y construir URL absoluta
+    const cleanUrl = url.replace('../', '');
+    const fullUrl = window.location.origin + '/' + cleanUrl;
     
     // Copiar al portapapeles
     navigator.clipboard.writeText(fullUrl).then(function() {
-        alert('URL copiada al portapapeles: ' + fullUrl);
+        alert('URL copiada al portapapeles:\n' + fullUrl);
     }, function() {
         // Fallback para navegadores antiguos
         const input = document.createElement('input');
@@ -382,7 +383,7 @@ function copyUrl(url) {
         input.select();
         document.execCommand('copy');
         document.body.removeChild(input);
-        alert('URL copiada al portapapeles: ' + fullUrl);
+        alert('URL copiada al portapapeles:\n' + fullUrl);
     });
 }
 </script>
