@@ -190,12 +190,7 @@ require_once 'inc/header.php';
             min-height: 100vh;
             padding-top: 20px;
         }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background-color: rgba(255,255,255,0.2) !important;
-            color: white !important;
-            transform: translateX(5px);
-        }
+    
         .sidebar .nav-link i {
             color: rgba(255,255,255,0.9) !important;
         }
