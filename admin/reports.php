@@ -185,24 +185,7 @@ require_once 'inc/header.php';
             height: 20px;
             border-radius: 10px;
         }
-        .sidebar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-top: 20px;
-        }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            padding: 15px 20px;
-            margin: 5px 0;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background-color: rgba(255,255,255,0.2);
-            color: white;
-            transform: translateX(5px);
-        }
+        /* Eliminar el estilo personalizado del sidebar para usar el predeterminado */
         .content-area {
             padding: 20px;
         }
