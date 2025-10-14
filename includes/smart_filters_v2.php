@@ -156,7 +156,7 @@ class SmartFilters {
      * Obtener todos los géneros que tienen productos (compatibles con filtros aplicados)
      */
     public function getAvailableGenres($appliedFilters = []) {
-        $sql = "SELECT DISTINCT g.id, g.name, g.slug, g.icon,
+        $sql = "SELECT DISTINCT g.id, g.name, g.slug,
                        COUNT(DISTINCT pg.product_id) as product_count
                 FROM genres g
                 INNER JOIN product_genres pg ON g.id = pg.genre_id
@@ -184,7 +184,7 @@ class SmartFilters {
             $params = array_merge($params, $appliedFilters['consoles']);
         }
         
-        $sql .= " GROUP BY g.id, g.name, g.slug, g.icon
+        $sql .= " GROUP BY g.id, g.name, g.slug
                   HAVING product_count > 0
                   ORDER BY g.name ASC";
         
