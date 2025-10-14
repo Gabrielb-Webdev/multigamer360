@@ -143,6 +143,8 @@ $order_by = $order_options[$_GET['order'] ?? 'newest'] ?? 'p.created_at DESC';
 
 // Aplicar configuración a filtros
 $filters['order_by'] = $order_by;
+$filters['limit'] = $limit;
+$filters['offset'] = $offset;
 
 // =====================================================
 // INICIALIZAR VARIABLES DE VISTA
@@ -182,6 +184,9 @@ if (!empty($appliedFilters['consoles']) && count($appliedFilters['consoles']) ==
 // =====================================================
 
 try {
+    // DEBUG: Ver qué filtros se están aplicando
+    echo "<!-- DEBUG: Filtros aplicados: " . print_r($filters, true) . " -->";
+    
     // Obtener productos usando la función apropiada según disponibilidad
     if ($dynamicFiltersAvailable && !empty($filters['tags'])) {
         $products = $productManager->getProductsWithDynamicFilters($filters);
@@ -190,6 +195,10 @@ try {
         $products = $productManager->getProducts($filters);
         $totalProducts = $productManager->countProducts($filters);
     }
+    
+    // DEBUG: Ver cuántos productos se obtuvieron
+    echo "<!-- DEBUG: Total productos encontrados: " . count($products) . " -->";
+    echo "<!-- DEBUG: Total count: " . $totalProducts . " -->";
     
     $totalPages = ceil($totalProducts / $limit);
     $categories = $productManager->getCategories();

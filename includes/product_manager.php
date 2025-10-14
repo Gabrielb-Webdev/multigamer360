@@ -136,9 +136,15 @@ class ProductManager {
             $sql .= " ORDER BY (p.stock_quantity > 0) DESC, p.created_at DESC";
         }
         
+        // Paginación
         if (!empty($filters['limit'])) {
             $sql .= " LIMIT ?";
-            $params[] = $filters['limit'];
+            $params[] = (int)$filters['limit'];
+            
+            if (isset($filters['offset'])) {
+                $sql .= " OFFSET ?";
+                $params[] = (int)$filters['offset'];
+            }
         }
         
         $stmt = $this->pdo->prepare($sql);
