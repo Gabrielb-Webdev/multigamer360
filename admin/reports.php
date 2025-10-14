@@ -108,6 +108,16 @@ function getTrendIcon($trend) {
 }
 
 $page_title = "Reportes y Analíticas";
+$page_actions = '
+    <div>
+        <button class="btn btn-primary me-2" onclick="exportData(\'pdf\')">
+            <i class="fas fa-file-pdf"></i> Exportar PDF
+        </button>
+        <button class="btn btn-outline-primary" onclick="exportData(\'excel\')">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+    </div>
+';
 require_once 'inc/header.php';
 ?>
 
@@ -198,25 +208,10 @@ require_once 'inc/header.php';
         }
     </style>
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-chart-line me-2"></i>Reportes y Analíticas</h1>
-            </div>
-            
             <!-- Dashboard de Reportes -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard de Reportes</h2>
-                <div>
-                    <button class="btn btn-primary me-2" onclick="exportData('pdf')">
-                        <i class="fas fa-file-pdf"></i> Exportar PDF
-                    </button>
-                    <button class="btn btn-success" onclick="exportData('excel')">
-                            <i class="fas fa-file-excel"></i> Exportar Excel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- KPIs Principales -->
+            </div>                <!-- KPIs Principales -->
                 <div class="row mb-4">
                     <?php if (!empty($kpis)): ?>
                         <?php foreach (array_slice($kpis, 0, 4) as $kpi): ?>
@@ -779,6 +774,5 @@ setInterval(function() {
     // Aquí se podría implementar actualización automática de datos
 }, 300000); // 5 minutos
 </script>
-        </main>
 
 <?php require_once 'inc/footer.php'; ?>

@@ -99,6 +99,7 @@ try {
 }
 
 $page_title = "Gestión de Cupones";
+$page_actions = '<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCouponModal"><i class="fas fa-plus me-2"></i>Crear Cupón</button>';
 require_once 'inc/header.php';
 ?>
 
@@ -148,31 +149,6 @@ require_once 'inc/header.php';
         font-weight: 500;
     }
 </style>
-    
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Header sin fondo especial, alineado a la izquierda -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">
-                        <i class="fas fa-ticket-alt me-2"></i>Gestión de Cupones
-                    </h1>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCouponModal">
-                        <i class="fas fa-plus me-2"></i>Crear Cupón
-                    </button>
-                </div>
-
-                <?php if (isset($success_msg)): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?php echo $success_msg; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (isset($error_msg)): ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?php echo $error_msg; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                <?php endif; ?>
 
                 <!-- Tarjetas de estadísticas -->
                 <div class="row mb-4">
@@ -491,7 +467,6 @@ require_once 'inc/header.php';
                         </div>
                     </div>
                 </div>
-            </main>
 
     <!-- Modal para crear cupón -->
     <div class="modal fade" id="createCouponModal" tabindex="-1">

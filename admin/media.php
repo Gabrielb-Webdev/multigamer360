@@ -144,16 +144,9 @@ $stats_stmt = $pdo->query("
 $stats = $stats_stmt->fetch();
 
 $page_title = "Gestión de Medios";
+$page_actions = '<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal"><i class="fas fa-upload me-1"></i>Subir Archivo</button>';
 require_once 'inc/header.php';
 ?>
-
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-photo-video me-2"></i>Gestión de Medios</h1>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                    <i class="fas fa-upload me-1"></i>Subir Archivo
-                </button>
-            </div>
 
             <?php if (isset($success_msg)): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -298,8 +291,6 @@ require_once 'inc/header.php';
                     </ul>
                 </nav>
             <?php endif; ?>
-
-        </main>
 
 <!-- Modal para subir archivo -->
 <div class="modal fade" id="uploadModal" tabindex="-1">
