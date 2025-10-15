@@ -137,15 +137,12 @@ class ProductManager {
             $sql .= " ORDER BY (p.stock_quantity > 0) DESC, p.created_at DESC";
         }
         
-        // Paginación
+        // Paginación - Agregar directamente al SQL con valores sanitizados
+        // No usar placeholders (?) para LIMIT/OFFSET porque PDO los convierte a strings
         if (!empty($filters['limit'])) {
-            $sql .= " LIMIT ?";
-            $params[] = (int)$filters['limit'];
-            
-            if (isset($filters['offset'])) {
-                $sql .= " OFFSET ?";
-                $params[] = (int)$filters['offset'];
-            }
+            $limit = (int)$filters['limit'];
+            $offset = isset($filters['offset']) ? (int)$filters['offset'] : 0;
+            $sql .= " LIMIT $limit OFFSET $offset";
         }
         
         $stmt = $this->pdo->prepare($sql);
@@ -376,15 +373,12 @@ class ProductManager {
                 ORDER BY (p.stock_quantity > 0) DESC, p.created_at DESC";
         
         if ($limit) {
-            $sql .= " LIMIT ?";
+            $limit = (int)$limit; // Sanitizar
+            $sql .= " LIMIT $limit";
         }
         
         $stmt = $this->pdo->prepare($sql);
-        if ($limit) {
-            $stmt->execute([$tag, $limit]);
-        } else {
-            $stmt->execute([$tag]);
-        }
+        $stmt->execute([$tag]);
         
         return $stmt->fetchAll();
     }
@@ -589,8 +583,8 @@ class ProductManager {
         }
         
         if (!empty($filters['limit'])) {
-            $sql .= " LIMIT ?";
-            $params[] = $filters['limit'];
+            $limit = (int)$filters['limit'];
+            $sql .= " LIMIT $limit";
         }
         
         $stmt = $this->pdo->prepare($sql);
