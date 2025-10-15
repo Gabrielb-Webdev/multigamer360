@@ -527,23 +527,39 @@ require_once 'includes/header.php';
                                 
                                 <!-- Imagen de fondo que ocupa toda la card -->
                                 <?php 
-                                // Verificar la existencia del archivo en las diferentes rutas
+                                // Obtener el nombre de archivo de la imagen
                                 $image_filename = !empty($product['image_url']) ? $product['image_url'] : 'product1.jpg';
-                                $assets_path = 'assets/images/products/' . $image_filename;
-                                $uploads_path = 'uploads/products/' . $image_filename;
                                 
-                                // Determinar qué ruta usar (prioridad a assets/images/products/)
-                                if (file_exists($assets_path)) {
-                                    $product_image = $assets_path;
-                                } else if (file_exists($uploads_path)) {
-                                    $product_image = $uploads_path;
-                                } else {
-                                    // Imagen por defecto
-                                    $product_image = 'assets/images/products/product1.jpg';
+                                // Construir rutas posibles
+                                $possible_paths = [
+                                    'uploads/products/' . $image_filename,
+                                    'assets/images/products/' . $image_filename,
+                                    'admin/uploads/products/' . $image_filename
+                                ];
+                                
+                                // Buscar la ruta correcta (usar $_SERVER['DOCUMENT_ROOT'] para rutas absolutas)
+                                $product_image = 'assets/images/products/product1.jpg'; // Imagen por defecto
+                                $doc_root = $_SERVER['DOCUMENT_ROOT'];
+                                
+                                foreach ($possible_paths as $path) {
+                                    // Verificar si el archivo existe en el servidor
+                                    $full_path = $doc_root . '/' . $path;
+                                    if (file_exists($full_path)) {
+                                        $product_image = $path;
+                                        break;
+                                    }
+                                }
+                                
+                                // Si no se encontró, intentar con la ruta directa de image_url
+                                if ($product_image === 'assets/images/products/product1.jpg' && !empty($product['image_url'])) {
+                                    // Asumir que image_url ya tiene la ruta completa
+                                    if (strpos($product['image_url'], '/') !== false || strpos($product['image_url'], 'http') === 0) {
+                                        $product_image = $product['image_url'];
+                                    }
                                 }
                                 ?>
                                 <div class="product-image-background" 
-                                     style="background-image: url('<?php echo $product_image; ?>');"
+                                     style="background-image: url('<?php echo htmlspecialchars($product_image); ?>');"
                                      data-fallback="assets/images/products/product1.jpg">
                                 </div>
                                 
@@ -578,7 +594,7 @@ require_once 'includes/header.php';
                                         
                                         <!-- 4. Botón de agregar al carrito -->
                                         <div class="product-actions">
-                                            <?php if ($product['stock'] > 0): ?>
+                                            <?php if (($product['stock_quantity'] ?? 0) > 0): ?>
                                                 <button class="btn-add-to-cart-modern" 
                                                         data-product-id="<?php echo $product['id']; ?>">
                                                     <i class="fas fa-shopping-cart cart-icon"></i>
