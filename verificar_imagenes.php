@@ -13,26 +13,36 @@ echo "<h1>🖼️ Verificación de Imágenes de Productos</h1>";
 echo "<hr>";
 
 try {
-    $stmt = $pdo->query("SELECT id, name, image_url FROM products WHERE is_active = 1");
+    $stmt = $pdo->query("
+        SELECT p.id, p.name, p.image_url, pi.image_url as primary_image, pi.is_primary
+        FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+        WHERE p.is_active = 1
+    ");
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo "<h2>Productos y sus rutas de imagen:</h2>";
     echo "<table border='1' cellpadding='10' style='border-collapse: collapse;'>";
     echo "<tr style='background: #007bff; color: white;'>";
-    echo "<th>ID</th><th>Nombre</th><th>image_url (DB)</th><th>Ruta Completa</th><th>¿Existe?</th><th>Preview</th>";
+    echo "<th>ID</th><th>Nombre</th><th>image_url (products)</th><th>primary_image (product_images)</th><th>Ruta Usada</th><th>¿Existe?</th><th>Preview</th>";
     echo "</tr>";
     
     $doc_root = $_SERVER['DOCUMENT_ROOT'];
     
     foreach ($products as $p) {
-        $image_url = $p['image_url'] ?? '';
+        // Priorizar primary_image de la tabla product_images
+        $image_filename = !empty($p['primary_image']) ? $p['primary_image'] : 
+                         (!empty($p['image_url']) ? $p['image_url'] : '');
+        
+        $source = !empty($p['primary_image']) ? 'product_images' : 
+                 (!empty($p['image_url']) ? 'products' : 'ninguna');
         
         // Posibles rutas
         $paths_to_check = [
-            'uploads/products/' . $image_url,
-            'assets/images/products/' . $image_url,
-            'admin/uploads/products/' . $image_url,
-            $image_url // Ruta directa
+            'uploads/products/' . $image_filename,
+            'assets/images/products/' . $image_filename,
+            'admin/uploads/products/' . $image_filename,
+            $image_filename // Ruta directa
         ];
         
         $found = false;
@@ -53,7 +63,8 @@ try {
         echo "<tr style='background: $status_color;'>";
         echo "<td>{$p['id']}</td>";
         echo "<td>{$p['name']}</td>";
-        echo "<td><code>" . htmlspecialchars($image_url) . "</code></td>";
+        echo "<td><code>" . htmlspecialchars($p['image_url'] ?? 'NULL') . "</code></td>";
+        echo "<td><code>" . htmlspecialchars($p['primary_image'] ?? 'NULL') . "</code><br><small>Fuente: <strong>$source</strong></small></td>";
         echo "<td><code>" . htmlspecialchars($working_path ?: 'N/A') . "</code></td>";
         echo "<td><strong>$status_text</strong></td>";
         echo "<td>";
@@ -97,6 +108,51 @@ try {
         }
         echo "</li>";
     }
+    echo "</ul>";
+    
+    // Verificar tabla product_images
+    echo "<hr>";
+    echo "<h2>📸 Tabla product_images:</h2>";
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM product_images");
+        $total = $stmt->fetchColumn();
+        echo "<p><strong>Total de imágenes en product_images:</strong> $total</p>";
+        
+        if ($total > 0) {
+            $stmt = $pdo->query("
+                SELECT pi.*, p.name as product_name 
+                FROM product_images pi
+                LEFT JOIN products p ON pi.product_id = p.id
+                ORDER BY pi.product_id, pi.display_order
+                LIMIT 20
+            ");
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo "<table border='1' cellpadding='10' style='border-collapse: collapse;'>";
+            echo "<tr style='background: #6c757d; color: white;'>";
+            echo "<th>ID</th><th>Product ID</th><th>Producto</th><th>image_url</th><th>is_primary</th><th>display_order</th>";
+            echo "</tr>";
+            
+            foreach ($images as $img) {
+                $primary_style = $img['is_primary'] ? 'background: #fff3cd;' : '';
+                echo "<tr style='$primary_style'>";
+                echo "<td>{$img['id']}</td>";
+                echo "<td>{$img['product_id']}</td>";
+                echo "<td>{$img['product_name']}</td>";
+                echo "<td><code>{$img['image_url']}</code></td>";
+                echo "<td>" . ($img['is_primary'] ? '⭐ SÍ' : 'No') . "</td>";
+                echo "<td>{$img['display_order']}</td>";
+                echo "</tr>";
+            }
+            
+            echo "</table>";
+        } else {
+            echo "<p style='color: orange;'>⚠️ No hay imágenes en la tabla product_images</p>";
+        }
+    } catch (PDOException $e) {
+        echo "<p style='color: red;'>Error: " . $e->getMessage() . "</p>";
+    }
+    
     echo "</ul>";
     
     // Recomendaciones

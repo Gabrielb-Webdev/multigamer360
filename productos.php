@@ -527,8 +527,9 @@ require_once 'includes/header.php';
                                 
                                 <!-- Imagen de fondo que ocupa toda la card -->
                                 <?php 
-                                // Obtener el nombre de archivo de la imagen
-                                $image_filename = !empty($product['image_url']) ? $product['image_url'] : 'product1.jpg';
+                                // Obtener la imagen principal desde la tabla product_images
+                                $image_filename = !empty($product['primary_image']) ? $product['primary_image'] : 
+                                                 (!empty($product['image_url']) ? $product['image_url'] : 'product1.jpg');
                                 
                                 // Construir rutas posibles
                                 $possible_paths = [
@@ -550,11 +551,11 @@ require_once 'includes/header.php';
                                     }
                                 }
                                 
-                                // Si no se encontró, intentar con la ruta directa de image_url
-                                if ($product_image === 'assets/images/products/product1.jpg' && !empty($product['image_url'])) {
+                                // Si no se encontró, intentar con la ruta directa
+                                if ($product_image === 'assets/images/products/product1.jpg' && !empty($image_filename)) {
                                     // Asumir que image_url ya tiene la ruta completa
-                                    if (strpos($product['image_url'], '/') !== false || strpos($product['image_url'], 'http') === 0) {
-                                        $product_image = $product['image_url'];
+                                    if (strpos($image_filename, '/') !== false || strpos($image_filename, 'http') === 0) {
+                                        $product_image = $image_filename;
                                     }
                                 }
                                 ?>

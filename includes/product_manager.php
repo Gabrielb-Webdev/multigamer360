@@ -11,12 +11,14 @@ class ProductManager {
     // Obtener productos destacados
     public function getFeaturedProducts($limit = 8) {
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
+                       pi.image_url as primary_image,
                        p.console, p.publication_date, p.price_usd, p.price_pesos, p.release_date,
                        p.main_image, p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.is_featured = 1 AND p.is_active = 1 
                 ORDER BY (p.stock_quantity > 0) DESC, p.created_at DESC 
                 LIMIT :limit";
@@ -30,12 +32,14 @@ class ProductManager {
     // Obtener productos nuevos (novedades)
     public function getNewProducts($limit = 8) {
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
+                       pi.image_url as primary_image,
                        p.console, p.publication_date, p.price_usd, p.price_pesos, p.release_date,
                        p.main_image, p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.is_new = 1 AND p.is_active = 1 
                 ORDER BY (p.stock_quantity > 0) DESC, p.created_at DESC 
                 LIMIT :limit";
@@ -53,11 +57,13 @@ class ProductManager {
                        b.name as brand_name,
                        co.name as console_name, 
                        co.slug as console_slug,
+                       pi.image_url as primary_image,
                        p.created_at as publication_date
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN consoles co ON p.console_id = co.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.is_active = 1";
         
         $params = [];
@@ -520,13 +526,15 @@ class ProductManager {
      */
     public function getProductsWithDynamicFilters($filters = []) {
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
+                       pi.image_url as primary_image,
                        p.console, p.publication_date, p.price_usd, p.price_pesos, p.release_date,
                        p.main_image, p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.is_active = TRUE";
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+                WHERE p.is_active = 1";
         
         $params = [];
         $where_conditions = [];
