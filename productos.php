@@ -581,7 +581,9 @@ require_once 'includes/header.php';
                                         <!-- 2. Consola -->
                                         <div class="product-console">
                                             <?php 
-                                            $console_text = !empty($product['console']) ? $product['console'] : 'PC';
+                                            // Usar console_name del JOIN con la tabla consoles
+                                            $console_text = !empty($product['console_name']) ? $product['console_name'] : 
+                                                          (!empty($product['console']) ? $product['console'] : 'PC');
                                             ?>
                                             <span class="console-name">
                                                 <?php echo htmlspecialchars($console_text); ?>
