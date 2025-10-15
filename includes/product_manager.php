@@ -63,8 +63,8 @@ class ProductManager {
         
         // Filtro por categoría (slug único)
         if (!empty($filters['category'])) {
-            $sql .= " AND c.slug = :category";
-            $params['category'] = $filters['category'];
+            $sql .= " AND c.slug = ?";
+            $params[] = $filters['category'];
         }
         
         // Filtro por múltiples categorías (IDs)
@@ -76,8 +76,8 @@ class ProductManager {
         
         // Filtro por marca (slug único)
         if (!empty($filters['brand'])) {
-            $sql .= " AND b.slug = :brand";
-            $params['brand'] = $filters['brand'];
+            $sql .= " AND b.slug = ?";
+            $params[] = $filters['brand'];
         }
         
         // Filtro por múltiples marcas (IDs)
