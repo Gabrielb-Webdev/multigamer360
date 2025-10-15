@@ -107,6 +107,7 @@ try {
     // Obtener productos
     $query = "
         SELECT p.*, c.name as category_name, b.name as brand_name,
+               co.name as console_name,
                pi.image_url as main_image,
                CASE 
                    WHEN p.stock_quantity = 0 THEN 'Agotado'
@@ -121,6 +122,7 @@ try {
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
+        LEFT JOIN consoles co ON p.console_id = co.id
         LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
         WHERE $where_clause
         ORDER BY p.created_at DESC
@@ -401,6 +403,7 @@ try {
                             <th>SKU</th>
                             <th>Categoría</th>
                             <th>Marca</th>
+                            <th>Consola</th>
                             <th>Precio ARS</th>
                             <th>Precio USD</th>
                             <th>Stock</th>
@@ -447,6 +450,15 @@ try {
                             </td>
                             <td>
                                 <?php echo htmlspecialchars($product['brand_name'] ?? 'Sin marca'); ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($product['console_name'])): ?>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-gamepad"></i> <?php echo htmlspecialchars($product['console_name']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <strong class="text-primary">$<?php echo number_format($product['price_pesos'], 0); ?></strong>
