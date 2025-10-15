@@ -48,8 +48,12 @@ class ProductManager {
     
     // Obtener todos los productos con filtros
     public function getProducts($filters = []) {
-        $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
-                       co.name as console_name, co.slug as console_slug
+        $sql = "SELECT p.*, 
+                       c.name as category_name, 
+                       b.name as brand_name,
+                       co.name as console_name, 
+                       co.slug as console_slug,
+                       p.created_at as publication_date
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id
