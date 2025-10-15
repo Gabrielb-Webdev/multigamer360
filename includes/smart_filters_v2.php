@@ -29,7 +29,7 @@ class SmartFilters {
         $sql = "SELECT DISTINCT c.id, c.name, c.slug, COUNT(DISTINCT p.id) as product_count
                 FROM categories c
                 INNER JOIN products p ON c.id = p.category_id
-                WHERE p.is_active = TRUE";
+                WHERE p.is_active = 1";
         
         $params = [];
         
@@ -72,7 +72,7 @@ class SmartFilters {
         $sql = "SELECT DISTINCT b.id, b.name, b.slug, COUNT(DISTINCT p.id) as product_count
                 FROM brands b
                 INNER JOIN products p ON b.id = p.brand_id
-                WHERE p.is_active = TRUE";
+                WHERE p.is_active = 1";
         
         $params = [];
         
@@ -116,7 +116,7 @@ class SmartFilters {
                        COUNT(DISTINCT p.id) as product_count
                 FROM consoles co
                 INNER JOIN products p ON co.id = p.console_id
-                WHERE p.is_active = TRUE";
+                WHERE p.is_active = 1";
         
         $params = [];
         
@@ -161,7 +161,7 @@ class SmartFilters {
                 FROM genres g
                 INNER JOIN product_genres pg ON g.id = pg.genre_id
                 INNER JOIN products p ON pg.product_id = p.id
-                WHERE p.is_active = TRUE";
+                WHERE p.is_active = 1";
         
         $params = [];
         
@@ -201,7 +201,7 @@ class SmartFilters {
                     MIN(p.price_pesos) as min,
                     MAX(p.price_pesos) as max
                 FROM products p
-                WHERE p.is_active = TRUE";
+                WHERE p.is_active = 1";
         
         $params = [];
         

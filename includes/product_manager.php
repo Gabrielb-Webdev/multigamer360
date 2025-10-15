@@ -58,7 +58,7 @@ class ProductManager {
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id
                 LEFT JOIN consoles co ON p.console_id = co.id
-                WHERE p.is_active = TRUE";
+                WHERE p.is_active = 1";
         
         $params = [];
         
@@ -300,23 +300,22 @@ class ProductManager {
             $params = array_merge($params, $filters['brands']);
         }
         
-        // Filtro por múltiples consolas
+        // Filtro por múltiples consolas (IDs de tabla consoles) - CORREGIDO
         if (!empty($filters['consoles']) && is_array($filters['consoles'])) {
             $placeholders = str_repeat('?,', count($filters['consoles']) - 1) . '?';
-            $sql .= " AND p.console IN ($placeholders)";
+            $sql .= " AND p.console_id IN ($placeholders)";
             $params = array_merge($params, $filters['consoles']);
         }
         
-        // Filtro por múltiples géneros
+        // Filtro por múltiples géneros (IDs de tabla genres con relación N:N) - CORREGIDO
         if (!empty($filters['genres']) && is_array($filters['genres'])) {
-            $genreConditions = [];
-            foreach ($filters['genres'] as $genre) {
-                $genreConditions[] = "p.genre LIKE ?";
-                $params[] = "%$genre%";
-            }
-            if (!empty($genreConditions)) {
-                $sql .= " AND (" . implode(" OR ", $genreConditions) . ")";
-            }
+            $placeholders = str_repeat('?,', count($filters['genres']) - 1) . '?';
+            $sql .= " AND EXISTS (
+                        SELECT 1 FROM product_genres pg 
+                        WHERE pg.product_id = p.id 
+                        AND pg.genre_id IN ($placeholders)
+                    )";
+            $params = array_merge($params, $filters['genres']);
         }
         
         // Búsqueda general

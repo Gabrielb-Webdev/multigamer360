@@ -185,7 +185,8 @@ if (!empty($appliedFilters['consoles']) && count($appliedFilters['consoles']) ==
 
 try {
     // DEBUG: Ver qué filtros se están aplicando
-    echo "<!-- DEBUG: Filtros aplicados: " . print_r($filters, true) . " -->";
+    error_log("=== DEBUG PRODUCTOS.PHP ===");
+    error_log("Filtros aplicados: " . print_r($filters, true));
     
     // Obtener productos usando la función apropiada según disponibilidad
     if ($dynamicFiltersAvailable && !empty($filters['tags'])) {
@@ -197,8 +198,18 @@ try {
     }
     
     // DEBUG: Ver cuántos productos se obtuvieron
+    error_log("Total productos obtenidos: " . count($products));
+    error_log("Total count productos: " . $totalProducts);
+    error_log("==========================");
+    
+    // Debug visible en HTML (solo para desarrollo)
+    echo "<!-- DEBUG: Filtros aplicados: " . htmlspecialchars(print_r($filters, true)) . " -->";
     echo "<!-- DEBUG: Total productos encontrados: " . count($products) . " -->";
     echo "<!-- DEBUG: Total count: " . $totalProducts . " -->";
+    
+    if (count($products) > 0) {
+        echo "<!-- DEBUG: Primer producto: " . htmlspecialchars(print_r($products[0], true)) . " -->";
+    }
     
     $totalPages = ceil($totalProducts / $limit);
     $categories = $productManager->getCategories();
