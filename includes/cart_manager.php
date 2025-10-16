@@ -39,11 +39,6 @@ class CartManager {
      * Sincronizar carrito desde la base de datos
      */
     public function syncCartFromDatabase() {
-        // DESHABILITADO TEMPORALMENTE - La tabla cart_sessions no existe aún
-        // El carrito funcionará solo con sesiones PHP por ahora
-        return true;
-        
-        /* CÓDIGO ORIGINAL (descomentar cuando exista la tabla cart_sessions):
         try {
             // Validar que tenemos identificadores válidos
             if (empty($this->session_id) && empty($this->user_id)) {
@@ -71,18 +66,12 @@ class CartManager {
             error_log("Error sincronizando carrito desde BD: " . $e->getMessage());
             return false;
         }
-        */
     }
 
     /**
      * Sincronizar carrito hacia la base de datos
      */
     public function syncCartToDatabase() {
-        // DESHABILITADO TEMPORALMENTE - La tabla cart_sessions no existe aún
-        // El carrito funcionará solo con sesiones PHP por ahora
-        return true;
-        
-        /* CÓDIGO ORIGINAL (descomentar cuando exista la tabla cart_sessions):
         try {
             // Validar que tenemos un session_id válido
             if (empty($this->session_id)) {
@@ -118,7 +107,6 @@ class CartManager {
             error_log("Error sincronizando carrito hacia BD: " . $e->getMessage());
             return false;
         }
-        */
     }
 
     /**
