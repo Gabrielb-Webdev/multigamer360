@@ -257,33 +257,32 @@
 
     /**
      * Verificar estado inicial del carrito al cargar la página
+     * OPTIMIZADO: Ya no hace peticiones AJAX, lee del atributo data-in-cart
      */
     async checkInitialCartState() {
         const buttons = document.querySelectorAll('.btn-add-to-cart-modern');
         
+        console.log(`ModernCartButton: Verificando estado inicial de ${buttons.length} botones`);
+        
         for (const button of buttons) {
             const productId = button.getAttribute('data-product-id');
-            if (productId) {
-                try {
-                    const response = await fetch(`ajax/check-cart-item.php?product_id=${productId}`, {
-                        credentials: 'same-origin',
-                        headers: {
-                            'Cache-Control': 'no-cache'
-                        }
-                    });
-                    const data = await response.json();
-                    
-                    if (data.in_cart) {
-                        this.setButtonInCartState(button, productId);
-                        this.productsInCart.add(productId);
-                    }
-                } catch (error) {
-                    console.error(`Error verificando estado del producto ${productId}:`, error);
+            const isInCart = button.getAttribute('data-in-cart') === 'true';
+            
+            if (productId && isInCart) {
+                // El producto ya está en el carrito según PHP
+                // No necesitamos hacer AJAX, simplemente actualizar el estado visual
+                this.productsInCart.add(productId);
+                
+                // El botón ya tiene la clase 'in-cart' desde PHP, pero aseguramos el estado
+                if (!button.classList.contains('in-cart')) {
+                    button.classList.add('in-cart');
                 }
+                
+                console.log(`ModernCartButton: Producto ${productId} marcado como en carrito (desde PHP)`);
             }
         }
         
-        console.log('ModernCartButton: Estado inicial del carrito verificado');
+        console.log('ModernCartButton: Estado inicial del carrito verificado (sin AJAX)');
     }
 
     /**

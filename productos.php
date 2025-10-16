@@ -222,6 +222,15 @@ try {
         $stmt->execute([$_SESSION['user_id']]);
         $userWishlist = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'product_id');
     }
+    
+    // =====================================================
+    // OBTENER PRODUCTOS EN CARRITO (PARA MOSTRAR ESTADO CORRECTO INMEDIATAMENTE)
+    // =====================================================
+    $productsInCart = [];
+    if (!empty($_SESSION['cart'])) {
+        $productsInCart = array_keys($_SESSION['cart']);
+    }
+    
 } catch (Exception $e) {
     error_log("Error en productos.php: " . $e->getMessage());
     $products = [];
@@ -230,6 +239,7 @@ try {
     $categories = [];
     $brands = [];
     $userWishlist = [];
+    $productsInCart = [];
 }
 
 // =====================================================
@@ -598,12 +608,20 @@ require_once 'includes/header.php';
                                         <!-- 4. Botón de agregar al carrito -->
                                         <div class="product-actions">
                                             <?php if (($product['stock_quantity'] ?? 0) > 0): ?>
-                                                <button class="btn-add-to-cart-modern" 
-                                                        data-product-id="<?php echo $product['id']; ?>">
-                                                    <i class="fas fa-shopping-cart cart-icon"></i>
+                                                <?php 
+                                                // Verificar si el producto ya está en el carrito
+                                                $isInCart = in_array($product['id'], $productsInCart);
+                                                $btnClass = $isInCart ? 'btn-add-to-cart-modern in-cart' : 'btn-add-to-cart-modern';
+                                                $btnText = $isInCart ? 'EN EL CARRITO' : 'AGREGAR AL CARRITO';
+                                                $iconClass = $isInCart ? 'fas fa-check' : 'fas fa-shopping-cart';
+                                                ?>
+                                                <button class="<?php echo $btnClass; ?>" 
+                                                        data-product-id="<?php echo $product['id']; ?>"
+                                                        data-in-cart="<?php echo $isInCart ? 'true' : 'false'; ?>">
+                                                    <i class="<?php echo $iconClass; ?> cart-icon"></i>
                                                     <div class="loading-spinner"></div>
                                                     <i class="fas fa-check success-check"></i>
-                                                    <span class="btn-text">AGREGAR AL CARRITO</span>
+                                                    <span class="btn-text"><?php echo $btnText; ?></span>
                                                 </button>
                                             <?php else: ?>
                                                 <button class="btn-no-stock" disabled>
