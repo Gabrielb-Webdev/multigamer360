@@ -77,34 +77,62 @@ function getCartProducts($pdo, $cart) {
         $product_ids = array_keys($cart);
         $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
         
-        $stmt = $pdo->prepare("
-            SELECT p.id, p.name, p.price_pesos as price, p.image_url,
-                   COALESCE(
-                       (SELECT pi.image_url 
-                        FROM product_images pi 
-                        WHERE pi.product_id = p.id 
-                        AND pi.is_primary = 1 
-                        AND pi.is_active = 1 
-                        LIMIT 1),
-                       p.image_url
-                   ) as primary_image,
-                   CASE 
-                       WHEN p.category_id = 1 THEN 'PlayStation'
-                       WHEN p.category_id = 2 THEN 'Nintendo'
-                       WHEN p.category_id = 3 THEN 'Xbox'
-                       WHEN p.category_id = 4 THEN 'Sega'
-                       ELSE 'General'
-                   END as category,
-                   CASE 
-                       WHEN p.brand_id = 1 THEN 'Sony'
-                       WHEN p.brand_id = 2 THEN 'Nintendo'
-                       WHEN p.brand_id = 3 THEN 'Microsoft'
-                       WHEN p.brand_id = 4 THEN 'Sega'
-                       ELSE 'Genérico'
-                   END as brand
-            FROM products p
-            WHERE p.id IN ($placeholders) AND p.is_active = 1
-        ");
+        // Verificar si la tabla product_images existe
+        $table_check = $pdo->query("SHOW TABLES LIKE 'product_images'")->fetch();
+        
+        if ($table_check) {
+            // Consulta CON product_images
+            $stmt = $pdo->prepare("
+                SELECT p.id, p.name, p.price_pesos as price, p.image_url,
+                       COALESCE(
+                           (SELECT pi.image_url 
+                            FROM product_images pi 
+                            WHERE pi.product_id = p.id 
+                            AND pi.is_primary = 1 
+                            AND pi.is_active = 1 
+                            LIMIT 1),
+                           p.image_url
+                       ) as primary_image,
+                       CASE 
+                           WHEN p.category_id = 1 THEN 'PlayStation'
+                           WHEN p.category_id = 2 THEN 'Nintendo'
+                           WHEN p.category_id = 3 THEN 'Xbox'
+                           WHEN p.category_id = 4 THEN 'Sega'
+                           ELSE 'General'
+                       END as category,
+                       CASE 
+                           WHEN p.brand_id = 1 THEN 'Sony'
+                           WHEN p.brand_id = 2 THEN 'Nintendo'
+                           WHEN p.brand_id = 3 THEN 'Microsoft'
+                           WHEN p.brand_id = 4 THEN 'Sega'
+                           ELSE 'Genérico'
+                       END as brand
+                FROM products p
+                WHERE p.id IN ($placeholders) AND p.is_active = 1
+            ");
+        } else {
+            // Consulta SIN product_images (fallback)
+            $stmt = $pdo->prepare("
+                SELECT id, name, price_pesos as price, image_url,
+                       image_url as primary_image,
+                       CASE 
+                           WHEN category_id = 1 THEN 'PlayStation'
+                           WHEN category_id = 2 THEN 'Nintendo'
+                           WHEN category_id = 3 THEN 'Xbox'
+                           WHEN category_id = 4 THEN 'Sega'
+                           ELSE 'General'
+                       END as category,
+                       CASE 
+                           WHEN brand_id = 1 THEN 'Sony'
+                           WHEN brand_id = 2 THEN 'Nintendo'
+                           WHEN brand_id = 3 THEN 'Microsoft'
+                           WHEN brand_id = 4 THEN 'Sega'
+                           ELSE 'Genérico'
+                       END as brand
+                FROM products
+                WHERE id IN ($placeholders) AND is_active = 1
+            ");
+        }
         
         $stmt->execute($product_ids);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
