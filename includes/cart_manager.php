@@ -373,7 +373,7 @@ class CartManager {
     public function getProductInfo($product_id) {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT id, name, price, sale_price, stock, is_active, 
+                SELECT id, name, price, sale_price, stock_quantity as stock, is_active, 
                        low_stock_threshold, is_featured, is_new 
                 FROM products 
                 WHERE id = ? AND is_active = 1
@@ -439,7 +439,7 @@ class CartManager {
     public function logStockMovement($product_id, $movement_type, $quantity, $reason = null) {
         try {
             // Obtener stock actual
-            $stmt = $this->pdo->prepare("SELECT stock FROM products WHERE id = ?");
+            $stmt = $this->pdo->prepare("SELECT stock_quantity FROM products WHERE id = ?");
             $stmt->execute([$product_id]);
             $currentStock = $stmt->fetchColumn();
 
