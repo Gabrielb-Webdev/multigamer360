@@ -16,14 +16,40 @@ $user_id = $_SESSION['user_id'];
 // Obtener productos de la wishlist
 $wishlist_products = [];
 try {
-    $stmt = $pdo->prepare("
-        SELECT p.id, p.name, p.price_pesos as price, p.image_url, p.stock_quantity,
-               uf.created_at as added_date
-        FROM user_favorites uf
-        JOIN products p ON uf.product_id = p.id
-        WHERE uf.user_id = ? AND p.is_active = 1
-        ORDER BY uf.created_at DESC
-    ");
+    // Verificar si la tabla product_images existe
+    $table_check = $pdo->query("SHOW TABLES LIKE 'product_images'")->fetch();
+    
+    if ($table_check) {
+        // Consulta CON product_images
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.name, p.price_pesos as price, p.image_url, p.stock_quantity,
+                   COALESCE(
+                       (SELECT pi.image_url 
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        AND pi.is_primary = 1
+                        LIMIT 1),
+                       p.image_url
+                   ) as primary_image,
+                   uf.created_at as added_date
+            FROM user_favorites uf
+            JOIN products p ON uf.product_id = p.id
+            WHERE uf.user_id = ? AND p.is_active = 1
+            ORDER BY uf.created_at DESC
+        ");
+    } else {
+        // Consulta SIN product_images (fallback)
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.name, p.price_pesos as price, p.image_url, p.stock_quantity,
+                   p.image_url as primary_image,
+                   uf.created_at as added_date
+            FROM user_favorites uf
+            JOIN products p ON uf.product_id = p.id
+            WHERE uf.user_id = ? AND p.is_active = 1
+            ORDER BY uf.created_at DESC
+        ");
+    }
+    
     $stmt->execute([$user_id]);
     $wishlist_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
@@ -92,19 +118,34 @@ try {
                         <!-- Imagen del producto -->
                         <div class="wishlist-image-container">
                             <?php
-                            // Procesar la imagen de manera similar a productos.php
-                            $image_filename = !empty($product['image_url']) ? $product['image_url'] : 'product1.jpg';
-                            $assets_path = 'assets/images/products/' . $image_filename;
-                            $uploads_path = 'uploads/products/' . $image_filename;
+                            // Obtener la imagen principal (misma lógica que productos.php y carrito.php)
+                            $image_filename = !empty($product['primary_image']) ? $product['primary_image'] : 
+                                             (!empty($product['image_url']) ? $product['image_url'] : 'product1.jpg');
                             
-                            // Determinar qué ruta usar (prioridad a assets/images/products/)
-                            if (file_exists($assets_path)) {
-                                $product_image = $assets_path;
-                            } else if (file_exists($uploads_path)) {
-                                $product_image = $uploads_path;
-                            } else {
-                                // Imagen por defecto
-                                $product_image = 'assets/images/products/product1.jpg';
+                            // Construir rutas posibles
+                            $possible_paths = [
+                                'uploads/products/' . $image_filename,
+                                'assets/images/products/' . $image_filename,
+                                'admin/uploads/products/' . $image_filename
+                            ];
+                            
+                            // Buscar la ruta correcta
+                            $product_image = 'assets/images/products/product1.jpg'; // Imagen por defecto
+                            $doc_root = $_SERVER['DOCUMENT_ROOT'];
+                            
+                            foreach ($possible_paths as $path) {
+                                $full_path = $doc_root . '/' . $path;
+                                if (file_exists($full_path)) {
+                                    $product_image = $path;
+                                    break;
+                                }
+                            }
+                            
+                            // Si no se encontró, intentar con la ruta directa
+                            if ($product_image === 'assets/images/products/product1.jpg' && !empty($image_filename)) {
+                                if (strpos($image_filename, '/') !== false || strpos($image_filename, 'http') === 0) {
+                                    $product_image = $image_filename;
+                                }
                             }
                             ?>
                             <img src="<?php echo htmlspecialchars($product_image); ?>" 
