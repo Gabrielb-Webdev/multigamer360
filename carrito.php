@@ -78,23 +78,32 @@ function getCartProducts($pdo, $cart) {
         $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
         
         $stmt = $pdo->prepare("
-            SELECT id, name, price_pesos as price, image_url, 
+            SELECT p.id, p.name, p.price_pesos as price, p.image_url,
+                   COALESCE(
+                       (SELECT pi.image_url 
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        AND pi.is_primary = 1 
+                        AND pi.is_active = 1 
+                        LIMIT 1),
+                       p.image_url
+                   ) as primary_image,
                    CASE 
-                       WHEN category_id = 1 THEN 'PlayStation'
-                       WHEN category_id = 2 THEN 'Nintendo'
-                       WHEN category_id = 3 THEN 'Xbox'
-                       WHEN category_id = 4 THEN 'Sega'
+                       WHEN p.category_id = 1 THEN 'PlayStation'
+                       WHEN p.category_id = 2 THEN 'Nintendo'
+                       WHEN p.category_id = 3 THEN 'Xbox'
+                       WHEN p.category_id = 4 THEN 'Sega'
                        ELSE 'General'
                    END as category,
                    CASE 
-                       WHEN brand_id = 1 THEN 'Sony'
-                       WHEN brand_id = 2 THEN 'Nintendo'
-                       WHEN brand_id = 3 THEN 'Microsoft'
-                       WHEN brand_id = 4 THEN 'Sega'
+                       WHEN p.brand_id = 1 THEN 'Sony'
+                       WHEN p.brand_id = 2 THEN 'Nintendo'
+                       WHEN p.brand_id = 3 THEN 'Microsoft'
+                       WHEN p.brand_id = 4 THEN 'Sega'
                        ELSE 'Genérico'
                    END as brand
-            FROM products 
-            WHERE id IN ($placeholders) AND is_active = 1
+            FROM products p
+            WHERE p.id IN ($placeholders) AND p.is_active = 1
         ");
         
         $stmt->execute($product_ids);
@@ -186,24 +195,40 @@ require_once 'includes/header.php';
                             <div class="row border-bottom border-secondary py-3 align-items-center" data-product-id="<?php echo $product['id']; ?>">
                                 <div class="col-md-2">
                                     <?php
-                                    // Procesar la imagen de manera similar a productos.php
-                                    $image_filename = !empty($product['image_url']) ? $product['image_url'] : 'product1.jpg';
-                                    $assets_path = 'assets/images/products/' . $image_filename;
-                                    $uploads_path = 'uploads/products/' . $image_filename;
+                                    // Obtener la imagen principal (misma lógica que productos.php)
+                                    $image_filename = !empty($product['primary_image']) ? $product['primary_image'] : 
+                                                     (!empty($product['image_url']) ? $product['image_url'] : 'product1.jpg');
                                     
-                                    // Determinar qué ruta usar (prioridad a assets/images/products/)
-                                    if (file_exists($assets_path)) {
-                                        $product_image = $assets_path;
-                                    } else if (file_exists($uploads_path)) {
-                                        $product_image = $uploads_path;
-                                    } else {
-                                        // Imagen por defecto
-                                        $product_image = 'assets/images/products/product1.jpg';
+                                    // Construir rutas posibles
+                                    $possible_paths = [
+                                        'uploads/products/' . $image_filename,
+                                        'assets/images/products/' . $image_filename,
+                                        'admin/uploads/products/' . $image_filename
+                                    ];
+                                    
+                                    // Buscar la ruta correcta
+                                    $product_image = 'assets/images/products/product1.jpg'; // Imagen por defecto
+                                    $doc_root = $_SERVER['DOCUMENT_ROOT'];
+                                    
+                                    foreach ($possible_paths as $path) {
+                                        $full_path = $doc_root . '/' . $path;
+                                        if (file_exists($full_path)) {
+                                            $product_image = $path;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    // Si no se encontró, intentar con la ruta directa
+                                    if ($product_image === 'assets/images/products/product1.jpg' && !empty($image_filename)) {
+                                        if (strpos($image_filename, '/') !== false || strpos($image_filename, 'http') === 0) {
+                                            $product_image = $image_filename;
+                                        }
                                     }
                                     ?>
                                     <img src="<?php echo htmlspecialchars($product_image); ?>" 
                                          alt="<?php echo htmlspecialchars($product['name']); ?>" 
-                                         class="img-fluid rounded">
+                                         class="img-fluid rounded"
+                                         onerror="this.src='assets/images/products/product1.jpg';">
                                 </div>
                                 <div class="col-md-5">
                                     <h6 class="mb-1 text-white"><?php echo htmlspecialchars($product['name']); ?></h6>
