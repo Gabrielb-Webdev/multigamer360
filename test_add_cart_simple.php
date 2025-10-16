@@ -40,7 +40,7 @@ echo "════════════════════════�
 echo "PASO 2: BUSCAR PRODUCTO ID $product_id\n";
 echo "═══════════════════════════════════════════════════════════════\n";
 
-$stmt = $pdo->prepare("SELECT id, name, stock_quantity, price FROM products WHERE id = ?");
+$stmt = $pdo->prepare("SELECT id, name, stock_quantity, price_pesos FROM products WHERE id = ?");
 $stmt->execute([$product_id]);
 $product = $stmt->fetch();
 
@@ -49,16 +49,16 @@ if ($product) {
     echo "   ID: {$product['id']}\n";
     echo "   Nombre: {$product['name']}\n";
     echo "   Stock: {$product['stock_quantity']}\n";
-    echo "   Precio: \${$product['price']}\n\n";
+    echo "   Precio: \${$product['price_pesos']}\n\n";
 } else {
     echo "❌ Producto ID $product_id NO EXISTE en la base de datos\n";
     
     // Mostrar productos disponibles
     echo "\n📦 Productos disponibles:\n";
-    $stmt = $pdo->query("SELECT id, name, stock_quantity FROM products LIMIT 5");
+    $stmt = $pdo->query("SELECT id, name, stock_quantity, price_pesos FROM products LIMIT 5");
     $available = $stmt->fetchAll();
     foreach ($available as $p) {
-        echo "   - ID: {$p['id']} | {$p['name']} | Stock: {$p['stock_quantity']}\n";
+        echo "   - ID: {$p['id']} | {$p['name']} | Stock: {$p['stock_quantity']} | Precio: \${$p['price_pesos']}\n";
     }
     echo "\n";
     exit;

@@ -388,9 +388,9 @@ class CartManager {
         try {
             error_log("CartManager::getProductInfo - Buscando producto ID: $product_id");
             
-            // Consulta ULTRA SIMPLE solo con campos que SIEMPRE existen
+            // Consulta con los nombres correctos de las columnas
             $stmt = $this->pdo->prepare("
-                SELECT id, name, price, stock_quantity as stock
+                SELECT id, name, price_pesos as price, stock_quantity as stock
                 FROM products 
                 WHERE id = ?
             ");
@@ -399,7 +399,7 @@ class CartManager {
             
             if ($result) {
                 error_log("CartManager::getProductInfo - ✓ Producto ENCONTRADO: {$result['name']}");
-                error_log("CartManager::getProductInfo - Stock: {$result['stock']}");
+                error_log("CartManager::getProductInfo - Stock: {$result['stock']}, Precio: {$result['price']}");
                 
                 // Agregar campos opcionales con valores por defecto
                 $result['sale_price'] = null;
@@ -411,7 +411,7 @@ class CartManager {
                 // Intentar obtener campos opcionales si existen
                 try {
                     $stmt2 = $this->pdo->prepare("
-                        SELECT sale_price, is_active, low_stock_threshold, is_featured, is_new
+                        SELECT price_dollars, discount_percentage, is_featured, is_on_sale, is_active, min_stock_level
                         FROM products 
                         WHERE id = ?
                     ");
@@ -419,11 +419,12 @@ class CartManager {
                     $optional = $stmt2->fetch();
                     
                     if ($optional) {
-                        $result['sale_price'] = $optional['sale_price'] ?? null;
+                        $result['price_dollars'] = $optional['price_dollars'] ?? null;
+                        $result['discount_percentage'] = $optional['discount_percentage'] ?? 0;
                         $result['is_active'] = $optional['is_active'] ?? 1;
-                        $result['low_stock_threshold'] = $optional['low_stock_threshold'] ?? 5;
                         $result['is_featured'] = $optional['is_featured'] ?? 0;
-                        $result['is_new'] = $optional['is_new'] ?? 0;
+                        $result['is_on_sale'] = $optional['is_on_sale'] ?? 0;
+                        $result['low_stock_threshold'] = $optional['min_stock_level'] ?? 5;
                     }
                 } catch (Exception $e_opt) {
                     error_log("CartManager::getProductInfo - Campos opcionales no disponibles (OK)");

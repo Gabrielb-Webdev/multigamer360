@@ -50,11 +50,7 @@ foreach ($columns as $col) {
 // 3. Probar la consulta del CartManager
 echo "\n4. PROBANDO CONSULTA DEL CARTMANAGER:\n";
 $stmt = $pdo->prepare("
-    SELECT id, name, price, sale_price, stock_quantity as stock, 
-           COALESCE(is_active, 1) as is_active,
-           COALESCE(low_stock_threshold, 5) as low_stock_threshold,
-           COALESCE(is_featured, 0) as is_featured,
-           COALESCE(is_new, 0) as is_new
+    SELECT id, name, price_pesos as price, stock_quantity as stock
     FROM products 
     WHERE id = ?
 ");
