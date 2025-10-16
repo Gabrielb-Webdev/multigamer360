@@ -78,7 +78,7 @@ function getCartProducts($pdo, $cart) {
         $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
         
         $stmt = $pdo->prepare("
-            SELECT id, name, price, image_url, 
+            SELECT id, name, price_pesos as price, image_url, 
                    CASE 
                        WHEN category_id = 1 THEN 'PlayStation'
                        WHEN category_id = 2 THEN 'Nintendo'
