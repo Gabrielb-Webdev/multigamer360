@@ -572,8 +572,7 @@ function removeFromWishlist(productId, button) {
                 }
             }, 500);
             
-            // Mostrar notificación mejorada
-            showNotification('Producto removido de tu wishlist', 'success');
+            // Producto removido silenciosamente (sin notificación)
         } else {
             // Restaurar botón en caso de error
             button.innerHTML = originalContent;
