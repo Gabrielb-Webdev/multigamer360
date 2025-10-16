@@ -300,7 +300,7 @@ class CartManager {
             $product_ids = array_keys($_SESSION['cart']);
             $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
             
-            $stmt = $this->pdo->prepare("SELECT id, price FROM products WHERE id IN ($placeholders)");
+            $stmt = $this->pdo->prepare("SELECT id, price_pesos FROM products WHERE id IN ($placeholders)");
             $stmt->execute($product_ids);
             $products = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
@@ -322,10 +322,49 @@ class CartManager {
      * Obtener información completa del carrito
      */
     public function getCartInfo() {
+        $items = [];
+        $total = 0;
+        
+        if (!empty($_SESSION['cart'])) {
+            try {
+                $product_ids = array_keys($_SESSION['cart']);
+                $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
+                
+                $stmt = $this->pdo->prepare("
+                    SELECT id, name, price_pesos as price, stock_quantity
+                    FROM products 
+                    WHERE id IN ($placeholders)
+                ");
+                $stmt->execute($product_ids);
+                $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                foreach ($products as $product) {
+                    $product_id = $product['id'];
+                    $quantity = $_SESSION['cart'][$product_id];
+                    $subtotal = $product['price'] * $quantity;
+                    
+                    $items[] = [
+                        'product_id' => $product_id,
+                        'name' => $product['name'],
+                        'price' => $product['price'],
+                        'quantity' => $quantity,
+                        'subtotal' => $subtotal,
+                        'stock_available' => $product['stock_quantity']
+                    ];
+                    
+                    $total += $subtotal;
+                }
+            } catch (Exception $e) {
+                error_log("Error obteniendo info del carrito: " . $e->getMessage());
+            }
+        }
+        
         return [
             'success' => true,
             'cart_count' => $this->getCartCount(),
-            'cart_total' => $this->getCartTotal(),
+            'cart_total' => $total,
+            'total' => $total,
+            'items' => $items,
             'cart' => $_SESSION['cart']
         ];
     }
