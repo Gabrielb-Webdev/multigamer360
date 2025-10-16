@@ -39,6 +39,11 @@ class CartManager {
      * Sincronizar carrito desde la base de datos
      */
     public function syncCartFromDatabase() {
+        // DESHABILITADO TEMPORALMENTE - La tabla cart_sessions no existe aún
+        // El carrito funcionará solo con sesiones PHP por ahora
+        return true;
+        
+        /* CÓDIGO ORIGINAL (descomentar cuando exista la tabla cart_sessions):
         try {
             // Validar que tenemos identificadores válidos
             if (empty($this->session_id) && empty($this->user_id)) {
@@ -66,12 +71,18 @@ class CartManager {
             error_log("Error sincronizando carrito desde BD: " . $e->getMessage());
             return false;
         }
+        */
     }
 
     /**
      * Sincronizar carrito hacia la base de datos
      */
     public function syncCartToDatabase() {
+        // DESHABILITADO TEMPORALMENTE - La tabla cart_sessions no existe aún
+        // El carrito funcionará solo con sesiones PHP por ahora
+        return true;
+        
+        /* CÓDIGO ORIGINAL (descomentar cuando exista la tabla cart_sessions):
         try {
             // Validar que tenemos un session_id válido
             if (empty($this->session_id)) {
@@ -107,6 +118,7 @@ class CartManager {
             error_log("Error sincronizando carrito hacia BD: " . $e->getMessage());
             return false;
         }
+        */
     }
 
     /**
@@ -114,25 +126,16 @@ class CartManager {
      */
     public function addToCart($product_id, $quantity = 1) {
         try {
-            error_log("CartManager: addToCart llamado - Producto ID: $product_id, Cantidad: $quantity");
-            
             // Validar que el producto existe y obtener info de stock
             $productInfo = $this->getProductInfo($product_id);
             
-            error_log("CartManager: productInfo obtenido - " . print_r($productInfo, true));
-            
             if (!$productInfo) {
-                error_log("CartManager: ERROR - Producto $product_id no encontrado en BD");
                 return ['success' => false, 'message' => 'Producto no encontrado'];
             }
-
-            error_log("CartManager: Producto encontrado - Stock disponible: " . $productInfo['stock']);
 
             // Verificar stock disponible
             $currentQuantityInCart = $this->getProductQuantity($product_id);
             $totalRequestedQuantity = $currentQuantityInCart + $quantity;
-
-            error_log("CartManager: Cantidad en carrito: $currentQuantityInCart, Total solicitado: $totalRequestedQuantity");
 
             if ($totalRequestedQuantity > $productInfo['stock']) {
                 $availableToAdd = $productInfo['stock'] - $currentQuantityInCart;
@@ -161,12 +164,8 @@ class CartManager {
             // Limitar por stock disponible (no más que el stock del producto)
             $_SESSION['cart'][$product_id] = min($_SESSION['cart'][$product_id], $productInfo['stock']);
 
-            error_log("CartManager: Producto agregado a sesión - Nueva cantidad: " . $_SESSION['cart'][$product_id]);
-
-            // Sincronizar con BD
+            // Sincronizar con BD (deshabilitado por ahora)
             $this->syncCartToDatabase();
-
-            error_log("CartManager: Carrito sincronizado con BD exitosamente");
 
             return [
                 'success' => true,
@@ -425,8 +424,6 @@ class CartManager {
      */
     public function getProductInfo($product_id) {
         try {
-            error_log("CartManager::getProductInfo - Buscando producto ID: $product_id");
-            
             // Consulta con los nombres correctos de las columnas
             $stmt = $this->pdo->prepare("
                 SELECT id, name, price_pesos as price, stock_quantity as stock
@@ -437,9 +434,6 @@ class CartManager {
             $result = $stmt->fetch();
             
             if ($result) {
-                error_log("CartManager::getProductInfo - ✓ Producto ENCONTRADO: {$result['name']}");
-                error_log("CartManager::getProductInfo - Stock: {$result['stock']}, Precio: {$result['price']}");
-                
                 // Agregar campos opcionales con valores por defecto
                 $result['sale_price'] = null;
                 $result['is_active'] = 1;
@@ -466,18 +460,16 @@ class CartManager {
                         $result['low_stock_threshold'] = $optional['min_stock_level'] ?? 5;
                     }
                 } catch (Exception $e_opt) {
-                    error_log("CartManager::getProductInfo - Campos opcionales no disponibles (OK)");
+                    // Campos opcionales no disponibles - no es problema
                 }
                 
                 return $result;
-            } else {
-                error_log("CartManager::getProductInfo - ✗ Producto NO ENCONTRADO con ID: $product_id");
-                return false;
             }
+            
+            return false;
             
         } catch (Exception $e) {
             error_log("CartManager::getProductInfo - ERROR: " . $e->getMessage());
-            error_log("CartManager::getProductInfo - Trace: " . $e->getTraceAsString());
             return false;
         }
     }
