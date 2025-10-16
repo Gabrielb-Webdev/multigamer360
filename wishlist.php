@@ -17,7 +17,7 @@ $user_id = $_SESSION['user_id'];
 $wishlist_products = [];
 try {
     $stmt = $pdo->prepare("
-        SELECT p.id, p.name, p.price, p.image_url, p.stock_quantity,
+        SELECT p.id, p.name, p.price_pesos as price, p.image_url, p.stock_quantity,
                uf.created_at as added_date
         FROM user_favorites uf
         JOIN products p ON uf.product_id = p.id

@@ -32,7 +32,7 @@ if ($product_id <= 0) {
 
 try {
     // Verificar que el producto existe
-    $productStmt = $pdo->prepare("SELECT id, name, price, image_url FROM products WHERE id = ? AND is_active = 1");
+    $productStmt = $pdo->prepare("SELECT id, name, price_pesos as price, image_url FROM products WHERE id = ? AND is_active = 1");
     $productStmt->execute([$product_id]);
     $product = $productStmt->fetch(PDO::FETCH_ASSOC);
     
