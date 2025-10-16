@@ -386,53 +386,59 @@ class CartManager {
      */
     public function getProductInfo($product_id) {
         try {
-            // Primero intentar con todos los campos incluyendo is_active
+            error_log("CartManager::getProductInfo - Buscando producto ID: $product_id");
+            
+            // Consulta ULTRA SIMPLE solo con campos que SIEMPRE existen
             $stmt = $this->pdo->prepare("
-                SELECT id, name, price, sale_price, stock_quantity as stock, 
-                       COALESCE(is_active, 1) as is_active,
-                       COALESCE(low_stock_threshold, 5) as low_stock_threshold,
-                       COALESCE(is_featured, 0) as is_featured,
-                       COALESCE(is_new, 0) as is_new
+                SELECT id, name, price, stock_quantity as stock
                 FROM products 
                 WHERE id = ?
             ");
             $stmt->execute([$product_id]);
             $result = $stmt->fetch();
             
-            // Log para debug
-            error_log("CartManager: getProductInfo para producto $product_id - Resultado: " . ($result ? 'Encontrado' : 'No encontrado'));
             if ($result) {
-                error_log("CartManager: Stock disponible: " . ($result['stock'] ?? 'NULL'));
-            }
-            
-            return $result;
-        } catch (Exception $e) {
-            error_log("Error obteniendo info del producto: " . $e->getMessage());
-            
-            // Intentar consulta más simple sin columnas opcionales
-            try {
-                $stmt = $this->pdo->prepare("
-                    SELECT id, name, price, stock_quantity as stock
-                    FROM products 
-                    WHERE id = ?
-                ");
-                $stmt->execute([$product_id]);
-                $result = $stmt->fetch();
+                error_log("CartManager::getProductInfo - ✓ Producto ENCONTRADO: {$result['name']}");
+                error_log("CartManager::getProductInfo - Stock: {$result['stock']}");
                 
-                // Agregar valores por defecto para campos faltantes
-                if ($result) {
-                    $result['sale_price'] = null;
-                    $result['is_active'] = 1;
-                    $result['low_stock_threshold'] = 5;
-                    $result['is_featured'] = 0;
-                    $result['is_new'] = 0;
+                // Agregar campos opcionales con valores por defecto
+                $result['sale_price'] = null;
+                $result['is_active'] = 1;
+                $result['low_stock_threshold'] = 5;
+                $result['is_featured'] = 0;
+                $result['is_new'] = 0;
+                
+                // Intentar obtener campos opcionales si existen
+                try {
+                    $stmt2 = $this->pdo->prepare("
+                        SELECT sale_price, is_active, low_stock_threshold, is_featured, is_new
+                        FROM products 
+                        WHERE id = ?
+                    ");
+                    $stmt2->execute([$product_id]);
+                    $optional = $stmt2->fetch();
+                    
+                    if ($optional) {
+                        $result['sale_price'] = $optional['sale_price'] ?? null;
+                        $result['is_active'] = $optional['is_active'] ?? 1;
+                        $result['low_stock_threshold'] = $optional['low_stock_threshold'] ?? 5;
+                        $result['is_featured'] = $optional['is_featured'] ?? 0;
+                        $result['is_new'] = $optional['is_new'] ?? 0;
+                    }
+                } catch (Exception $e_opt) {
+                    error_log("CartManager::getProductInfo - Campos opcionales no disponibles (OK)");
                 }
                 
                 return $result;
-            } catch (Exception $e2) {
-                error_log("Error en consulta simple: " . $e2->getMessage());
+            } else {
+                error_log("CartManager::getProductInfo - ✗ Producto NO ENCONTRADO con ID: $product_id");
                 return false;
             }
+            
+        } catch (Exception $e) {
+            error_log("CartManager::getProductInfo - ERROR: " . $e->getMessage());
+            error_log("CartManager::getProductInfo - Trace: " . $e->getTraceAsString());
+            return false;
         }
     }
 
