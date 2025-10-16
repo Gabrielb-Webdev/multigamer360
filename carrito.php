@@ -81,15 +81,14 @@ function getCartProducts($pdo, $cart) {
         $table_check = $pdo->query("SHOW TABLES LIKE 'product_images'")->fetch();
         
         if ($table_check) {
-            // Consulta CON product_images
+            // Consulta CON product_images (sin usar is_active que no existe)
             $stmt = $pdo->prepare("
                 SELECT p.id, p.name, p.price_pesos as price, p.image_url,
                        COALESCE(
                            (SELECT pi.image_url 
                             FROM product_images pi 
                             WHERE pi.product_id = p.id 
-                            AND pi.is_primary = 1 
-                            AND pi.is_active = 1 
+                            AND pi.is_primary = 1
                             LIMIT 1),
                            p.image_url
                        ) as primary_image,

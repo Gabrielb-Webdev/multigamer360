@@ -59,7 +59,7 @@ echo "<br>";
 
 // Test 3: Consulta CON product_images (si existe)
 if ($table_exists) {
-    echo "<h3>Test 3: Consulta con product_images</h3>";
+    echo "<h3>Test 3: Consulta con product_images (SIN is_active)</h3>";
     try {
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, p.price_pesos as price, p.image_url,
@@ -67,8 +67,7 @@ if ($table_exists) {
                        (SELECT pi.image_url 
                         FROM product_images pi 
                         WHERE pi.product_id = p.id 
-                        AND pi.is_primary = 1 
-                        AND pi.is_active = 1 
+                        AND pi.is_primary = 1
                         LIMIT 1),
                        p.image_url
                    ) as primary_image
