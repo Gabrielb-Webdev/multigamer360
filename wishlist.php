@@ -77,10 +77,12 @@ try {
 
     <?php if (empty($wishlist_products)): ?>
         <div class="text-center py-5">
-            <i class="fas fa-heart-broken display-1 text-muted mb-4"></i>
+            <i class="fas fa-heart-broken display-1 text-danger mb-4"></i>
             <h3 class="text-white">Tu lista está vacía</h3>
-            <p class="text-muted">Explora productos y agréguelos a tu wishlist</p>
-            <a href="productos.php" class="btn btn-primary">Ver Productos</a>
+            <p class="text-white">Explora productos y agréguelos a tu wishlist</p>
+            <a href="productos.php" class="btn btn-outline-light">
+                <i class="fas fa-gamepad me-2"></i>Ver Productos
+            </a>
         </div>
     <?php else: ?>
         <div class="row">
