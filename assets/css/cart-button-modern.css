@@ -170,6 +170,9 @@
     transition: all 0.3s ease;
     width: 100% !important; /* Mantener 100% del ancho cuando está en carrito */
     justify-content: center; /* Centrar contenido */
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-add-to-cart-modern.in-cart:hover {
@@ -180,17 +183,16 @@
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-.btn-add-to-cart-modern.in-cart .cart-icon {
-    display: inline-block !important;
-    font-size: 16px;
-    margin-right: 4px; /* Espacio entre carrito y check */
-}
-
+/* Iconos en estado "en carrito" */
+.btn-add-to-cart-modern.in-cart .cart-icon,
 .btn-add-to-cart-modern.in-cart .success-check {
     display: inline-block !important;
-    font-size: 16px;
+    font-size: 18px;
+    opacity: 1 !important;
+    transform: scale(1) !important;
 }
 
+/* Ocultar elementos no necesarios cuando está en carrito */
 .btn-add-to-cart-modern.in-cart .btn-text,
 .btn-add-to-cart-modern.in-cart .loading-spinner {
     display: none !important;

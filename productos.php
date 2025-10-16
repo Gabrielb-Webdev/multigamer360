@@ -613,15 +613,21 @@ require_once 'includes/header.php';
                                                 $isInCart = in_array($product['id'], $productsInCart);
                                                 $btnClass = $isInCart ? 'btn-add-to-cart-modern in-cart' : 'btn-add-to-cart-modern';
                                                 $btnText = $isInCart ? 'EN EL CARRITO' : 'AGREGAR AL CARRITO';
-                                                $iconClass = $isInCart ? 'fas fa-check' : 'fas fa-shopping-cart';
                                                 ?>
                                                 <button class="<?php echo $btnClass; ?>" 
                                                         data-product-id="<?php echo $product['id']; ?>"
                                                         data-in-cart="<?php echo $isInCart ? 'true' : 'false'; ?>">
-                                                    <i class="<?php echo $iconClass; ?> cart-icon"></i>
-                                                    <div class="loading-spinner"></div>
-                                                    <i class="fas fa-check success-check"></i>
-                                                    <span class="btn-text"><?php echo $btnText; ?></span>
+                                                    <?php if ($isInCart): ?>
+                                                        <!-- Producto en carrito: solo mostrar checks -->
+                                                        <i class="fas fa-shopping-cart cart-icon"></i>
+                                                        <i class="fas fa-check success-check"></i>
+                                                    <?php else: ?>
+                                                        <!-- Producto no en carrito: mostrar carrito normal -->
+                                                        <i class="fas fa-shopping-cart cart-icon"></i>
+                                                        <div class="loading-spinner"></div>
+                                                        <i class="fas fa-check success-check"></i>
+                                                        <span class="btn-text"><?php echo $btnText; ?></span>
+                                                    <?php endif; ?>
                                                 </button>
                                             <?php else: ?>
                                                 <button class="btn-no-stock" disabled>
