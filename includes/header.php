@@ -12,6 +12,38 @@ if (!function_exists('isLoggedIn')) {
 // Obtener usuario actual
 $currentUser = getCurrentUser();
 $isLoggedIn = isLoggedIn();
+
+// ====================================================================
+// CARGAR CARRITO INMEDIATAMENTE EN PHP (SIN ESPERAR JAVASCRIPT)
+// ====================================================================
+$cartTotal = 0;
+$cartCount = 0;
+$wishlistCount = 0;
+
+try {
+    // Cargar CartManager si no está cargado
+    if (!class_exists('CartManager')) {
+        require_once __DIR__ . '/../config/database.php';
+        require_once __DIR__ . '/cart_manager.php';
+        $cartManager = new CartManager($pdo);
+        
+        // Obtener total y cantidad del carrito
+        $cartTotal = $cartManager->getCartTotal();
+        $cartCount = $cartManager->getCartCount();
+    }
+    
+    // Obtener cantidad de wishlist si el usuario está logueado
+    if ($isLoggedIn && isset($pdo)) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM user_favorites WHERE user_id = ?");
+        $stmt->execute([$currentUser['id']]);
+        $wishlistCount = $stmt->fetchColumn();
+    }
+} catch (Exception $e) {
+    error_log("Error cargando carrito en header: " . $e->getMessage());
+}
+
+// Formatear el total del carrito
+$cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -27,40 +59,17 @@ $isLoggedIn = isLoggedIn();
     <!-- CSS para botón moderno de carrito -->
     <link rel="stylesheet" href="assets/css/cart-button-modern.css?v=0.2">
     
-    <!-- Precarga inmediata del estado del carrito -->
-    <script>
-        // Precargar estado del carrito lo más pronto posible
-        (function() {
-            const preloadCart = () => {
-                fetch('ajax/get-cart-count.php', {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Guardar en variable global para acceso inmediato
-                    window.cartData = data;
-                    // Intentar actualizar el display si ya existe
-                    const cartDisplay = document.getElementById('cart-display');
-                    if (cartDisplay && data.cart_total !== undefined) {
-                        const formattedTotal = data.cart_total > 0 ? `$${parseFloat(data.cart_total).toFixed(2)}` : '$0';
-                        cartDisplay.textContent = formattedTotal;
-                        console.log('Header preload - Cart updated:', formattedTotal);
-                    }
-                })
-                .catch(error => console.log('Preload cart error:', error));
-            };
-            
-            // Ejecutar inmediatamente
-            preloadCart();
-        })();
-    </script>
-    
     <!-- Script para detectar horario local del usuario -->
     <script>
+        // Datos del carrito ya cargados desde el servidor
+        window.cartData = {
+            cart_total: <?php echo $cartTotal; ?>,
+            cart_count: <?php echo $cartCount; ?>,
+            wishlist_count: <?php echo $wishlistCount; ?>
+        };
+        
+        console.log('Cart loaded from PHP:', window.cartData);
+        
         // Detectar horario local del usuario y enviarlo al servidor
         document.addEventListener('DOMContentLoaded', function() {
             const userHour = new Date().getHours();
@@ -80,29 +89,28 @@ $isLoggedIn = isLoggedIn();
             });
         });
         
-        // Sincronización instantánea del carrito - ejecutar lo antes posible
-        function syncCartInstantly() {
-            fetch('ajax/get-cart-count.php', {
-                credentials: 'same-origin',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
+        // Función para actualizar el display del carrito (solo cuando sea necesario)
+        function updateCartDisplay(data) {
+            if (!data) data = window.cartData;
+            
+            const cartDisplay = document.getElementById('cart-display');
+            if (cartDisplay && data.cart_total !== undefined) {
+                const formattedTotal = data.cart_total > 0 ? `$${parseFloat(data.cart_total).toFixed(2)}` : '$0';
+                cartDisplay.textContent = formattedTotal;
+                console.log('Cart display updated:', formattedTotal);
+            }
+            
+            // Actualizar wishlist count si existe
+            if (data.wishlist_count !== undefined) {
+                const wishlistBadge = document.querySelector('.wishlist-count');
+                if (wishlistBadge) {
+                    wishlistBadge.textContent = data.wishlist_count;
+                    wishlistBadge.style.display = data.wishlist_count > 0 ? 'inline-block' : 'none';
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                window.cartData = data; // Guardar globalmente
-                const cartDisplay = document.getElementById('cart-display');
-                if (cartDisplay && data.cart_total !== undefined) {
-                    const formattedTotal = data.cart_total > 0 ? `$${parseFloat(data.cart_total).toFixed(2)}` : '$0';
-                    cartDisplay.textContent = formattedTotal;
-                    console.log('Header instant sync - Updated to:', formattedTotal);
-                }
-            })
-            .catch(error => console.log('Cart sync error:', error));
+            }
         }
         
-        // Sincronización de wishlist count
+        // Sincronización de wishlist count (solo si es necesario)
         function syncWishlistCount() {
             fetch('ajax/get-wishlist-count.php', {
                 credentials: 'same-origin',
@@ -127,50 +135,21 @@ $isLoggedIn = isLoggedIn();
             .catch(error => console.log('Wishlist sync error:', error));
         }
         
-        // Observer para detectar cuando aparece el cart-display y actualizarlo inmediatamente
-        function initCartObserver() {
-            if (document.body) {
-                const cartDisplayObserver = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        mutation.addedNodes.forEach((node) => {
-                            if (node.nodeType === 1) { // Element node
-                                const cartDisplay = node.id === 'cart-display' ? node : node.querySelector('#cart-display');
-                                if (cartDisplay && window.cartData) {
-                                    const formattedTotal = window.cartData.cart_total > 0 ? 
-                                        `$${parseFloat(window.cartData.cart_total).toFixed(2)}` : '$0';
-                                    cartDisplay.textContent = formattedTotal;
-                                    console.log('Observer - Cart display updated:', formattedTotal);
-                                }
-                            }
-                        });
-                    });
-                });
-                
-                // Iniciar observer solo si document.body existe
-                cartDisplayObserver.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-                
-                console.log('Cart observer initialized');
-            } else {
-                // Reintentar cuando document.body esté disponible
-                setTimeout(initCartObserver, 100);
-            }
-        }
         
-        // Ejecutar sincronización tan pronto como sea posible
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                syncCartInstantly();
-                syncWishlistCount();
-                initCartObserver();
-            });
-        } else {
-            syncCartInstantly();
-            syncWishlistCount();
-            initCartObserver();
-        }
+        // Ya no necesitamos observers ni sincronizaciones adicionales
+        // El carrito se carga directamente desde PHP
+        
+        // Solo actualizar wishlist si el usuario está logueado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Actualizar wishlist badge inicial
+            if (window.cartData.wishlist_count > 0) {
+                const wishlistBadge = document.querySelector('.wishlist-count');
+                if (wishlistBadge) {
+                    wishlistBadge.textContent = window.cartData.wishlist_count;
+                    wishlistBadge.style.display = 'inline-block';
+                }
+            }
+        });
     </script>
     
 </head>
@@ -212,12 +191,12 @@ $isLoggedIn = isLoggedIn();
                                 <div class="wishlist-button me-2">
                                     <a href="wishlist.php" class="btn header-btn position-relative">
                                         <i class="fas fa-heart"></i> WISHLIST
-                                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle wishlist-count" style="display: none;">0</span>
+                                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle wishlist-count" style="display: <?php echo $wishlistCount > 0 ? 'inline-block' : 'none'; ?>;"><?php echo $wishlistCount; ?></span>
                                     </a>
                                 </div>
                                 <div class="cart-button">
                                     <a href="carrito.php" class="btn header-btn position-relative">
-                                        <i class="fas fa-shopping-cart"></i> <span id="cart-display">$0</span>
+                                        <i class="fas fa-shopping-cart"></i> <span id="cart-display"><?php echo $cartDisplayText; ?></span>
                                     </a>
                                 </div>
                             </div>
