@@ -114,15 +114,25 @@ class CartManager {
      */
     public function addToCart($product_id, $quantity = 1) {
         try {
+            error_log("CartManager: addToCart llamado - Producto ID: $product_id, Cantidad: $quantity");
+            
             // Validar que el producto existe y obtener info de stock
             $productInfo = $this->getProductInfo($product_id);
+            
+            error_log("CartManager: productInfo obtenido - " . print_r($productInfo, true));
+            
             if (!$productInfo) {
+                error_log("CartManager: ERROR - Producto $product_id no encontrado en BD");
                 return ['success' => false, 'message' => 'Producto no encontrado'];
             }
+
+            error_log("CartManager: Producto encontrado - Stock disponible: " . $productInfo['stock']);
 
             // Verificar stock disponible
             $currentQuantityInCart = $this->getProductQuantity($product_id);
             $totalRequestedQuantity = $currentQuantityInCart + $quantity;
+
+            error_log("CartManager: Cantidad en carrito: $currentQuantityInCart, Total solicitado: $totalRequestedQuantity");
 
             if ($totalRequestedQuantity > $productInfo['stock']) {
                 $availableToAdd = $productInfo['stock'] - $currentQuantityInCart;
@@ -151,8 +161,12 @@ class CartManager {
             // Limitar por stock disponible (no más que el stock del producto)
             $_SESSION['cart'][$product_id] = min($_SESSION['cart'][$product_id], $productInfo['stock']);
 
+            error_log("CartManager: Producto agregado a sesión - Nueva cantidad: " . $_SESSION['cart'][$product_id]);
+
             // Sincronizar con BD
             $this->syncCartToDatabase();
+
+            error_log("CartManager: Carrito sincronizado con BD exitosamente");
 
             return [
                 'success' => true,
@@ -372,17 +386,53 @@ class CartManager {
      */
     public function getProductInfo($product_id) {
         try {
+            // Primero intentar con todos los campos incluyendo is_active
             $stmt = $this->pdo->prepare("
-                SELECT id, name, price, sale_price, stock_quantity as stock, is_active, 
-                       low_stock_threshold, is_featured, is_new 
+                SELECT id, name, price, sale_price, stock_quantity as stock, 
+                       COALESCE(is_active, 1) as is_active,
+                       COALESCE(low_stock_threshold, 5) as low_stock_threshold,
+                       COALESCE(is_featured, 0) as is_featured,
+                       COALESCE(is_new, 0) as is_new
                 FROM products 
-                WHERE id = ? AND is_active = 1
+                WHERE id = ?
             ");
             $stmt->execute([$product_id]);
-            return $stmt->fetch();
+            $result = $stmt->fetch();
+            
+            // Log para debug
+            error_log("CartManager: getProductInfo para producto $product_id - Resultado: " . ($result ? 'Encontrado' : 'No encontrado'));
+            if ($result) {
+                error_log("CartManager: Stock disponible: " . ($result['stock'] ?? 'NULL'));
+            }
+            
+            return $result;
         } catch (Exception $e) {
             error_log("Error obteniendo info del producto: " . $e->getMessage());
-            return false;
+            
+            // Intentar consulta más simple sin columnas opcionales
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT id, name, price, stock_quantity as stock
+                    FROM products 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$product_id]);
+                $result = $stmt->fetch();
+                
+                // Agregar valores por defecto para campos faltantes
+                if ($result) {
+                    $result['sale_price'] = null;
+                    $result['is_active'] = 1;
+                    $result['low_stock_threshold'] = 5;
+                    $result['is_featured'] = 0;
+                    $result['is_new'] = 0;
+                }
+                
+                return $result;
+            } catch (Exception $e2) {
+                error_log("Error en consulta simple: " . $e2->getMessage());
+                return false;
+            }
         }
     }
 
