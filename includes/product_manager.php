@@ -161,10 +161,12 @@ class ProductManager {
         $sql = "SELECT p.*, 
                        c.name as category_name, 
                        b.name as brand_name,
-                       p.console as console_name
+                       co.name as console_name,
+                       co.slug as console_slug
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id 
+                LEFT JOIN consoles co ON p.console_id = co.id
                 WHERE p.id = :id AND p.is_active = 1";
         
         $stmt = $this->pdo->prepare($sql);
