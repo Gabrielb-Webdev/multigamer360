@@ -170,18 +170,19 @@ function getImagePath($image_name)
                 $stock = $current_product['stock_quantity'] ?? 0;
                 if ($stock <= 0): ?>
                     <span class="badge bg-danger">SIN STOCK</span>
-                <?php elseif ($stock <= 5): ?>
-                    <span class="badge bg-orange">POCAS UNIDADES</span>
                 <?php endif; ?>
             </div>
 
-            <?php if (!empty($current_product['long_description'])): ?>
-                <p class="product-description">
-                    <?php echo nl2br(htmlspecialchars(substr($current_product['long_description'], 0, 200))); ?>...</p>
-            <?php elseif (!empty($current_product['description'])): ?>
-                <p class="product-description">
-                    <?php echo nl2br(htmlspecialchars(substr($current_product['description'], 0, 200))); ?>...</p>
-            <?php endif; ?>
+            <!-- Description at the top -->
+            <div class="product-description-top">
+                <?php if (!empty($current_product['long_description'])): ?>
+                    <p><?php echo nl2br(htmlspecialchars($current_product['long_description'])); ?></p>
+                <?php elseif (!empty($current_product['description'])): ?>
+                    <p><?php echo nl2br(htmlspecialchars($current_product['description'])); ?></p>
+                <?php else: ?>
+                    <p>Producto de alta calidad disponible en MultiGamer360. ¡No te lo pierdas!</p>
+                <?php endif; ?>
+            </div>
 
             <!-- Stock information -->
             <div class="stock-info-detail">
@@ -198,29 +199,29 @@ function getImagePath($image_name)
                 <?php endif; ?>
             </div>
 
-            <div class="product-pricing">
-                <?php
-                // Usar price_pesos como precio principal
-                $product_price = $current_product['price_pesos'] ?? $current_product['price'];
+            <!-- Price and Quantity Selector Combined -->
+            <div class="price-quantity-container">
+                <div class="product-pricing">
+                    <?php
+                    // Usar price_pesos como precio principal de la base de datos
+                    $product_price = $current_product['price_pesos'] ?? $current_product['price'];
 
-                // Calcular precios
-                $cash_price = $product_price * 0.9;
-                $regular_price = $product_price;
-
-                // Verificar si hay descuento activo
-                $has_discount = !empty($current_product['sale_price']) && $current_product['sale_price'] > 0;
-                
-                if ($has_discount) {
-                    $cash_price = $current_product['sale_price'] * 0.9;
-                    $regular_price = $current_product['sale_price'];
-                }
-                ?>
-                <div class="price-cash">
-                    <span class="price-value">$<?php echo number_format($cash_price, 0, ',', '.'); ?></span>
-                    <span class="price-label">En efectivo</span>
+                    // Calcular precio en efectivo (10% descuento)
+                    $cash_price = $product_price * 0.9;
+                    ?>
+                    <div class="price-cash">
+                        <span class="price-value">$<?php echo number_format($cash_price, 0, ',', '.'); ?></span>
+                        <span class="price-label">En efectivo</span>
+                    </div>
                 </div>
-                <?php if ($has_discount): ?>
-                    <div class="price-card">$<?php echo number_format($regular_price, 0, ',', '.'); ?></div>
+
+                <?php if ($stock > 0): ?>
+                    <div class="quantity-selector">
+                        <button type="button" class="quantity-btn minus">-</button>
+                        <input type="number" class="quantity-input" value="1" min="1" max="<?php echo $stock; ?>"
+                            id="product-quantity">
+                        <button type="button" class="quantity-btn plus">+</button>
+                    </div>
                 <?php endif; ?>
             </div>
 
@@ -228,7 +229,7 @@ function getImagePath($image_name)
                 <div class="discount-info">
                     <i class="fas fa-credit-card"></i>
                     <span>En 4 cuotas sin interes
-                        <strong>$<?php echo number_format($regular_price / 4, 0, ',', '.'); ?></strong></span>
+                        <strong>$<?php echo number_format($product_price / 4, 0, ',', '.'); ?></strong></span>
                 </div>
                 <div class="cash-discount">
                     <i class="fas fa-percentage"></i>
@@ -239,44 +240,8 @@ function getImagePath($image_name)
             <div class="payment-methods">
                 <a href="#" class="payment-link">VER MEDIOS DE PAGO</a>
             </div>
-
-            <div class="product-actions">
-                <?php
-                $stock = $current_product['stock_quantity'] ?? 0;
-                if ($stock > 0): ?>
-                    <div class="quantity-selector">
-                        <button type="button" class="quantity-btn minus">-</button>
-                        <input type="number" class="quantity-input" value="1" min="1" max="<?php echo $stock; ?>"
-                            id="product-quantity">
-                        <button type="button" class="quantity-btn plus">+</button>
-                    </div>
-
-                    <!-- REMOVED: Conflicting cart button - only modern cart button in productos.php should be active -->
-                <?php else: ?>
-                    <button class="add-to-cart-detail" disabled>
-                        <i class="fas fa-ban"></i>
-                        SIN STOCK
-                    </button>
-                <?php endif; ?>
-            </div>
-
-            <div class="product-description">
-                <h5>Descripción</h5>
-                <?php if (!empty($current_product['description'])): ?>
-                    <p><?php echo nl2br(htmlspecialchars($current_product['description'])); ?></p>
-                <?php else: ?>
-                    <p>Producto de alta calidad disponible en MultiGamer360. ¡No te lo pierdas!</p>
-                <?php endif; ?>
-            </div>
         </div>
     </div>
-
-    <!-- Product Info Section -->
-    <div class="col-md-6">
-
-    </div>
-</div>
-</div>
 
 </div>
 </div>
