@@ -508,7 +508,7 @@ require_once 'includes/header.php';
                 <!-- =====================================================
                      GRID DE PRODUCTOS (ESTRUCTURA LIMPIA)
                      ===================================================== -->
-                <div class="products-grid" id="products-grid" <?php if ($isVideoGamesView && !$currentConsole): ?>style="display:none;"<?php endif; ?>>
+                <div class="products-grid" id="products-grid">
                     <?php if (!empty($products)): ?>
                         <?php foreach ($products as $product): ?>
                             <!-- =====================================================
