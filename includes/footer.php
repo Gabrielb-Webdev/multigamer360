@@ -120,104 +120,7 @@
         });
     </script>
     
-    <!-- Dropdown Fix Script -->
-    <script>
-        // Solución definitiva para el dropdown del usuario
-        document.addEventListener('DOMContentLoaded', function() {
-            // Agregar delay para asegurar que Bootstrap esté completamente cargado
-            setTimeout(function() {
-                console.log('Initializing user dropdown...');
-                
-                const userDropdown = document.getElementById('userMenuDropdown');
-                const dropdownMenu = document.querySelector('.user-dropdown-menu');
-                
-                if (userDropdown && dropdownMenu) {
-                    console.log('User dropdown elements found');
-                    
-                    // Eliminar cualquier listener de Bootstrap y limpiar atributos
-                    userDropdown.removeAttribute('data-bs-toggle');
-                    userDropdown.removeAttribute('data-bs-auto-close');
-                    
-                    // Variable para evitar conflictos de eventos múltiples
-                    let isProcessingClick = false;
-                    let dropdownOpen = false;
-                    
-                    // Función para abrir dropdown
-                    function openDropdown() {
-                        dropdownMenu.classList.add('show');
-                        userDropdown.setAttribute('aria-expanded', 'true');
-                        dropdownOpen = true;
-                        console.log('User dropdown opened');
-                    }
-                    
-                    // Función para cerrar dropdown
-                    function closeDropdown() {
-                        dropdownMenu.classList.remove('show');
-                        userDropdown.setAttribute('aria-expanded', 'false');
-                        dropdownOpen = false;
-                        console.log('User dropdown closed');
-                    }
-                    
-                    // Evento click en el botón del dropdown
-                    userDropdown.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        // Evitar procesamiento múltiple
-                        if (isProcessingClick) return;
-                        isProcessingClick = true;
-                        
-                        console.log('User dropdown clicked');
-                        
-                        // Cerrar otros dropdowns primero
-                        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                            if (menu !== dropdownMenu) {
-                                menu.classList.remove('show');
-                            }
-                        });
-                        
-                        // Toggle del dropdown principal
-                        if (dropdownOpen) {
-                            closeDropdown();
-                        } else {
-                            openDropdown();
-                        }
-                        
-                        // Reset del flag después de un breve delay
-                        setTimeout(() => {
-                            isProcessingClick = false;
-                        }, 150);
-                    });
-                    
-                    // Prevenir que los clics dentro del dropdown lo cierren
-                    dropdownMenu.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                    });
-                    
-                    // Cerrar al hacer clic fuera del dropdown
-                    document.addEventListener('click', function(e) {
-                        if (dropdownOpen && !userDropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                            closeDropdown();
-                            console.log('User dropdown closed by outside click');
-                        }
-                    });
-                    
-                    // Cerrar con la tecla Escape
-                    document.addEventListener('keydown', function(e) {
-                        if (e.key === 'Escape' && dropdownOpen) {
-                            closeDropdown();
-                            console.log('User dropdown closed by Escape key');
-                        }
-                    });
-                    
-                } else {
-                    console.log('User dropdown elements not found');
-                }
-            }, 300); // Delay de 300ms para asegurar que todo esté cargado
-        });
-    </script>
-    
-    <!-- CSS adicional para asegurar que los dropdowns funcionen -->
+    <!-- CSS adicional para asegurar que los dropdowns funcionen correctamente -->
     <style>
         /* Asegurar que los dropdowns tengan el z-index correcto */
         .dropdown-menu {
@@ -237,23 +140,11 @@
             background: rgba(40, 40, 40, 0.95) !important;
             backdrop-filter: blur(10px) !important;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-            transform: translateY(0) !important;
         }
         
         /* Forzar el posicionamiento correcto */
         .header-actions .dropdown {
             position: relative !important;
-        }
-        
-        .dropdown-toggle::after {
-            display: inline-block !important;
-            margin-left: 0.255em !important;
-            vertical-align: 0.255em !important;
-            content: "" !important;
-            border-top: 0.3em solid !important;
-            border-right: 0.3em solid transparent !important;
-            border-bottom: 0 !important;
-            border-left: 0.3em solid transparent !important;
         }
         
         /* Mejorar la apariencia de los items del dropdown */
@@ -281,9 +172,6 @@
             margin: 5px 0 !important;
         }
     </style>
-    
-    <!-- Bootstrap JavaScript Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Script para actualizar carrito al cargar página -->
     <script>

@@ -171,7 +171,7 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
                                 <div class="auth-buttons me-4 d-none d-lg-block">
                                     <?php if ($isLoggedIn): ?>
                                         <div class="dropdown">
-                                            <button class="btn header-btn dropdown-toggle" type="button" id="userMenuDropdown" aria-expanded="false">
+                                            <button class="btn header-btn dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="fas fa-user"></i> <?= htmlspecialchars($currentUser['first_name']) ?>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu">
