@@ -24,7 +24,7 @@ try {
     if (!empty($_POST['consoles'])) $filters['consoles'] = array_map('intval', explode(',', $_POST['consoles']));
     if (!empty($_POST['genres'])) $filters['genres'] = array_map('intval', explode(',', $_POST['genres']));
     
-    // Verificar si existe la tabla product_genres (para relación muchos a muchos)
+    // Verificar si existe la tabla product_genres
     $hasProductGenresTable = false;
     try {
         $checkTable = $pdo->query("SHOW TABLES LIKE 'product_genres'")->fetch();
@@ -33,31 +33,53 @@ try {
         error_log("Error verificando tabla product_genres: " . $e->getMessage());
     }
     
-    // ==========================================
-    // CONSTRUIR WHERE PARA CONTAR PRODUCTOS TOTALES
-    // ==========================================
-    $where = ['p.is_active = 1'];
-    $joins = [];
+    // Obtener ID de categoría "Videojuegos" para saber si podemos aplicar géneros
+    $videojuegosCategoryId = null;
+    try {
+        $stmt = $pdo->query("SELECT id FROM categories WHERE slug = 'videojuegos' OR name LIKE '%videojuego%' LIMIT 1");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result) {
+            $videojuegosCategoryId = $result['id'];
+        }
+    } catch (Exception $e) {
+        error_log("Error obteniendo categoría videojuegos: " . $e->getMessage());
+    }
+    
+    // Determinar si se deben aplicar géneros:
+    // SOLO si NO hay filtro de categoría O si el filtro de categoría incluye "Videojuegos"
+    $shouldApplyGenres = empty($filters['categories']) || 
+                         ($videojuegosCategoryId && in_array($videojuegosCategoryId, $filters['categories']));
+    
+    // Si hay filtro de géneros, FORZAR que solo se muestren videojuegos
+    if (!empty($filters['genres']) && $videojuegosCategoryId) {
+        $filters['categories'] = [$videojuegosCategoryId];
+    }
+    
+    // ===== CONTAR TOTAL DE PRODUCTOS CON TODOS LOS FILTROS =====
+    $where = ["p.is_active = 1"];
     $params = [];
+    $joins = [];
     
     if (!empty($filters['categories'])) {
         $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
         $where[] = "p.category_id IN ($ph)";
         $params = array_merge($params, $filters['categories']);
     }
+    
     if (!empty($filters['brands'])) {
         $ph = implode(',', array_fill(0, count($filters['brands']), '?'));
         $where[] = "p.brand_id IN ($ph)";
         $params = array_merge($params, $filters['brands']);
     }
+    
     if (!empty($filters['consoles'])) {
         $ph = implode(',', array_fill(0, count($filters['consoles']), '?'));
         $where[] = "p.console_id IN ($ph)";
         $params = array_merge($params, $filters['consoles']);
     }
     
-    // Si hay filtro de géneros, usar product_genres
-    if ($hasProductGenresTable && !empty($filters['genres'])) {
+    // SOLO aplicar géneros si NO hay filtro de categoría o si incluye "Videojuegos"
+    if ($hasProductGenresTable && !empty($filters['genres']) && $shouldApplyGenres) {
         $joins[] = "INNER JOIN product_genres pg ON p.id = pg.product_id";
         $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
         $where[] = "pg.genre_id IN ($ph)";
@@ -67,13 +89,10 @@ try {
     $joinClause = implode(' ', $joins);
     $whereClause = implode(' AND ', $where);
     
-    // Contar productos totales
     $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $joinClause WHERE $whereClause";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    $productCount = (int)$stmt->fetchColumn();
-    
-    
+    $totalCount = $stmt->fetchColumn();    
     // ==========================================
     // OBTENER MARCAS CON CONTEO INTELIGENTE
     // ==========================================
@@ -96,8 +115,8 @@ try {
             $brandWhere[] = "p.console_id IN ($ph)";
             $brandParams = array_merge($brandParams, $filters['consoles']);
         }
-        // IMPORTANTE: Si hay filtro de géneros, usar product_genres
-        if ($hasProductGenresTable && !empty($filters['genres'])) {
+        // APLICAR géneros SOLO si NO estamos filtrando Consolas
+        if ($hasProductGenresTable && !empty($filters['genres']) && $shouldApplyGenres) {
             $brandJoins[] = "INNER JOIN product_genres pg ON p.id = pg.product_id";
             $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
             $brandWhere[] = "pg.genre_id IN ($ph)";
@@ -134,8 +153,8 @@ try {
             $consoleWhere[] = "p.brand_id IN ($ph)";
             $consoleParams = array_merge($consoleParams, $filters['brands']);
         }
-        // IMPORTANTE: Si hay filtro de géneros, usar product_genres para consolas también
-        if ($hasProductGenresTable && !empty($filters['genres'])) {
+        // APLICAR géneros SOLO si NO estamos filtrando categoría Consolas
+        if ($hasProductGenresTable && !empty($filters['genres']) && $shouldApplyGenres) {
             $consoleJoins[] = "INNER JOIN product_genres pg ON p.id = pg.product_id";
             $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
             $consoleWhere[] = "pg.genre_id IN ($ph)";
@@ -153,39 +172,52 @@ try {
     // ==========================================
     // OBTENER GÉNEROS CON CONTEO INTELIGENTE
     // ==========================================
-    // Para cada género, contar productos considerando SOLO los filtros que NO sean de géneros
+    // REGLA CRÍTICA: Los géneros SOLO aplican a Videojuegos, NUNCA a Consolas
+    // Si hay filtro de categoría "Consolas", devolver todos los géneros con product_count = 0
     $genres = [];
     if ($hasProductGenresTable) {
         try {
             // Excluir género invisible "_CONSOLA_" (ID 999)
             $stmt = $pdo->query("SELECT id, name FROM genres WHERE id != 999 AND name NOT LIKE '\\\_%' ESCAPE '\\\\' ORDER BY name");
+            
+            // Si está filtrando categoría "Consolas", todos los géneros tienen 0 productos
+            $isFilteringConsolesCategory = !empty($filters['categories']) && 
+                                           !($videojuegosCategoryId && in_array($videojuegosCategoryId, $filters['categories']));
+            
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
-                $genreWhere = ['p.is_active = 1'];
-                $genreJoin = "INNER JOIN product_genres pg ON p.id = pg.product_id AND pg.genre_id = ?";
-                $genreParams = [$g['id']];
-                
-                // Aplicar filtros EXCEPTO el de géneros
-                if (!empty($filters['categories'])) {
-                    $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
-                    $genreWhere[] = "p.category_id IN ($ph)";
-                    $genreParams = array_merge($genreParams, $filters['categories']);
+                if ($isFilteringConsolesCategory) {
+                    // Si filtro Consolas, NO hay géneros disponibles
+                    $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => 0];
+                } else {
+                    // Contar productos normalmente (solo Videojuegos pueden tener géneros)
+                    $genreWhere = ['p.is_active = 1'];
+                    $genreJoin = "INNER JOIN product_genres pg ON p.id = pg.product_id AND pg.genre_id = ?";
+                    $genreParams = [$g['id']];
+                    
+                    // FORZAR categoría Videojuegos
+                    if ($videojuegosCategoryId) {
+                        $genreWhere[] = "p.category_id = ?";
+                        $genreParams[] = $videojuegosCategoryId;
+                    }
+                    
+                    // Aplicar filtros EXCEPTO el de géneros
+                    if (!empty($filters['brands'])) {
+                        $ph = implode(',', array_fill(0, count($filters['brands']), '?'));
+                        $genreWhere[] = "p.brand_id IN ($ph)";
+                        $genreParams = array_merge($genreParams, $filters['brands']);
+                    }
+                    if (!empty($filters['consoles'])) {
+                        $ph = implode(',', array_fill(0, count($filters['consoles']), '?'));
+                        $genreWhere[] = "p.console_id IN ($ph)";
+                        $genreParams = array_merge($genreParams, $filters['consoles']);
+                    }
+                    
+                    $genreWhereClause = implode(' AND ', $genreWhere);
+                    $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $genreJoin WHERE $genreWhereClause";
+                    $s = $pdo->prepare($sql);
+                    $s->execute($genreParams);
+                    $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
                 }
-                if (!empty($filters['brands'])) {
-                    $ph = implode(',', array_fill(0, count($filters['brands']), '?'));
-                    $genreWhere[] = "p.brand_id IN ($ph)";
-                    $genreParams = array_merge($genreParams, $filters['brands']);
-                }
-                if (!empty($filters['consoles'])) {
-                    $ph = implode(',', array_fill(0, count($filters['consoles']), '?'));
-                    $genreWhere[] = "p.console_id IN ($ph)";
-                    $genreParams = array_merge($genreParams, $filters['consoles']);
-                }
-                
-                $genreWhereClause = implode(' AND ', $genreWhere);
-                $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $genreJoin WHERE $genreWhereClause";
-                $s = $pdo->prepare($sql);
-                $s->execute($genreParams);
-                $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
             }
         } catch (Exception $e) {
             error_log("Error obteniendo géneros: " . $e->getMessage());

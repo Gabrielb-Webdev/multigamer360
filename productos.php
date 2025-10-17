@@ -2419,6 +2419,14 @@ function updateDynamicFilters() {
 function updateFilterCounts(filters) {
     console.log('🔄 Actualizando contadores de filtros:', filters);
     
+    // Verificar si hay géneros con 0 productos (indica filtro de Consolas activo)
+    const allGenresDisabled = filters.genres && filters.genres.length > 0 && 
+                              filters.genres.every(g => g.product_count === 0);
+    
+    if (allGenresDisabled) {
+        console.log('⚠️ CATEGORÍA CONSOLAS ACTIVA: Todos los géneros deshabilitados (solo aplican a videojuegos)');
+    }
+    
     // Actualizar marcas
     if (filters.brands) {
         // Primero, habilitar todas las marcas
