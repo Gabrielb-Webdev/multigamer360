@@ -1,9 +1,10 @@
 <?php 
 /**
  * Product Details Page - MultiGamer360
- * Last Updated: 2025-10-17 20:30
- * Version: 2.1 - Bootstrap Load Order Fixed
- * Fix: Scripts now load AFTER Bootstrap to prevent "bootstrap is not defined" errors
+ * Last Updated: 2025-10-17 21:00
+ * Version: 2.2 - FORCE SYNC FIX
+ * Fix: Scripts load AFTER Bootstrap + Removed short_description dependency
+ * CRITICAL: This version MUST be deployed to Hostinger
  */
 
 // Solo iniciar sesión si no está ya iniciada
@@ -459,10 +460,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- 
 ╔══════════════════════════════════════════════════════════════════╗
-║  PRODUCT DETAILS PAGE - VERSION 2.1                              ║
-║  Last Updated: 2025-10-17 at 20:30                               ║
-║  Bootstrap Load Order Fixed - Scripts after Bootstrap            ║
-║  GitHub Commit: Bootstrap Load Order Fix                         ║
+║  PRODUCT DETAILS PAGE - VERSION 2.2 - FORCE SYNC                ║
+║  Last Updated: 2025-10-17 at 21:00                               ║
+║  CRITICAL FIX: Bootstrap loads before scripts                    ║
+║  SYNC TOKEN: FORCE_UPDATE_2025_10_17_21_00                       ║
 ╚══════════════════════════════════════════════════════════════════╝
 -->
 
