@@ -65,13 +65,24 @@ try {
         $consoles[] = ['id' => $c['id'], 'name' => $c['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
+    // Géneros - intentar obtener de forma segura
     $genres = [];
-    $stmt = $pdo->query("SELECT id, name FROM genres ORDER BY name");
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
-        $cp = array_merge([$g['id']], $params);
-        $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE p.genre_id = ? AND $whereClause");
-        $s->execute($cp);
-        $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
+    try {
+        // Verificar si existe la columna genre_id en products
+        $checkColumn = $pdo->query("SHOW COLUMNS FROM products LIKE 'genre_id'")->fetch();
+        
+        if ($checkColumn) {
+            $stmt = $pdo->query("SELECT id, name FROM genres ORDER BY name");
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
+                $cp = array_merge([$g['id']], $params);
+                $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE p.genre_id = ? AND $whereClause");
+                $s->execute($cp);
+                $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
+            }
+        }
+    } catch (Exception $e) {
+        // Ignorar errores de géneros, no es crítico
+        error_log("Géneros no disponibles: " . $e->getMessage());
     }
     
     sendJson([
