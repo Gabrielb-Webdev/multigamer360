@@ -157,10 +157,6 @@ function getImagePath($image_name) {
                 </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Product Info Section -->
-        <div class="col-md-6">
             <div class="product-info-section">
                 <h1 class="product-title"><?php echo htmlspecialchars($current_product['name']); ?></h1>
                 
@@ -280,6 +276,11 @@ function getImagePath($image_name) {
                     <?php endif; ?>
                 </div>
             </div>
+        </div>
+
+        <!-- Product Info Section -->
+        <div class="col-md-6">
+            
         </div>
     </div>
 </div>
