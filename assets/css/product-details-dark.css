@@ -367,6 +367,9 @@
     transition: all 0.3s ease;
     color: #dc262b;
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .quantity-btn:hover {
@@ -385,6 +388,15 @@
     font-size: 1.2rem;
     color: white;
     font-weight: bold;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* Quitar flechas del input number en Chrome, Safari, Edge, Opera */
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .quantity-input:focus {

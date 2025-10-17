@@ -207,7 +207,10 @@ function getImagePath($image_name)
                 $cash_price = $product_price * 0.9;
                 $regular_price = $product_price;
 
-                if (!empty($current_product['sale_price']) && $current_product['sale_price'] > 0) {
+                // Verificar si hay descuento activo
+                $has_discount = !empty($current_product['sale_price']) && $current_product['sale_price'] > 0;
+                
+                if ($has_discount) {
                     $cash_price = $current_product['sale_price'] * 0.9;
                     $regular_price = $current_product['sale_price'];
                 }
@@ -216,7 +219,9 @@ function getImagePath($image_name)
                     <span class="price-value">$<?php echo number_format($cash_price, 0, ',', '.'); ?></span>
                     <span class="price-label">En efectivo</span>
                 </div>
-                <div class="price-card">$<?php echo number_format($regular_price, 0, ',', '.'); ?></div>
+                <?php if ($has_discount): ?>
+                    <div class="price-card">$<?php echo number_format($regular_price, 0, ',', '.'); ?></div>
+                <?php endif; ?>
             </div>
 
             <div class="payment-options">
@@ -253,15 +258,6 @@ function getImagePath($image_name)
                         SIN STOCK
                     </button>
                 <?php endif; ?>
-            </div>
-
-            <div class="shipping-calculator">
-                <h5>Calcular envío</h5>
-                <div class="shipping-form">
-                    <input type="text" class="form-control" placeholder="Tu código postal">
-                    <button type="button" class="btn-calculate">CALCULAR</button>
-                </div>
-                <small class="shipping-note">No sé mi código postal</small>
             </div>
 
             <div class="product-description">
