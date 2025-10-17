@@ -49,10 +49,6 @@
 }
 
 /* Product Images */
-.product-image-section {
-    position: sticky;
-    top: 20px;
-}
 
 .main-product-image {
     position: relative;
