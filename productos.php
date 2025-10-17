@@ -2333,12 +2333,120 @@ function updateFilter(filterType, value, checked) {
         }
         
         filtersChanged = true;
-        // updateFilterCompatibility(); // DESHABILITADO - Causaba errores AJAX
         updateFilterButtons();
+        
+        // Actualizar filtros dinámicamente en tiempo real
+        updateDynamicFilters();
+        
         console.log('📝 Filtro actualizado:', filterType, value, checked);
         
     } catch (error) {
         console.error('❌ Error en updateFilter:', error);
+    }
+}
+
+/**
+ * Actualizar filtros dinámicamente (TIEMPO REAL)
+ * Obtiene los conteos actualizados según los filtros seleccionados
+ */
+function updateDynamicFilters() {
+    const formData = new FormData();
+    
+    // Enviar filtros actuales
+    if (pendingFilters.categories.length > 0) {
+        formData.append('categories', pendingFilters.categories.join(','));
+    }
+    if (pendingFilters.brands.length > 0) {
+        formData.append('brands', pendingFilters.brands.join(','));
+    }
+    if (pendingFilters.consoles.length > 0) {
+        formData.append('consoles', pendingFilters.consoles.join(','));
+    }
+    if (pendingFilters.genres.length > 0) {
+        formData.append('genres', pendingFilters.genres.join(','));
+    }
+    if (pendingFilters.minPrice) {
+        formData.append('min_price', pendingFilters.minPrice);
+    }
+    if (pendingFilters.maxPrice) {
+        formData.append('max_price', pendingFilters.maxPrice);
+    }
+    
+    fetch('ajax/get-dynamic-filters.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar contadores de cada filtro
+            updateFilterCounts(data.filters);
+            
+            // Actualizar contador total de productos
+            const countElement = document.querySelector('.products-count');
+            if (countElement && data.product_count !== undefined) {
+                countElement.textContent = `Mostrando ${data.product_count} producto${data.product_count !== 1 ? 's' : ''}`;
+            }
+            
+            console.log('✅ Filtros actualizados dinámicamente:', data.product_count, 'productos');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error actualizando filtros:', error);
+    });
+}
+
+/**
+ * Actualizar los contadores de cada filtro
+ */
+function updateFilterCounts(filters) {
+    // Actualizar marcas
+    if (filters.brands) {
+        filters.brands.forEach(brand => {
+            const countElement = document.querySelector(`#brand_${brand.id} + label .filter-count`);
+            if (countElement) {
+                countElement.textContent = `(${brand.product_count})`;
+                
+                // Deshabilitar si no hay productos
+                const checkbox = document.getElementById(`brand_${brand.id}`);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.disabled = brand.product_count === 0;
+                    checkbox.parentElement.style.opacity = brand.product_count === 0 ? '0.5' : '1';
+                }
+            }
+        });
+    }
+    
+    // Actualizar consolas
+    if (filters.consoles) {
+        filters.consoles.forEach(console => {
+            const countElement = document.querySelector(`#console_${console.id} + label .filter-count`);
+            if (countElement) {
+                countElement.textContent = `(${console.product_count})`;
+                
+                const checkbox = document.getElementById(`console_${console.id}`);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.disabled = console.product_count === 0;
+                    checkbox.parentElement.style.opacity = console.product_count === 0 ? '0.5' : '1';
+                }
+            }
+        });
+    }
+    
+    // Actualizar géneros
+    if (filters.genres) {
+        filters.genres.forEach(genre => {
+            const countElement = document.querySelector(`#genre_${genre.id} + label .filter-count`);
+            if (countElement) {
+                countElement.textContent = `(${genre.product_count})`;
+                
+                const checkbox = document.getElementById(`genre_${genre.id}`);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.disabled = genre.product_count === 0;
+                    checkbox.parentElement.style.opacity = genre.product_count === 0 ? '0.5' : '1';
+                }
+            }
+        });
     }
 }
 
