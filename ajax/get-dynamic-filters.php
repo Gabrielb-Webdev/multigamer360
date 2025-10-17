@@ -17,18 +17,27 @@ try {
         sendJson(['success' => false, 'message' => 'DB no disponible', 'filters' => ['brands' => [], 'consoles' => [], 'genres' => []], 'product_count' => 0]);
     }
     
+    // Obtener filtros aplicados
     $filters = [];
     if (!empty($_POST['categories'])) $filters['categories'] = array_map('intval', explode(',', $_POST['categories']));
     if (!empty($_POST['brands'])) $filters['brands'] = array_map('intval', explode(',', $_POST['brands']));
     if (!empty($_POST['consoles'])) $filters['consoles'] = array_map('intval', explode(',', $_POST['consoles']));
     if (!empty($_POST['genres'])) $filters['genres'] = array_map('intval', explode(',', $_POST['genres']));
     
+    // Verificar si existe la columna genre_id
+    $hasGenreColumn = false;
+    try {
+        $checkColumn = $pdo->query("SHOW COLUMNS FROM products LIKE 'genre_id'")->fetch();
+        $hasGenreColumn = !empty($checkColumn);
+    } catch (Exception $e) {
+        error_log("Error verificando columna genre_id: " . $e->getMessage());
+    }
+    
+    // ==========================================
+    // CONSTRUIR WHERE PARA CONTAR PRODUCTOS TOTALES
+    // ==========================================
     $where = ['p.is_active = 1'];
     $params = [];
-    
-    // Determinar el tipo de filtro principal
-    $isConsoleFilter = !empty($filters['consoles']);
-    $isVideoGameFilter = !empty($filters['categories']);
     
     if (!empty($filters['categories'])) {
         $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
@@ -45,18 +54,7 @@ try {
         $where[] = "p.console_id IN ($ph)";
         $params = array_merge($params, $filters['consoles']);
     }
-    
-    // Verificar si existe la columna genre_id
-    $hasGenreColumn = false;
-    try {
-        $checkColumn = $pdo->query("SHOW COLUMNS FROM products LIKE 'genre_id'")->fetch();
-        $hasGenreColumn = !empty($checkColumn);
-    } catch (Exception $e) {
-        error_log("Error verificando columna genre_id: " . $e->getMessage());
-    }
-    
-    // Solo aplicar filtro de géneros si NO es un filtro de consolas y la columna existe
-    if ($hasGenreColumn && !$isConsoleFilter && !empty($filters['genres'])) {
+    if ($hasGenreColumn && !empty($filters['genres'])) {
         $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
         $where[] = "p.genre_id IN ($ph)";
         $params = array_merge($params, $filters['genres']);
@@ -64,19 +62,23 @@ try {
     
     $whereClause = implode(' AND ', $where);
     
+    // Contar productos totales
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $whereClause");
     $stmt->execute($params);
     $productCount = (int)$stmt->fetchColumn();
     
-    // Construir WHERE para conteo de cada filtro (sin incluir el filtro actual)
-    // Para MARCAS: excluir filtro de marcas del WHERE
+    
+    // ==========================================
+    // OBTENER MARCAS CON CONTEO INTELIGENTE
+    // ==========================================
+    // Para cada marca, contar productos considerando SOLO los filtros que NO sean de marca
     $brands = [];
     $stmt = $pdo->query("SELECT id, name FROM brands ORDER BY name");
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $b) {
-        // Construir WHERE sin el filtro de marcas
         $brandWhere = ['p.is_active = 1', 'p.brand_id = ?'];
         $brandParams = [$b['id']];
         
+        // Aplicar filtros EXCEPTO el de marcas
         if (!empty($filters['categories'])) {
             $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
             $brandWhere[] = "p.category_id IN ($ph)";
@@ -87,7 +89,7 @@ try {
             $brandWhere[] = "p.console_id IN ($ph)";
             $brandParams = array_merge($brandParams, $filters['consoles']);
         }
-        if ($hasGenreColumn && !$isConsoleFilter && !empty($filters['genres'])) {
+        if ($hasGenreColumn && !empty($filters['genres'])) {
             $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
             $brandWhere[] = "p.genre_id IN ($ph)";
             $brandParams = array_merge($brandParams, $filters['genres']);
@@ -99,14 +101,17 @@ try {
         $brands[] = ['id' => $b['id'], 'name' => $b['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
-    // Para CONSOLAS: excluir filtro de consolas del WHERE
+    // ==========================================
+    // OBTENER CONSOLAS CON CONTEO INTELIGENTE
+    // ==========================================
+    // Para cada consola, contar productos considerando SOLO los filtros que NO sean de consolas
     $consoles = [];
     $stmt = $pdo->query("SELECT id, name FROM consoles ORDER BY name");
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $c) {
-        // Construir WHERE sin el filtro de consolas
         $consoleWhere = ['p.is_active = 1', 'p.console_id = ?'];
         $consoleParams = [$c['id']];
         
+        // Aplicar filtros EXCEPTO el de consolas
         if (!empty($filters['categories'])) {
             $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
             $consoleWhere[] = "p.category_id IN ($ph)";
@@ -117,7 +122,7 @@ try {
             $consoleWhere[] = "p.brand_id IN ($ph)";
             $consoleParams = array_merge($consoleParams, $filters['brands']);
         }
-        // Las consolas NO usan filtro de géneros
+        // NO aplicar filtro de géneros porque las consolas no tienen géneros
         
         $consoleWhereClause = implode(' AND ', $consoleWhere);
         $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $consoleWhereClause");
@@ -125,37 +130,40 @@ try {
         $consoles[] = ['id' => $c['id'], 'name' => $c['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
-    // Para GÉNEROS: excluir filtro de géneros del WHERE y solo si NO es filtro de consolas
+    // ==========================================
+    // OBTENER GÉNEROS CON CONTEO INTELIGENTE
+    // ==========================================
+    // Para cada género, contar productos considerando SOLO los filtros que NO sean de géneros
     $genres = [];
     if ($hasGenreColumn) {
         try {
-            // Excluir géneros internos/invisibles (ID 999 = _CONSOLA_ y nombres que empiecen con _)
+            // Excluir género invisible "_CONSOLA_" (ID 999)
             $stmt = $pdo->query("SELECT id, name FROM genres WHERE id != 999 AND name NOT LIKE '\\\_%' ESCAPE '\\\\' ORDER BY name");
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
-                // Si hay filtro de consolas, mostrar géneros pero con count 0
-                if ($isConsoleFilter) {
-                    $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => 0];
-                } else {
-                    // Construir WHERE sin el filtro de géneros
-                    $genreWhere = ['p.is_active = 1', 'p.genre_id = ?'];
-                    $genreParams = [$g['id']];
-                    
-                    if (!empty($filters['categories'])) {
-                        $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
-                        $genreWhere[] = "p.category_id IN ($ph)";
-                        $genreParams = array_merge($genreParams, $filters['categories']);
-                    }
-                    if (!empty($filters['brands'])) {
-                        $ph = implode(',', array_fill(0, count($filters['brands']), '?'));
-                        $genreWhere[] = "p.brand_id IN ($ph)";
-                        $genreParams = array_merge($genreParams, $filters['brands']);
-                    }
-                    
-                    $genreWhereClause = implode(' AND ', $genreWhere);
-                    $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $genreWhereClause");
-                    $s->execute($genreParams);
-                    $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
+                $genreWhere = ['p.is_active = 1', 'p.genre_id = ?'];
+                $genreParams = [$g['id']];
+                
+                // Aplicar filtros EXCEPTO el de géneros
+                if (!empty($filters['categories'])) {
+                    $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
+                    $genreWhere[] = "p.category_id IN ($ph)";
+                    $genreParams = array_merge($genreParams, $filters['categories']);
                 }
+                if (!empty($filters['brands'])) {
+                    $ph = implode(',', array_fill(0, count($filters['brands']), '?'));
+                    $genreWhere[] = "p.brand_id IN ($ph)";
+                    $genreParams = array_merge($genreParams, $filters['brands']);
+                }
+                if (!empty($filters['consoles'])) {
+                    $ph = implode(',', array_fill(0, count($filters['consoles']), '?'));
+                    $genreWhere[] = "p.console_id IN ($ph)";
+                    $genreParams = array_merge($genreParams, $filters['consoles']);
+                }
+                
+                $genreWhereClause = implode(' AND ', $genreWhere);
+                $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $genreWhereClause");
+                $s->execute($genreParams);
+                $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
             }
         } catch (Exception $e) {
             error_log("Error obteniendo géneros: " . $e->getMessage());
