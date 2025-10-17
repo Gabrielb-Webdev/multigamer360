@@ -2494,7 +2494,7 @@ function applyAllFilters() {
         const url = new URL(window.location);
         
         // Limpiar parámetros existentes
-        url.searchParams.delete('category');
+        url.searchParams.delete('categories');
         url.searchParams.delete('brands');
         url.searchParams.delete('consoles');
         url.searchParams.delete('genres');
@@ -2504,7 +2504,7 @@ function applyAllFilters() {
         
         // Aplicar categorías
         if (pendingFilters.categories.length > 0) {
-            url.searchParams.set('category', pendingFilters.categories.join(','));
+            url.searchParams.set('categories', pendingFilters.categories.join(','));
         }
         
         // Aplicar marcas
