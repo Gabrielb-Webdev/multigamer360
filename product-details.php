@@ -201,25 +201,27 @@ function getImagePath($image_name)
 
             <!-- Price and Quantity Selector Combined -->
             <div class="price-quantity-container">
+                <?php 
+                // Obtener precio y stock directamente de la base de datos
+                $product_price = $current_product['price_pesos'] ?? $current_product['price'];
+                $stock = $current_product['stock_quantity'] ?? 0;
+                ?>
+                
+                <?php if ($stock > 0): ?>
+                    <div class="quantity-selector">
+                        <button type="button" class="quantity-btn minus">-</button>
+                        <input type="number" class="quantity-input" value="1" min="1" max="<?php echo $stock; ?>"
+                            id="product-quantity" data-max-stock="<?php echo $stock; ?>">
+                        <button type="button" class="quantity-btn plus">+</button>
+                    </div>
+                <?php endif; ?>
+
                 <div class="product-pricing">
-                    <?php
-                    // Obtener precio directamente de la base de datos sin modificaciones
-                    $product_price = $current_product['price_pesos'] ?? $current_product['price'];
-                    ?>
                     <div class="price-cash">
                         <span class="price-value">$<?php echo number_format($product_price, 0, ',', '.'); ?></span>
                         <span class="price-label">EN EFECTIVO</span>
                     </div>
                 </div>
-
-                <?php if ($stock > 0): ?>
-                    <div class="quantity-selector">
-                        <button type="button" class="quantity-btn minus">-</button>
-                        <input type="number" class="quantity-input" value="1" min="1" max="<?php echo $stock; ?>"
-                            id="product-quantity">
-                        <button type="button" class="quantity-btn plus">+</button>
-                    </div>
-                <?php endif; ?>
             </div>
 
             <div class="payment-options">
@@ -338,27 +340,60 @@ function getImagePath($image_name)
         const maxStock = <?php echo isset($current_product['stock_quantity']) ? (int) $current_product['stock_quantity'] : 0; ?>;
 
         if (minusBtn && plusBtn && quantityInput) {
+            // Botón menos
             minusBtn.addEventListener('click', function () {
-                const currentValue = parseInt(quantityInput.value);
+                const currentValue = parseInt(quantityInput.value) || 1;
                 if (currentValue > 1) {
                     quantityInput.value = currentValue - 1;
                 }
             });
 
+            // Botón más
             plusBtn.addEventListener('click', function () {
-                const currentValue = parseInt(quantityInput.value);
-                if (currentValue < maxStock) {
+                const currentValue = parseInt(quantityInput.value) || 1;
+                const max = parseInt(quantityInput.getAttribute('max')) || maxStock;
+                if (currentValue < max) {
                     quantityInput.value = currentValue + 1;
+                } else {
+                    // Mostrar mensaje si intenta superar el stock
+                    quantityInput.value = max;
+                    console.log('Stock máximo alcanzado: ' + max);
                 }
             });
 
-            // Validar input manual
-            quantityInput.addEventListener('change', function () {
-                const value = parseInt(this.value);
-                if (value < 1) {
+            // Validar input manual (cuando el usuario escribe directamente)
+            quantityInput.addEventListener('input', function () {
+                let value = parseInt(this.value);
+                const max = parseInt(this.getAttribute('max')) || maxStock;
+                
+                if (isNaN(value) || value < 1) {
                     this.value = 1;
-                } else if (value > maxStock) {
-                    this.value = maxStock;
+                } else if (value > max) {
+                    this.value = max;
+                }
+            });
+
+            // Validar al perder el foco
+            quantityInput.addEventListener('blur', function () {
+                let value = parseInt(this.value);
+                const max = parseInt(this.getAttribute('max')) || maxStock;
+                
+                if (isNaN(value) || value < 1) {
+                    this.value = 1;
+                } else if (value > max) {
+                    this.value = max;
+                }
+            });
+
+            // Validar con change event también
+            quantityInput.addEventListener('change', function () {
+                let value = parseInt(this.value);
+                const max = parseInt(this.getAttribute('max')) || maxStock;
+                
+                if (isNaN(value) || value < 1) {
+                    this.value = 1;
+                } else if (value > max) {
+                    this.value = max;
                 }
             });
         }
