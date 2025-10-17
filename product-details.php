@@ -84,9 +84,7 @@ function getImagePath($image_name) {
 
 <!-- Dark Theme Stylesheet -->
 <link rel="stylesheet" href="assets/css/product-details-dark.css?v=<?php echo time(); ?>">
-
-<div class="container-fluid product-details-container">
-    <!-- Breadcrumb Navigation -->
+<!-- Breadcrumb Navigation -->
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="index.php">INICIO</a></li>
@@ -94,6 +92,8 @@ function getImagePath($image_name) {
             <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($current_product['name']); ?></li>
         </ol>
     </nav>
+<div class="container-fluid product-details-container">
+    
 
     <div class="row product-detail-row">
         <!-- Product Images Section -->
