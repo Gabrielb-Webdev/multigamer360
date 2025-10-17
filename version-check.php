@@ -7,12 +7,13 @@
 header('Content-Type: application/json');
 
 $version_info = [
-    'file' => 'product-details.php',
-    'current_version' => '2.2',
-    'last_update' => '2025-10-17 21:00',
-    'commit' => '3327179',
-    'status' => 'FORCE_UPDATE_2025_10_17_21_00',
-    'bootstrap_fix' => 'APPLIED - Scripts load AFTER Bootstrap',
+    'file' => 'product-details.php + header.php',
+    'current_version' => '2.3',
+    'last_update' => '2025-10-17 21:30',
+    'commit' => 'PENDING',
+    'status' => 'BOOTSTRAP_FIX_COMPLETE_2025_10_17_21_30',
+    'bootstrap_fix' => 'FIXED - Mobile menu script moved to separate file loaded AFTER Bootstrap',
+    'changes' => 'Removed inline script from header.php, created mobile-menu.js, loads after Bootstrap',
     'timestamp' => date('Y-m-d H:i:s'),
     'server' => $_SERVER['SERVER_NAME'] ?? 'unknown'
 ];
