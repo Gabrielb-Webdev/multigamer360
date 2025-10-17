@@ -1,8 +1,9 @@
 <?php 
 /**
  * Product Details Page - MultiGamer360
- * Last Updated: 2025-10-17 18:20
- * Version: 2.0 - Bootstrap Fix Applied
+ * Last Updated: 2025-10-17 20:30
+ * Version: 2.1 - Bootstrap Load Order Fixed
+ * Fix: Scripts now load AFTER Bootstrap to prevent "bootstrap is not defined" errors
  */
 
 // Solo iniciar sesión si no está ya iniciada
@@ -303,75 +304,6 @@ if (!$current_product) {
 }
 </style>
 
-<script>
-// Funcionalidad para los botones de cantidad
-document.addEventListener('DOMContentLoaded', function() {
-    const quantityInput = document.querySelector('.quantity-input');
-    const minusBtn = document.querySelector('.quantity-btn.minus');
-    const plusBtn = document.querySelector('.quantity-btn.plus');
-    const maxStock = <?php echo $current_product['stock']; ?>;
-
-    if (minusBtn && plusBtn && quantityInput) {
-        minusBtn.addEventListener('click', function() {
-            const currentValue = parseInt(quantityInput.value);
-            if (currentValue > 1) {
-                quantityInput.value = currentValue - 1;
-            }
-        });
-
-        plusBtn.addEventListener('click', function() {
-            const currentValue = parseInt(quantityInput.value);
-            if (currentValue < maxStock) {
-                quantityInput.value = currentValue + 1;
-            }
-        });
-
-        // Validar input manual
-        quantityInput.addEventListener('change', function() {
-            const value = parseInt(this.value);
-            if (value < 1) {
-                this.value = 1;
-            } else if (value > maxStock) {
-                this.value = maxStock;
-            }
-        });
-    }
-
-    // Funcionalidad para cambiar imagen principal al hacer clic en miniatura
-    const thumbnails = document.querySelectorAll('.thumbnail-item');
-    const mainImage = document.querySelector('.main-image');
-
-    thumbnails.forEach(function(thumbnail) {
-        thumbnail.addEventListener('click', function() {
-            // Remover clase active de todas las miniaturas
-            thumbnails.forEach(t => t.classList.remove('active'));
-            
-            // Agregar clase active a la miniatura clickeada
-            this.classList.add('active');
-            
-            // Cambiar imagen principal
-            const newImageSrc = this.querySelector('img').src;
-            mainImage.src = newImageSrc;
-        });
-    });
-
-    // Modificar función de agregar al carrito para incluir cantidad
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('.btn-cart-detail, .btn-cart-detail *')) {
-            e.preventDefault();
-            const button = e.target.closest('.btn-cart-detail');
-            if (button && !button.disabled && window.advancedCartSystem) {
-                const productId = button.getAttribute('data-product-id');
-                const quantity = document.getElementById('product-quantity').value;
-                
-                // Usar el sistema de carrito avanzado con cantidad personalizada
-                window.advancedCartSystem.addToCartWithQuantity(button, productId, parseInt(quantity));
-            }
-        }
-    });
-});
-</script>
-
                 </div>
             </div>
         </div>
@@ -441,9 +373,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </section>
 </div>
 
-<!-- Product Details JavaScript - Version 2.0 -->
-<script src="assets/js/product-details.js?v=<?php echo time(); ?>"></script>
-
 <style>
 /* Asegurar z-index correcto para dropdowns en product-details */
 .dropdown-menu {
@@ -456,12 +385,84 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php include 'includes/footer.php'; ?>
 
+<!-- Product Details JavaScript - Version 2.1 - LOADED AFTER BOOTSTRAP -->
+<script src="assets/js/product-details.js?v=<?php echo time(); ?>"></script>
+
+<script>
+// Funcionalidad inline para los botones de cantidad (cargado después de Bootstrap)
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.querySelector('.quantity-input');
+    const minusBtn = document.querySelector('.quantity-btn.minus');
+    const plusBtn = document.querySelector('.quantity-btn.plus');
+    const maxStock = <?php echo $current_product['stock']; ?>;
+
+    if (minusBtn && plusBtn && quantityInput) {
+        minusBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+
+        plusBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue < maxStock) {
+                quantityInput.value = currentValue + 1;
+            }
+        });
+
+        // Validar input manual
+        quantityInput.addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 1) {
+                this.value = 1;
+            } else if (value > maxStock) {
+                this.value = maxStock;
+            }
+        });
+    }
+
+    // Funcionalidad para cambiar imagen principal al hacer clic en miniatura
+    const thumbnails = document.querySelectorAll('.thumbnail-item');
+    const mainImage = document.querySelector('.main-image');
+
+    thumbnails.forEach(function(thumbnail) {
+        thumbnail.addEventListener('click', function() {
+            // Remover clase active de todas las miniaturas
+            thumbnails.forEach(t => t.classList.remove('active'));
+            
+            // Agregar clase active a la miniatura clickeada
+            this.classList.add('active');
+            
+            // Cambiar imagen principal
+            const newImageSrc = this.querySelector('img').src;
+            mainImage.src = newImageSrc;
+        });
+    });
+
+    // Modificar función de agregar al carrito para incluir cantidad
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.btn-cart-detail, .btn-cart-detail *')) {
+            e.preventDefault();
+            const button = e.target.closest('.btn-cart-detail');
+            if (button && !button.disabled && window.advancedCartSystem) {
+                const productId = button.getAttribute('data-product-id');
+                const quantity = document.getElementById('product-quantity').value;
+                
+                // Usar el sistema de carrito avanzado con cantidad personalizada
+                window.advancedCartSystem.addToCartWithQuantity(button, productId, parseInt(quantity));
+            }
+        }
+    });
+});
+</script>
+
 <!-- 
 ╔══════════════════════════════════════════════════════════════════╗
-║  PRODUCT DETAILS PAGE - VERSION 2.0                              ║
-║  Last Updated: 2025-10-17 at 18:20                               ║
-║  Bootstrap Fix Applied - NO MORE ERRORS                          ║
-║  GitHub Commit: Force Update                                     ║
+║  PRODUCT DETAILS PAGE - VERSION 2.1                              ║
+║  Last Updated: 2025-10-17 at 20:30                               ║
+║  Bootstrap Load Order Fixed - Scripts after Bootstrap            ║
+║  GitHub Commit: Bootstrap Load Order Fix                         ║
 ╚══════════════════════════════════════════════════════════════════╝
 -->
 
