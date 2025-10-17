@@ -82,6 +82,7 @@ try {
     $stmt = $pdo->query("SELECT id, name FROM brands ORDER BY name");
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $b) {
         $brandWhere = ['p.is_active = 1', 'p.brand_id = ?'];
+        $brandJoins = [];
         $brandParams = [$b['id']];
         
         // Aplicar filtros EXCEPTO el de marcas
@@ -95,14 +96,18 @@ try {
             $brandWhere[] = "p.console_id IN ($ph)";
             $brandParams = array_merge($brandParams, $filters['consoles']);
         }
-        if ($hasGenreColumn && !empty($filters['genres'])) {
+        // IMPORTANTE: Si hay filtro de géneros, usar product_genres
+        if ($hasProductGenresTable && !empty($filters['genres'])) {
+            $brandJoins[] = "INNER JOIN product_genres pg ON p.id = pg.product_id";
             $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
-            $brandWhere[] = "p.genre_id IN ($ph)";
+            $brandWhere[] = "pg.genre_id IN ($ph)";
             $brandParams = array_merge($brandParams, $filters['genres']);
         }
         
+        $brandJoinClause = implode(' ', $brandJoins);
         $brandWhereClause = implode(' AND ', $brandWhere);
-        $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $brandWhereClause");
+        $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $brandJoinClause WHERE $brandWhereClause";
+        $s = $pdo->prepare($sql);
         $s->execute($brandParams);
         $brands[] = ['id' => $b['id'], 'name' => $b['name'], 'product_count' => (int)$s->fetchColumn()];
     }
@@ -115,6 +120,7 @@ try {
     $stmt = $pdo->query("SELECT id, name FROM consoles ORDER BY name");
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $c) {
         $consoleWhere = ['p.is_active = 1', 'p.console_id = ?'];
+        $consoleJoins = [];
         $consoleParams = [$c['id']];
         
         // Aplicar filtros EXCEPTO el de consolas
@@ -128,10 +134,18 @@ try {
             $consoleWhere[] = "p.brand_id IN ($ph)";
             $consoleParams = array_merge($consoleParams, $filters['brands']);
         }
-        // NO aplicar filtro de géneros porque las consolas no tienen géneros
+        // IMPORTANTE: Si hay filtro de géneros, usar product_genres para consolas también
+        if ($hasProductGenresTable && !empty($filters['genres'])) {
+            $consoleJoins[] = "INNER JOIN product_genres pg ON p.id = pg.product_id";
+            $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
+            $consoleWhere[] = "pg.genre_id IN ($ph)";
+            $consoleParams = array_merge($consoleParams, $filters['genres']);
+        }
         
+        $consoleJoinClause = implode(' ', $consoleJoins);
         $consoleWhereClause = implode(' AND ', $consoleWhere);
-        $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $consoleWhereClause");
+        $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $consoleJoinClause WHERE $consoleWhereClause";
+        $s = $pdo->prepare($sql);
         $s->execute($consoleParams);
         $consoles[] = ['id' => $c['id'], 'name' => $c['name'], 'product_count' => (int)$s->fetchColumn()];
     }
