@@ -207,6 +207,13 @@ function getImagePath($image_name)
                 $stock = $current_product['stock_quantity'] ?? 0;
                 ?>
                 
+                <div class="product-pricing">
+                    <div class="price-cash">
+                        <span class="price-value">$<?php echo number_format($product_price, 0, ',', '.'); ?></span>
+                        <span class="price-label">EN EFECTIVO</span>
+                    </div>
+                </div>
+
                 <?php if ($stock > 0): ?>
                     <div class="quantity-selector">
                         <button type="button" class="quantity-btn minus">-</button>
@@ -215,13 +222,6 @@ function getImagePath($image_name)
                         <button type="button" class="quantity-btn plus">+</button>
                     </div>
                 <?php endif; ?>
-
-                <div class="product-pricing">
-                    <div class="price-cash">
-                        <span class="price-value">$<?php echo number_format($product_price, 0, ',', '.'); ?></span>
-                        <span class="price-label">EN EFECTIVO</span>
-                    </div>
-                </div>
             </div>
 
             <div class="payment-options">
