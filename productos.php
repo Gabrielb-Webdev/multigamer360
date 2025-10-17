@@ -2372,7 +2372,7 @@ function updateDynamicFilters() {
         formData.append('max_price', pendingFilters.maxPrice);
     }
     
-    fetch('ajax/get-dynamic-filters.php', {
+    fetch('ajax/get-dynamic-filters-v2.php', {
         method: 'POST',
         body: formData
     })

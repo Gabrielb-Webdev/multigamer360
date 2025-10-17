@@ -4,6 +4,10 @@
  * Retorna los filtros con conteos actualizados según los filtros actualmente aplicados
  */
 
+// Habilitar reporte de errores para depuración
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // No mostrar en pantalla, solo log
+
 // Limpiar cualquier salida previa
 if (ob_get_level()) {
     ob_clean();
@@ -11,10 +15,26 @@ if (ob_get_level()) {
 
 header('Content-Type: application/json');
 
+// Verificar que los archivos existan antes de incluirlos
+if (!file_exists('../config/database.php')) {
+    echo json_encode(['success' => false, 'message' => 'database.php no encontrado']);
+    exit;
+}
+
+if (!file_exists('../includes/ProductManager.php')) {
+    echo json_encode(['success' => false, 'message' => 'ProductManager.php no encontrado']);
+    exit;
+}
+
 require_once '../config/database.php';
 require_once '../includes/ProductManager.php';
 
 try {
+    // Verificar que $pdo esté disponible
+    if (!isset($pdo)) {
+        throw new Exception('Variable $pdo no está definida');
+    }
+    
     // Obtener filtros aplicados desde POST
     $appliedFilters = [];
     
