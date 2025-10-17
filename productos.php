@@ -2376,19 +2376,32 @@ function updateDynamicFilters() {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Actualizar contadores de cada filtro
-            updateFilterCounts(data.filters);
-            
-            // Actualizar contador total de productos
-            const countElement = document.querySelector('.products-count');
-            if (countElement && data.product_count !== undefined) {
-                countElement.textContent = `Mostrando ${data.product_count} producto${data.product_count !== 1 ? 's' : ''}`;
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                // Actualizar contadores de cada filtro
+                updateFilterCounts(data.filters);
+                
+                // Actualizar contador total de productos
+                const countElement = document.querySelector('.products-count');
+                if (countElement && data.product_count !== undefined) {
+                    countElement.textContent = `Mostrando ${data.product_count} producto${data.product_count !== 1 ? 's' : ''}`;
+                }
+                
+                console.log('✅ Filtros actualizados dinámicamente:', data.product_count, 'productos');
+            } else {
+                console.error('❌ Error en respuesta:', data.message);
             }
-            
-            console.log('✅ Filtros actualizados dinámicamente:', data.product_count, 'productos');
+        } catch (e) {
+            console.error('❌ Error parseando JSON:', e);
+            console.error('📄 Respuesta recibida:', text);
         }
     })
     .catch(error => {

@@ -4,6 +4,11 @@
  * Retorna los filtros con conteos actualizados según los filtros actualmente aplicados
  */
 
+// Limpiar cualquier salida previa
+if (ob_get_level()) {
+    ob_clean();
+}
+
 header('Content-Type: application/json');
 
 require_once '../config/database.php';
@@ -73,14 +78,24 @@ try {
         'product_count' => $productCount,
         'applied_filters' => $appliedFilters
     ]);
+    exit;
     
 } catch (Exception $e) {
     error_log("Error en get-dynamic-filters.php: " . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error al obtener filtros: ' . $e->getMessage()
+        'message' => 'Error al obtener filtros: ' . $e->getMessage(),
+        'filters' => [
+            'brands' => [],
+            'consoles' => [],
+            'genres' => []
+        ],
+        'product_count' => 0
     ]);
 }
+
+exit;
 
 /**
  * Obtener filtros disponibles con conteos dinámicos
@@ -123,56 +138,86 @@ function getAvailableFiltersWithCounts($pdo, $currentFilters) {
     $whereClause = implode(' AND ', $whereParts);
     
     // Obtener marcas con conteo
-    $sql = "SELECT b.id, b.name, COUNT(DISTINCT p.id) as product_count
-            FROM brands b
-            LEFT JOIN products p ON b.id = p.brand_id AND $whereClause
-            GROUP BY b.id, b.name
-            HAVING product_count > 0 OR b.id IN (" . implode(',', $currentFilters['brands'] ?? [0]) . ")
-            ORDER BY b.name";
-    
+    $result['brands'] = [];
     try {
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $result['brands'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT DISTINCT b.id, b.name
+                FROM brands b
+                ORDER BY b.name";
+        
+        $stmt = $pdo->query($sql);
+        $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Contar productos para cada marca
+        foreach ($brands as &$brand) {
+            $countSql = "SELECT COUNT(*) as cnt 
+                         FROM products p 
+                         WHERE p.brand_id = ? AND $whereClause";
+            $countParams = array_merge([$brand['id']], $params);
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->execute($countParams);
+            $brand['product_count'] = (int)$countStmt->fetchColumn();
+        }
+        
+        $result['brands'] = $brands;
     } catch (Exception $e) {
+        error_log("Error obteniendo marcas: " . $e->getMessage());
         $result['brands'] = [];
     }
     
     // Obtener consolas con conteo
-    $sql = "SELECT c.id, c.name, COUNT(DISTINCT p.id) as product_count
-            FROM consoles c
-            LEFT JOIN products p ON c.id = p.console_id AND $whereClause
-            GROUP BY c.id, c.name
-            HAVING product_count > 0 OR c.id IN (" . implode(',', $currentFilters['consoles'] ?? [0]) . ")
-            ORDER BY c.name";
-    
+    $result['consoles'] = [];
     try {
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $result['consoles'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT DISTINCT c.id, c.name
+                FROM consoles c
+                ORDER BY c.name";
+        
+        $stmt = $pdo->query($sql);
+        $consoles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Contar productos para cada consola
+        foreach ($consoles as &$console) {
+            $countSql = "SELECT COUNT(*) as cnt
+                         FROM products p
+                         WHERE p.console_id = ? AND $whereClause";
+            $countParams = array_merge([$console['id']], $params);
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->execute($countParams);
+            $console['product_count'] = (int)$countStmt->fetchColumn();
+        }
+        
+        $result['consoles'] = $consoles;
     } catch (Exception $e) {
+        error_log("Error obteniendo consolas: " . $e->getMessage());
         $result['consoles'] = [];
     }
     
-    // Obtener géneros con conteo (si la tabla existe)
+    // Obtener géneros con conteo
+    $result['genres'] = [];
     try {
-        $sql = "SELECT g.id, g.name, COUNT(DISTINCT p.id) as product_count
+        $sql = "SELECT DISTINCT g.id, g.name
                 FROM genres g
-                LEFT JOIN products p ON g.id = p.genre_id AND $whereClause
-                GROUP BY g.id, g.name
-                HAVING product_count > 0 OR g.id IN (" . implode(',', $currentFilters['genres'] ?? [0]) . ")
                 ORDER BY g.name";
         
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $result['genres'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->query($sql);
+        $genres = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Contar productos para cada género
+        foreach ($genres as &$genre) {
+            $countSql = "SELECT COUNT(*) as cnt
+                         FROM products p
+                         WHERE p.genre_id = ? AND $whereClause";
+            $countParams = array_merge([$genre['id']], $params);
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->execute($countParams);
+            $genre['product_count'] = (int)$countStmt->fetchColumn();
+        }
+        
+        $result['genres'] = $genres;
     } catch (Exception $e) {
+        error_log("Error obteniendo géneros: " . $e->getMessage());
         $result['genres'] = [];
     }
     
     return $result;
-}
-?>
-    ]);
 }
 ?>
