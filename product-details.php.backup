@@ -42,9 +42,6 @@ $current_product['is_featured'] = $current_product['is_featured'] ?? 0;
 $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
 ?>
 
-<!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=<?php echo time(); ?>">
-
 <div class="container-fluid product-details-container">
     <!-- Breadcrumb Navigation -->
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
@@ -227,6 +224,100 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
     </div>
 </div>
 
+<style>
+.favorite-btn-detail {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.favorite-btn-detail:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.favorite-btn-detail.active {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.favorite-btn-detail i {
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.product-badges {
+    margin-bottom: 15px;
+}
+
+.product-badges .badge {
+    margin-right: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.stock-info-detail {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+}
+
+.stock-available, .stock-unavailable {
+    font-weight: 500;
+}
+
+.btn-cart-detail {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-cart-detail.success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.btn-cart-detail:hover.success {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.btn-cart-detail .cart-icon,
+.btn-cart-detail .loading-icon,
+.btn-cart-detail .success-icon {
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .product-detail-row {
+        flex-direction: column;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .quantity-selector {
+        justify-content: center;
+    }
+}
+</style>
+
                 </div>
             </div>
         </div>
@@ -295,6 +386,16 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
         </div>
     </section>
 </div>
+
+<style>
+/* Asegurar z-index correcto para dropdowns en product-details */
+.dropdown-menu {
+    z-index: 1055 !important;
+}
+.main-header {
+    z-index: 1050 !important;
+}
+</style>
 
 <?php include 'includes/footer.php'; ?>
 
@@ -378,5 +479,4 @@ document.addEventListener('DOMContentLoaded', function() {
 ║  SYNC TOKEN: FORCE_UPDATE_2025_10_17_21_00                       ║
 ╚══════════════════════════════════════════════════════════════════╝
 -->
-
 
