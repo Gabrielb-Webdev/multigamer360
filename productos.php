@@ -1469,6 +1469,19 @@ require_once 'includes/header.php';
     word-wrap: break-word; /* Permitir quiebre de línea si es necesario */
 }
 
+/* Estilo para el rango de precio */
+.price-range-info {
+    background-color: #ffffff !important; /* Fondo blanco */
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.price-range-info small {
+    color: #000000 !important; /* Letras negras */
+    font-weight: 500;
+}
+
 /* Estilos mejorados para inputs de precio */
 .price-inputs {
     display: flex;
