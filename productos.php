@@ -497,11 +497,11 @@ require_once 'includes/header.php';
                 <!-- =====================================================
                      SELECTOR DE CONSOLAS (Cuando se selecciona "Videojuegos")
                      ===================================================== -->
-                <?php if ($isVideoGamesView && !$currentConsole): ?>
+                <?php if ($isVideoGamesView && !$currentConsole && false): // Temporalmente deshabilitado ?>
                     <div class="console-selector-section">
                         <h2 class="section-title">Selecciona tu Consola</h2>
                         <p class="section-subtitle">Explora nuestra colección de videojuegos por plataforma</p>
-                        <?php echo $videoGameFilters->renderConsoleGrid(); ?>
+                        <?php // echo $videoGameFilters->renderConsoleGrid(); ?>
                     </div>
                 <?php endif; ?>
 
