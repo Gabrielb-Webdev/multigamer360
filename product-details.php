@@ -97,7 +97,7 @@ function getImagePath($image_name) {
 
     <div class="row product-detail-row">
         <!-- Product Images Section -->
-        <div class="col-md-5 col-lg-4">
+        <div class="col-lg-4 col-md-5 col-12">
             <div class="product-image-section">
                 <!-- Main Product Image -->
                 <div class="main-product-image">
@@ -160,7 +160,7 @@ function getImagePath($image_name) {
         </div>
 
         <!-- Product Info Section -->
-        <div class="col-md-7 col-lg-8">
+        <div class="col-lg-8 col-md-7 col-12">
             <div class="product-info-section">
                 <h1 class="product-title"><?php echo htmlspecialchars($current_product['name']); ?></h1>
                 
