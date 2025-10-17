@@ -437,23 +437,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script src="assets/js/product-details.js"></script>
 
+<style>
+/* Asegurar z-index correcto para dropdowns en product-details */
+.dropdown-menu {
+    z-index: 1055 !important;
+}
+.main-header {
+    z-index: 1050 !important;
+}
+</style>
+
+<?php include 'includes/footer.php'; ?>
+
 <!-- Script para asegurar funcionamiento de dropdowns de Bootstrap -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Esperamos un poco para que todos los scripts se carguen
+// Esperar a que Bootstrap esté completamente cargado
+window.addEventListener('load', function() {
+    // Verificar que Bootstrap esté disponible
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap no está cargado');
+        return;
+    }
+    
+    // Esperamos un poco más para asegurar que todo esté listo
     setTimeout(function() {
         // Destruir dropdowns existentes y recrearlos
         const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
         
         dropdownElementList.forEach(dropdownToggleEl => {
-            // Verificar si ya tiene una instancia de Bootstrap y destruirla
-            const existingDropdown = bootstrap.Dropdown.getInstance(dropdownToggleEl);
-            if (existingDropdown) {
-                existingDropdown.dispose();
+            try {
+                // Verificar si ya tiene una instancia de Bootstrap y destruirla
+                const existingDropdown = bootstrap.Dropdown.getInstance(dropdownToggleEl);
+                if (existingDropdown) {
+                    existingDropdown.dispose();
+                }
+                
+                // Crear nueva instancia
+                new bootstrap.Dropdown(dropdownToggleEl);
+            } catch (error) {
+                console.error('Error inicializando dropdown:', error);
             }
-            
-            // Crear nueva instancia
-            new bootstrap.Dropdown(dropdownToggleEl);
         });
         
         console.log('Bootstrap dropdowns reinicializados en product-details:', dropdownElementList.length);
@@ -471,18 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Dropdown clicked:', this.id, e);
             });
         });
-    }, 100);
+    }, 200);
 });
 </script>
-
-<style>
-/* Asegurar z-index correcto para dropdowns en product-details */
-.dropdown-menu {
-    z-index: 1055 !important;
-}
-.main-header {
-    z-index: 1050 !important;
-}
-</style>
-
-<?php include 'includes/footer.php'; ?>
