@@ -1,5 +1,6 @@
 <?php 
 // Solo iniciar sesión si no está ya iniciada
+// Updated: 2025-10-17 - Bootstrap error fixed
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
