@@ -24,19 +24,20 @@ try {
     if (!empty($_POST['consoles'])) $filters['consoles'] = array_map('intval', explode(',', $_POST['consoles']));
     if (!empty($_POST['genres'])) $filters['genres'] = array_map('intval', explode(',', $_POST['genres']));
     
-    // Verificar si existe la columna genre_id
-    $hasGenreColumn = false;
+    // Verificar si existe la tabla product_genres (para relación muchos a muchos)
+    $hasProductGenresTable = false;
     try {
-        $checkColumn = $pdo->query("SHOW COLUMNS FROM products LIKE 'genre_id'")->fetch();
-        $hasGenreColumn = !empty($checkColumn);
+        $checkTable = $pdo->query("SHOW TABLES LIKE 'product_genres'")->fetch();
+        $hasProductGenresTable = !empty($checkTable);
     } catch (Exception $e) {
-        error_log("Error verificando columna genre_id: " . $e->getMessage());
+        error_log("Error verificando tabla product_genres: " . $e->getMessage());
     }
     
     // ==========================================
     // CONSTRUIR WHERE PARA CONTAR PRODUCTOS TOTALES
     // ==========================================
     $where = ['p.is_active = 1'];
+    $joins = [];
     $params = [];
     
     if (!empty($filters['categories'])) {
@@ -54,16 +55,21 @@ try {
         $where[] = "p.console_id IN ($ph)";
         $params = array_merge($params, $filters['consoles']);
     }
-    if ($hasGenreColumn && !empty($filters['genres'])) {
+    
+    // Si hay filtro de géneros, usar product_genres
+    if ($hasProductGenresTable && !empty($filters['genres'])) {
+        $joins[] = "INNER JOIN product_genres pg ON p.id = pg.product_id";
         $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
-        $where[] = "p.genre_id IN ($ph)";
+        $where[] = "pg.genre_id IN ($ph)";
         $params = array_merge($params, $filters['genres']);
     }
     
+    $joinClause = implode(' ', $joins);
     $whereClause = implode(' AND ', $where);
     
     // Contar productos totales
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $whereClause");
+    $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $joinClause WHERE $whereClause";
+    $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $productCount = (int)$stmt->fetchColumn();
     
@@ -135,12 +141,13 @@ try {
     // ==========================================
     // Para cada género, contar productos considerando SOLO los filtros que NO sean de géneros
     $genres = [];
-    if ($hasGenreColumn) {
+    if ($hasProductGenresTable) {
         try {
             // Excluir género invisible "_CONSOLA_" (ID 999)
             $stmt = $pdo->query("SELECT id, name FROM genres WHERE id != 999 AND name NOT LIKE '\\\_%' ESCAPE '\\\\' ORDER BY name");
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
-                $genreWhere = ['p.is_active = 1', 'p.genre_id = ?'];
+                $genreWhere = ['p.is_active = 1'];
+                $genreJoin = "INNER JOIN product_genres pg ON p.id = pg.product_id AND pg.genre_id = ?";
                 $genreParams = [$g['id']];
                 
                 // Aplicar filtros EXCEPTO el de géneros
@@ -161,7 +168,8 @@ try {
                 }
                 
                 $genreWhereClause = implode(' AND ', $genreWhere);
-                $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $genreWhereClause");
+                $sql = "SELECT COUNT(DISTINCT p.id) FROM products p $genreJoin WHERE $genreWhereClause";
+                $s = $pdo->prepare($sql);
                 $s->execute($genreParams);
                 $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
             }
