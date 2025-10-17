@@ -163,7 +163,6 @@ class ProductManager {
                        b.name as brand_name,
                        co.name as console_name,
                        co.slug as console_slug,
-                       p.main_image,
                        pi.image_url as primary_image
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 

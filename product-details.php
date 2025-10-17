@@ -40,13 +40,13 @@ if (!$current_product) {
 // Obtener todas las imágenes del producto
 $product_images = $productManager->getProductImages($product_id);
 
-// Determinar imagen principal (prioridad: main_image > primary_image > image_url)
+// Determinar imagen principal (prioridad: primary_image > image_url)
 $main_image = null;
-if (!empty($current_product['main_image'])) {
-    $main_image = $current_product['main_image'];
-} elseif (!empty($current_product['primary_image'])) {
+if (!empty($current_product['primary_image'])) {
+    // Usar imagen principal de product_images (is_primary = 1)
     $main_image = $current_product['primary_image'];
 } elseif (!empty($current_product['image_url'])) {
+    // Fallback a image_url de la tabla products
     $main_image = $current_product['image_url'];
 }
 
