@@ -158,19 +158,19 @@ class ProductManager {
     
     // Obtener producto por ID
     public function getProductById($id) {
-        $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
-                       p.console, p.publication_date, p.price_usd, p.release_date,
-                       p.main_image, p.long_description, p.rating, p.developer,
-                       p.publisher, p.genre, p.condition_product
+        $sql = "SELECT p.*, 
+                       c.name as category_name, 
+                       b.name as brand_name,
+                       p.console as console_name
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.id = :id AND p.is_active = TRUE";
+                WHERE p.id = :id AND p.is_active = 1";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetch();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
     // Obtener producto por slug

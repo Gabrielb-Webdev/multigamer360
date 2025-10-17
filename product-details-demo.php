@@ -1,10 +1,14 @@
 <?php 
 /**
  * Product Details Page - MultiGamer360
- * Last Updated: 2025-10-17 23:00
+ * Last Updated: 2025-10-17 23:15
  * Version: 3.0 - Dark Theme + Database Integration
  * Based on working demo version with dark theme styling
  */
+
+// Activar reporte de errores para debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Solo iniciar sesión si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
