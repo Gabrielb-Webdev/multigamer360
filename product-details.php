@@ -6,6 +6,10 @@
  * Based on working demo version with dark theme styling
  */
 
+// Activar reporte de errores temporalmente para debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Solo iniciar sesión si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -53,6 +57,29 @@ $current_product['discount_percentage'] = $current_product['discount_percentage'
 $current_product['is_new'] = $current_product['is_new'] ?? 0;
 $current_product['is_featured'] = $current_product['is_featured'] ?? 0;
 $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
+
+// Función para obtener ruta de imagen
+function getImagePath($image_name) {
+    if (empty($image_name)) {
+        return 'assets/images/products/product1.jpg';
+    }
+    
+    // Verificar diferentes rutas posibles
+    $paths = [
+        'uploads/products/' . $image_name,
+        'assets/images/products/' . $image_name,
+        $image_name // Si ya viene con ruta completa
+    ];
+    
+    foreach ($paths as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+    
+    // Si no existe, usar la ruta con uploads como default
+    return 'uploads/products/' . $image_name;
+}
 ?>
 
 <!-- Dark Theme Stylesheet -->
@@ -75,29 +102,6 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
                 <!-- Main Product Image -->
                 <div class="main-product-image">
                     <?php 
-                    // Función para obtener ruta de imagen
-                    function getImagePath($image_name) {
-                        if (empty($image_name)) {
-                            return 'assets/images/products/product1.jpg';
-                        }
-                        
-                        // Verificar diferentes rutas posibles
-                        $paths = [
-                            'uploads/products/' . $image_name,
-                            'assets/images/products/' . $image_name,
-                            $image_name // Si ya viene con ruta completa
-                        ];
-                        
-                        foreach ($paths as $path) {
-                            if (file_exists($path)) {
-                                return $path;
-                            }
-                        }
-                        
-                        // Si no existe, usar la ruta con uploads como default
-                        return 'uploads/products/' . $image_name;
-                    }
-                    
                     $product_image = getImagePath($main_image);
                     ?>
                     <img src="<?php echo htmlspecialchars($product_image); ?>" 
