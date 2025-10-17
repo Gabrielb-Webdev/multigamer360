@@ -161,7 +161,9 @@ class SmartFilters {
                 FROM genres g
                 INNER JOIN product_genres pg ON g.id = pg.genre_id
                 INNER JOIN products p ON pg.product_id = p.id
-                WHERE p.is_active = 1";
+                WHERE p.is_active = 1 
+                AND g.id != 999 
+                AND g.name NOT LIKE '\\\_%' ESCAPE '\\\\'";
         
         $params = [];
         

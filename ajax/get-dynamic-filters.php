@@ -129,8 +129,8 @@ try {
     $genres = [];
     if ($hasGenreColumn) {
         try {
-            // Excluir géneros internos/invisibles (que empiecen con _)
-            $stmt = $pdo->query("SELECT id, name FROM genres WHERE name NOT LIKE '\_%' ORDER BY name");
+            // Excluir géneros internos/invisibles (ID 999 = _CONSOLA_ y nombres que empiecen con _)
+            $stmt = $pdo->query("SELECT id, name FROM genres WHERE id != 999 AND name NOT LIKE '\\\_%' ESCAPE '\\\\' ORDER BY name");
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
                 // Si hay filtro de consolas, mostrar géneros pero con count 0
                 if ($isConsoleFilter) {
