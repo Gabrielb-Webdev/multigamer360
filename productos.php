@@ -2298,6 +2298,8 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function updateFilter(filterType, value, checked) {
     try {
+        console.log(`🔧 updateFilter llamado: ${filterType} = ${value}, checked = ${checked}`);
+        
         if (filterType === 'category') {
             if (checked) {
                 if (!pendingFilters.categories.includes(value)) {
@@ -2334,6 +2336,8 @@ function updateFilter(filterType, value, checked) {
         
         filtersChanged = true;
         updateFilterButtons();
+        
+        console.log('📊 Filtros pendientes actualizados:', pendingFilters);
         
         // Actualizar filtros dinámicamente en tiempo real
         updateDynamicFilters();
@@ -2410,21 +2414,42 @@ function updateDynamicFilters() {
 }
 
 /**
- * Actualizar los contadores de cada filtro
+ * Actualizar los contadores de cada filtro y deshabilitar los que no tienen productos
  */
 function updateFilterCounts(filters) {
+    console.log('🔄 Actualizando contadores de filtros:', filters);
+    
     // Actualizar marcas
     if (filters.brands) {
+        // Primero, habilitar todas las marcas
+        document.querySelectorAll('.brand-filter').forEach(checkbox => {
+            if (!checkbox.checked) {
+                checkbox.disabled = false;
+                checkbox.parentElement.style.opacity = '1';
+                checkbox.parentElement.style.cursor = 'pointer';
+            }
+        });
+        
+        // Luego, actualizar contadores y deshabilitar las que no tienen productos
         filters.brands.forEach(brand => {
+            const checkbox = document.getElementById(`brand_${brand.id}`);
             const countElement = document.querySelector(`#brand_${brand.id} + label .filter-count`);
+            
             if (countElement) {
                 countElement.textContent = `(${brand.product_count})`;
-                
-                // Deshabilitar si no hay productos
-                const checkbox = document.getElementById(`brand_${brand.id}`);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.disabled = brand.product_count === 0;
-                    checkbox.parentElement.style.opacity = brand.product_count === 0 ? '0.5' : '1';
+            }
+            
+            if (checkbox && !checkbox.checked) {
+                if (brand.product_count === 0) {
+                    checkbox.disabled = true;
+                    checkbox.parentElement.style.opacity = '0.4';
+                    checkbox.parentElement.style.cursor = 'not-allowed';
+                    checkbox.parentElement.title = 'No hay productos disponibles con los filtros actuales';
+                } else {
+                    checkbox.disabled = false;
+                    checkbox.parentElement.style.opacity = '1';
+                    checkbox.parentElement.style.cursor = 'pointer';
+                    checkbox.parentElement.title = '';
                 }
             }
         });
@@ -2432,15 +2457,35 @@ function updateFilterCounts(filters) {
     
     // Actualizar consolas
     if (filters.consoles) {
+        // Primero, habilitar todas las consolas
+        document.querySelectorAll('.console-filter').forEach(checkbox => {
+            if (!checkbox.checked) {
+                checkbox.disabled = false;
+                checkbox.parentElement.style.opacity = '1';
+                checkbox.parentElement.style.cursor = 'pointer';
+            }
+        });
+        
+        // Luego, actualizar contadores y deshabilitar las que no tienen productos
         filters.consoles.forEach(console => {
+            const checkbox = document.getElementById(`console_${console.id}`);
             const countElement = document.querySelector(`#console_${console.id} + label .filter-count`);
+            
             if (countElement) {
                 countElement.textContent = `(${console.product_count})`;
-                
-                const checkbox = document.getElementById(`console_${console.id}`);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.disabled = console.product_count === 0;
-                    checkbox.parentElement.style.opacity = console.product_count === 0 ? '0.5' : '1';
+            }
+            
+            if (checkbox && !checkbox.checked) {
+                if (console.product_count === 0) {
+                    checkbox.disabled = true;
+                    checkbox.parentElement.style.opacity = '0.4';
+                    checkbox.parentElement.style.cursor = 'not-allowed';
+                    checkbox.parentElement.title = 'No hay productos disponibles con los filtros actuales';
+                } else {
+                    checkbox.disabled = false;
+                    checkbox.parentElement.style.opacity = '1';
+                    checkbox.parentElement.style.cursor = 'pointer';
+                    checkbox.parentElement.title = '';
                 }
             }
         });
@@ -2448,19 +2493,41 @@ function updateFilterCounts(filters) {
     
     // Actualizar géneros
     if (filters.genres) {
+        // Primero, habilitar todos los géneros
+        document.querySelectorAll('.genre-filter').forEach(checkbox => {
+            if (!checkbox.checked) {
+                checkbox.disabled = false;
+                checkbox.parentElement.style.opacity = '1';
+                checkbox.parentElement.style.cursor = 'pointer';
+            }
+        });
+        
+        // Luego, actualizar contadores y deshabilitar los que no tienen productos
         filters.genres.forEach(genre => {
+            const checkbox = document.getElementById(`genre_${genre.id}`);
             const countElement = document.querySelector(`#genre_${genre.id} + label .filter-count`);
+            
             if (countElement) {
                 countElement.textContent = `(${genre.product_count})`;
-                
-                const checkbox = document.getElementById(`genre_${genre.id}`);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.disabled = genre.product_count === 0;
-                    checkbox.parentElement.style.opacity = genre.product_count === 0 ? '0.5' : '1';
+            }
+            
+            if (checkbox && !checkbox.checked) {
+                if (genre.product_count === 0) {
+                    checkbox.disabled = true;
+                    checkbox.parentElement.style.opacity = '0.4';
+                    checkbox.parentElement.style.cursor = 'not-allowed';
+                    checkbox.parentElement.title = 'No hay productos disponibles con los filtros actuales';
+                } else {
+                    checkbox.disabled = false;
+                    checkbox.parentElement.style.opacity = '1';
+                    checkbox.parentElement.style.cursor = 'pointer';
+                    checkbox.parentElement.title = '';
                 }
             }
         });
     }
+    
+    console.log('✅ Contadores actualizados y filtros habilitados/deshabilitados');
 }
 
 /**
