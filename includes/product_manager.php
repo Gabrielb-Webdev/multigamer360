@@ -162,17 +162,32 @@ class ProductManager {
                        c.name as category_name, 
                        b.name as brand_name,
                        co.name as console_name,
-                       co.slug as console_slug
+                       co.slug as console_slug,
+                       p.main_image,
+                       pi.image_url as primary_image
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id 
                 LEFT JOIN consoles co ON p.console_id = co.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.id = :id AND p.is_active = 1";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // Obtener todas las imágenes de un producto
+    public function getProductImages($product_id) {
+        $sql = "SELECT * FROM product_images 
+                WHERE product_id = :product_id 
+                ORDER BY is_primary DESC, display_order ASC";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
     // Obtener producto por slug

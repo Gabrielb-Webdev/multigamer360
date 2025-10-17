@@ -33,6 +33,19 @@ if (!$current_product) {
     exit;
 }
 
+// Obtener todas las imágenes del producto
+$product_images = $productManager->getProductImages($product_id);
+
+// Determinar imagen principal (prioridad: main_image > primary_image > image_url)
+$main_image = null;
+if (!empty($current_product['main_image'])) {
+    $main_image = $current_product['main_image'];
+} elseif (!empty($current_product['primary_image'])) {
+    $main_image = $current_product['primary_image'];
+} elseif (!empty($current_product['image_url'])) {
+    $main_image = $current_product['image_url'];
+}
+
 // Asegurar que tengamos los valores necesarios con valores por defecto
 $current_product['stock_quantity'] = $current_product['stock_quantity'] ?? 0;
 $current_product['price_pesos'] = $current_product['price_pesos'] ?? 0;
@@ -62,24 +75,35 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
                 <!-- Main Product Image -->
                 <div class="main-product-image">
                     <?php 
-                    // Procesar la imagen de manera similar a productos.php
-                    $image_filename = !empty($current_product['image_url']) ? $current_product['image_url'] : 'product1.jpg';
-                    $assets_path = 'assets/images/products/' . $image_filename;
-                    $uploads_path = 'uploads/products/' . $image_filename;
-                    
-                    // Determinar qué ruta usar (prioridad a assets/images/products/)
-                    if (file_exists($assets_path)) {
-                        $product_image = $assets_path;
-                    } else if (file_exists($uploads_path)) {
-                        $product_image = $uploads_path;
-                    } else {
-                        // Imagen por defecto
-                        $product_image = 'assets/images/products/product1.jpg';
+                    // Función para obtener ruta de imagen
+                    function getImagePath($image_name) {
+                        if (empty($image_name)) {
+                            return 'assets/images/products/product1.jpg';
+                        }
+                        
+                        // Verificar diferentes rutas posibles
+                        $paths = [
+                            'uploads/products/' . $image_name,
+                            'assets/images/products/' . $image_name,
+                            $image_name // Si ya viene con ruta completa
+                        ];
+                        
+                        foreach ($paths as $path) {
+                            if (file_exists($path)) {
+                                return $path;
+                            }
+                        }
+                        
+                        // Si no existe, usar la ruta con uploads como default
+                        return 'uploads/products/' . $image_name;
                     }
+                    
+                    $product_image = getImagePath($main_image);
                     ?>
                     <img src="<?php echo htmlspecialchars($product_image); ?>" 
                          alt="<?php echo htmlspecialchars($current_product['name']); ?>" 
                          class="img-fluid main-image"
+                         id="mainProductImage"
                          onerror="this.src='assets/images/products/product1.jpg'">
                          
                     <!-- Wishlist button overlay -->
@@ -92,12 +116,41 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
                 
                 <!-- Thumbnail Images -->
                 <div class="product-thumbnails">
-                    <div class="thumbnail-item active">
-                        <img src="<?php echo $product_image; ?>" alt="Imagen 1" class="img-fluid">
-                    </div>
-                    <div class="thumbnail-item">
-                        <img src="assets/images/products/product2.jpg" alt="Imagen 2" class="img-fluid">
-                    </div>
+                    <?php 
+                    // Mostrar imagen principal como primera miniatura
+                    if ($main_image) {
+                        $thumb_path = getImagePath($main_image);
+                        ?>
+                        <div class="thumbnail-item active" onclick="changeMainImage('<?php echo htmlspecialchars($thumb_path); ?>')">
+                            <img src="<?php echo htmlspecialchars($thumb_path); ?>" 
+                                 alt="Imagen principal" 
+                                 class="img-fluid"
+                                 onerror="this.src='assets/images/products/product1.jpg'">
+                        </div>
+                    <?php 
+                    }
+                    
+                    // Mostrar imágenes adicionales de product_images
+                    if (!empty($product_images)) {
+                        foreach ($product_images as $img) {
+                            // Skip la imagen principal si ya la mostramos
+                            if ($img['is_primary'] == 1 && $img['image_url'] == $main_image) {
+                                continue;
+                            }
+                            
+                            $img_path = getImagePath($img['image_url']);
+                            ?>
+                            <div class="thumbnail-item" onclick="changeMainImage('<?php echo htmlspecialchars($img_path); ?>')">
+                                <img src="<?php echo htmlspecialchars($img_path); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Imagen adicional'); ?>" 
+                                     class="img-fluid"
+                                     onerror="this.src='assets/images/products/product1.jpg'">
+                            </div>
+                        <?php 
+                        }
+                    }
+                    ?>
+                </div>
                 </div>
             </div>
         </div>
@@ -302,6 +355,20 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
 <script src="assets/js/product-details.js?v=<?php echo time(); ?>"></script>
 
 <script>
+// Función para cambiar la imagen principal al hacer clic en miniaturas
+function changeMainImage(imageSrc) {
+    const mainImage = document.getElementById('mainProductImage');
+    if (mainImage) {
+        mainImage.src = imageSrc;
+        
+        // Actualizar clase active en miniaturas
+        document.querySelectorAll('.thumbnail-item').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+    }
+}
+
 // Funcionalidad inline para los botones de cantidad (cargado después de Bootstrap)
 document.addEventListener('DOMContentLoaded', function() {
     const quantityInput = document.querySelector('.quantity-input');
