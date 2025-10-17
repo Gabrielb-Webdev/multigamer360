@@ -9,12 +9,14 @@
 }
 
 .breadcrumb-nav {
-    margin-bottom: 30px;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
 }
 
 .breadcrumb {
     background: transparent;
     padding: 0;
+    margin-bottom: 0;
 }
 
 .breadcrumb-item {
@@ -37,11 +39,12 @@
 
 .product-detail-row {
     background: #1a1a1a;
-    padding: 30px 25px;
+    padding: 35px 30px;
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     border: 1px solid #333;
     min-height: 600px;
+    margin: 0;
 }
 
 /* Product Images */
