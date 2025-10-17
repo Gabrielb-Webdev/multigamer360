@@ -170,7 +170,7 @@ try {
                         <div class="wishlist-info">
                             <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
                             <div class="price-section">
-                                <span class="current-price">$<?php echo number_format($product['price'], 2); ?></span>
+                                <span class="current-price wishlist-price" data-price="<?php echo $product['price']; ?>">$<?php echo number_format($product['price'], 2); ?></span>
                             </div>
                             <div class="added-date">
                                 <i class="fas fa-heart text-danger"></i>
@@ -565,6 +565,28 @@ function removeFromWishlist(productId, button) {
                 const countElement = document.getElementById('wishlist-count');
                 if (countElement) {
                     countElement.textContent = remainingProducts.length;
+                }
+                
+                // Actualizar valor total inmediatamente
+                if (data.new_total !== undefined) {
+                    const totalElement = document.getElementById('wishlist-total');
+                    if (totalElement) {
+                        totalElement.textContent = '$' + parseFloat(data.new_total).toFixed(2);
+                    }
+                } else {
+                    // Calcular total manualmente sumando los precios restantes
+                    let total = 0;
+                    remainingProducts.forEach(prod => {
+                        const priceText = prod.querySelector('.wishlist-price')?.textContent || '0';
+                        const price = parseFloat(priceText.replace('$', '').replace(',', ''));
+                        if (!isNaN(price)) {
+                            total += price;
+                        }
+                    });
+                    const totalElement = document.getElementById('wishlist-total');
+                    if (totalElement) {
+                        totalElement.textContent = '$' + total.toFixed(2);
+                    }
                 }
                 
                 // Actualizar contador en header si existe la función

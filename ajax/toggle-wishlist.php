@@ -96,11 +96,23 @@ try {
     $countStmt->execute([$user_id]);
     $count = $countStmt->fetchColumn();
     
+    // Calcular el valor total de la wishlist
+    $totalStmt = $pdo->prepare("
+        SELECT SUM(p.price_pesos) as total
+        FROM user_favorites uf
+        JOIN products p ON uf.product_id = p.id
+        WHERE uf.user_id = ? AND p.is_active = 1
+    ");
+    $totalStmt->execute([$user_id]);
+    $totalResult = $totalStmt->fetch(PDO::FETCH_ASSOC);
+    $wishlistTotal = $totalResult['total'] ?? 0;
+    
     echo json_encode([
         'success' => true,
         'message' => $message,
         'in_wishlist' => $in_wishlist,
         'count' => (int)$count,
+        'new_total' => (float)$wishlistTotal,
         'product' => [
             'id' => $product['id'],
             'name' => $product['name'],
