@@ -1,9 +1,9 @@
 <?php 
 /**
- * Product Details Page - DEMO VERSION (Hardcoded Data)
- * Last Updated: 2025-10-17 22:00
- * Version: 2.5-DEMO - No Database Required
- * Purpose: Testing page display without database dependencies
+ * Product Details Page - MultiGamer360
+ * Last Updated: 2025-10-17 23:00
+ * Version: 3.0 - Dark Theme + Database Integration
+ * Based on working demo version with dark theme styling
  */
 
 // Solo iniciar sesión si no está ya iniciada
@@ -11,99 +11,54 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Incluir solo el header (no necesitamos DB para esta demo)
+// Incluir configuración de base de datos primero
+require_once 'config/database.php';
+require_once 'includes/auth.php';
+require_once 'includes/product_manager.php';
+
+// Crear instancia del manager de productos
+$productManager = new ProductManager($pdo);
+
 include 'includes/header.php'; 
 
-// DATOS HARDCODEADOS - Producto de ejemplo
+// Obtener parámetros del producto
 $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 1;
 
-// Array de productos hardcodeados
-$demo_products = [
-    1 => [
-        'id' => 1,
-        'name' => 'Kingdom Hearts',
-        'slug' => 'kingdom-hearts',
-        'description' => 'Kingdom Hearts es un videojuego de rol de acción desarrollado y publicado por Square en colaboración con Disney Interactive. Es el primer juego de la serie Kingdom Hearts.',
-        'long_description' => 'Kingdom Hearts es un videojuego de rol de acción desarrollado y publicado por Square en colaboración con Disney Interactive. Es el primer juego de la serie Kingdom Hearts y el resultado de una colaboración entre Square y The Walt Disney Company. El juego combina personajes y escenarios de las películas animadas de Disney con los de la serie Final Fantasy de Square.',
-        'price_pesos' => 100.00,
-        'price_dollars' => 10.00,
-        'stock_quantity' => 15,
-        'min_stock_level' => 5,
-        'category_name' => 'Videojuegos',
-        'brand_name' => 'Square Enix',
-        'console_name' => 'PlayStation 2',
-        'is_new' => 1,
-        'is_featured' => 1,
-        'is_on_sale' => 0,
-        'discount_percentage' => 0,
-        'image_url' => 'product1.jpg',
-        'sku' => 'KINGDOM-5050'
-    ],
-    2 => [
-        'id' => 2,
-        'name' => 'Kingdom Hearts 2',
-        'slug' => 'kingdom-hearts-2',
-        'description' => 'Kingdom Hearts II es la secuela de Kingdom Hearts y Kingdom Hearts: Chain of Memories. Al igual que sus predecesores, el videojuego fue desarrollado por Square Enix.',
-        'long_description' => 'Kingdom Hearts II es la secuela de Kingdom Hearts y Kingdom Hearts: Chain of Memories. Al igual que sus predecesores, el videojuego fue desarrollado por Square Enix. Continúa la historia de Sora, Donald y Goofy mientras viajan por varios mundos de Disney.',
-        'price_pesos' => 120.00,
-        'price_dollars' => 12.00,
-        'stock_quantity' => 10,
-        'min_stock_level' => 3,
-        'category_name' => 'Videojuegos',
-        'brand_name' => 'Square Enix',
-        'console_name' => 'PlayStation 2',
-        'is_new' => 0,
-        'is_featured' => 1,
-        'is_on_sale' => 1,
-        'discount_percentage' => 10,
-        'image_url' => 'product2.jpg',
-        'sku' => 'KINGDOM-3600'
-    ],
-    3 => [
-        'id' => 3,
-        'name' => 'Final Fantasy VII',
-        'slug' => 'final-fantasy-vii',
-        'description' => 'Final Fantasy VII es un videojuego de rol desarrollado por la compañía japonesa Square para la consola PlayStation.',
-        'long_description' => 'Final Fantasy VII es un videojuego de rol desarrollado por la compañía japonesa Square para la consola PlayStation. Es la séptima entrega numerada de la serie Final Fantasy y la primera en utilizar gráficos 3D. Cuenta la historia de Cloud Strife, un mercenario que se une a un grupo ecoterrorista para luchar contra una corporación corrupta.',
-        'price_pesos' => 150.00,
-        'price_dollars' => 15.00,
-        'stock_quantity' => 8,
-        'min_stock_level' => 2,
-        'category_name' => 'Videojuegos',
-        'brand_name' => 'Square Enix',
-        'console_name' => 'PlayStation',
-        'is_new' => 0,
-        'is_featured' => 1,
-        'is_on_sale' => 0,
-        'discount_percentage' => 0,
-        'image_url' => 'product3.jpg',
-        'sku' => 'FF7-5951'
-    ],
-    10 => [
-        'id' => 10,
-        'name' => 'PlayStation 5',
-        'slug' => 'ps5',
-        'description' => 'PlayStation 5 (PS5) es la consola de videojuegos de sobremesa de novena generación desarrollada por Sony Interactive Entertainment.',
-        'long_description' => 'PlayStation 5 (PS5) es la consola de videojuegos de sobremesa de novena generación desarrollada por Sony Interactive Entertainment. Lanzada en noviembre de 2020, es la sucesora de PlayStation 4. Cuenta con un procesador AMD Zen 2, gráficos AMD RDNA 2 y un SSD ultrarrápido.',
-        'price_pesos' => 200.00,
-        'price_dollars' => 20.00,
-        'stock_quantity' => 5,
-        'min_stock_level' => 1,
-        'category_name' => 'Consolas',
-        'brand_name' => 'Sony',
-        'console_name' => 'PlayStation 5',
-        'is_new' => 1,
-        'is_featured' => 1,
-        'is_on_sale' => 0,
-        'discount_percentage' => 0,
-        'image_url' => 'product4.jpg',
-        'sku' => 'PS5X-141239'
-    ]
-];
+// Obtener producto desde la base de datos
+$current_product = $productManager->getProductById($product_id);
 
-// Obtener el producto actual
-$current_product = $demo_products[$product_id] ?? $demo_products[1];
+// Si no se encuentra el producto, redirigir a productos
+if (!$current_product) {
+    header('Location: productos.php');
+    exit;
+}
+
+// Asegurar que tengamos los valores necesarios con valores por defecto
+$current_product['stock_quantity'] = $current_product['stock_quantity'] ?? 0;
+$current_product['price_pesos'] = $current_product['price_pesos'] ?? 0;
+$current_product['discount_percentage'] = $current_product['discount_percentage'] ?? 0;
+$current_product['is_new'] = $current_product['is_new'] ?? 0;
+$current_product['is_featured'] = $current_product['is_featured'] ?? 0;
+$current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
+
+// Obtener productos relacionados de la misma categoría
+$related_products = [];
+if (!empty($current_product['category_id'])) {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.name as category_name, b.name as brand_name 
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN brands b ON p.brand_id = b.id
+        WHERE p.category_id = ? AND p.id != ? AND p.is_active = 1
+        LIMIT 4
+    ");
+    $stmt->execute([$current_product['category_id'], $product_id]);
+    $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
+
+<!-- Dark Theme Stylesheet -->
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=<?php echo time(); ?>">
 
 <div class="container-fluid product-details-container">
     <!-- Breadcrumb Navigation -->
@@ -308,17 +263,24 @@ $current_product = $demo_products[$product_id] ?? $demo_products[1];
         <h2 class="similar-products-title">OTROS PRODUCTOS QUE TE PUEDEN INTERESAR</h2>
         <div class="row">
             <?php 
-            // Mostrar otros productos demo
-            $other_products = array_filter($demo_products, function($p) use ($product_id) {
-                return $p['id'] != $product_id;
-            });
-            $count = 0;
-            foreach (array_slice($other_products, 0, 4) as $product): 
-                $count++;
+            if (!empty($related_products)) {
+                foreach ($related_products as $product): 
+                    // Procesar imagen del producto
+                    $image_filename = !empty($product['image_url']) ? $product['image_url'] : 'product1.jpg';
+                    $assets_path = 'assets/images/products/' . $image_filename;
+                    $uploads_path = 'uploads/products/' . $image_filename;
+                    
+                    if (file_exists($assets_path)) {
+                        $product_image = $assets_path;
+                    } else if (file_exists($uploads_path)) {
+                        $product_image = $uploads_path;
+                    } else {
+                        $product_image = 'assets/images/products/product1.jpg';
+                    }
             ?>
             <div class="col-md-3 col-sm-6 mb-4">
                 <div class="similar-product-card">
-                    <img src="assets/images/products/product<?php echo $count; ?>.jpg" 
+                    <img src="<?php echo htmlspecialchars($product_image); ?>" 
                          alt="<?php echo htmlspecialchars($product['name']); ?>" 
                          class="img-fluid"
                          onerror="this.src='assets/images/products/product1.jpg'">
@@ -335,307 +297,15 @@ $current_product = $demo_products[$product_id] ?? $demo_products[1];
                     </div>
                 </div>
             </div>
-            <?php endforeach; ?>
+            <?php 
+                endforeach;
+            } else {
+                echo '<p class="text-center text-muted">No hay productos relacionados disponibles.</p>';
+            }
+            ?>
         </div>
     </section>
 </div>
-
-<style>
-/* Estilos específicos para product-details */
-.product-details-container {
-    padding: 20px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.breadcrumb-nav {
-    margin-bottom: 30px;
-}
-
-.breadcrumb {
-    background: transparent;
-    padding: 0;
-}
-
-.breadcrumb-item a {
-    color: #dc262b;
-    text-decoration: none;
-}
-
-.product-detail-row {
-    background: #fff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.main-product-image {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.main-product-image img {
-    width: 100%;
-    border-radius: 10px;
-}
-
-.favorite-btn-detail {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 50px;
-    height: 50px;
-    border: none;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    z-index: 2;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.favorite-btn-detail:hover {
-    background: #dc262b;
-    color: white;
-    transform: scale(1.1);
-}
-
-.product-thumbnails {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.thumbnail-item {
-    width: 80px;
-    height: 80px;
-    border: 2px solid transparent;
-    border-radius: 5px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.thumbnail-item.active {
-    border-color: #dc262b;
-}
-
-.thumbnail-item:hover {
-    border-color: #dc262b;
-    opacity: 0.8;
-}
-
-.thumbnail-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.product-title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: #333;
-}
-
-.product-badges {
-    margin-bottom: 15px;
-}
-
-.product-badges .badge {
-    margin-right: 10px;
-    padding: 8px 15px;
-    font-size: 0.85rem;
-}
-
-.product-description {
-    color: #666;
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-
-.stock-info-detail {
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-}
-
-.stock-available {
-    color: #28a745;
-    font-weight: 500;
-}
-
-.stock-unavailable {
-    color: #dc3545;
-    font-weight: 500;
-}
-
-.product-meta p {
-    margin-bottom: 8px;
-    color: #555;
-}
-
-.product-pricing {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-.price-original {
-    font-size: 1.2rem;
-    color: #999;
-    margin-bottom: 10px;
-}
-
-.price-cash {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.price-value {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #dc262b;
-}
-
-.price-label {
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.price-card {
-    font-size: 1.3rem;
-    color: #555;
-}
-
-.payment-options {
-    margin-bottom: 20px;
-}
-
-.payment-options > div {
-    margin-bottom: 10px;
-    padding: 10px;
-    background: rgba(220, 38, 27, 0.05);
-    border-radius: 5px;
-}
-
-.quantity-selector {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.quantity-btn {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 5px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.quantity-btn:hover {
-    background: #dc262b;
-    color: white;
-    border-color: #dc262b;
-}
-
-.quantity-input {
-    width: 80px;
-    height: 40px;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1.1rem;
-}
-
-.shipping-form {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.shipping-form input {
-    flex: 1;
-}
-
-.similar-products-section {
-    padding: 40px 0;
-}
-
-.similar-products-title {
-    text-align: center;
-    margin-bottom: 30px;
-    font-weight: bold;
-    color: #333;
-}
-
-.similar-product-card {
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.similar-product-card:hover {
-    transform: translateY(-5px);
-}
-
-.similar-product-info {
-    padding: 15px;
-}
-
-.similar-product-info h6 {
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.similar-price {
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-    margin-bottom: 5px;
-}
-
-.similar-price-cash {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #dc262b;
-}
-
-.similar-price-label {
-    font-size: 0.8rem;
-    color: #666;
-}
-
-.similar-price-card {
-    color: #555;
-    font-size: 1rem;
-}
-
-@media (max-width: 768px) {
-    .product-detail-row {
-        flex-direction: column;
-    }
-    
-    .price-value {
-        font-size: 2rem;
-    }
-    
-    .product-title {
-        font-size: 1.5rem;
-    }
-}
-</style>
 
 <?php include 'includes/footer.php'; ?>
 
@@ -704,3 +374,4 @@ document.addEventListener('DOMContentLoaded', function() {
 ║  Purpose: Testing and debugging display issues                   ║
 ╚══════════════════════════════════════════════════════════════════╝
 -->
+
