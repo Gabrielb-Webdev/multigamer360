@@ -21,6 +21,7 @@ try {
     if (!empty($_POST['categories'])) $filters['categories'] = array_map('intval', explode(',', $_POST['categories']));
     if (!empty($_POST['brands'])) $filters['brands'] = array_map('intval', explode(',', $_POST['brands']));
     if (!empty($_POST['consoles'])) $filters['consoles'] = array_map('intval', explode(',', $_POST['consoles']));
+    if (!empty($_POST['genres'])) $filters['genres'] = array_map('intval', explode(',', $_POST['genres']));
     
     $where = ['p.is_active = 1'];
     $params = [];
@@ -39,6 +40,21 @@ try {
         $ph = implode(',', array_fill(0, count($filters['consoles']), '?'));
         $where[] = "p.console_id IN ($ph)";
         $params = array_merge($params, $filters['consoles']);
+    }
+    
+    // Verificar si existe la columna genre_id antes de filtrar por géneros
+    $hasGenreColumn = false;
+    try {
+        $checkColumn = $pdo->query("SHOW COLUMNS FROM products LIKE 'genre_id'")->fetch();
+        $hasGenreColumn = !empty($checkColumn);
+    } catch (Exception $e) {
+        error_log("Error verificando columna genre_id: " . $e->getMessage());
+    }
+    
+    if ($hasGenreColumn && !empty($filters['genres'])) {
+        $ph = implode(',', array_fill(0, count($filters['genres']), '?'));
+        $where[] = "p.genre_id IN ($ph)";
+        $params = array_merge($params, $filters['genres']);
     }
     
     $whereClause = implode(' AND ', $where);
@@ -65,13 +81,10 @@ try {
         $consoles[] = ['id' => $c['id'], 'name' => $c['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
-    // Géneros - intentar obtener de forma segura
+    // Géneros - solo si la columna existe
     $genres = [];
-    try {
-        // Verificar si existe la columna genre_id en products
-        $checkColumn = $pdo->query("SHOW COLUMNS FROM products LIKE 'genre_id'")->fetch();
-        
-        if ($checkColumn) {
+    if ($hasGenreColumn) {
+        try {
             $stmt = $pdo->query("SELECT id, name FROM genres ORDER BY name");
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
                 $cp = array_merge([$g['id']], $params);
@@ -79,10 +92,10 @@ try {
                 $s->execute($cp);
                 $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
             }
+        } catch (Exception $e) {
+            // Ignorar errores de géneros, no es crítico
+            error_log("Error obteniendo géneros: " . $e->getMessage());
         }
-    } catch (Exception $e) {
-        // Ignorar errores de géneros, no es crítico
-        error_log("Géneros no disponibles: " . $e->getMessage());
     }
     
     sendJson([
