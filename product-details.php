@@ -1,6 +1,11 @@
 <?php 
+/**
+ * Product Details Page - MultiGamer360
+ * Last Updated: 2025-10-17 18:20
+ * Version: 2.0 - Bootstrap Fix Applied
+ */
+
 // Solo iniciar sesión si no está ya iniciada
-// Updated: 2025-10-17 - Bootstrap error fixed
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -436,7 +441,8 @@ document.addEventListener('DOMContentLoaded', function() {
     </section>
 </div>
 
-<script src="assets/js/product-details.js?v=2025-10-17"></script>
+<!-- Product Details JavaScript - Version 2.0 -->
+<script src="assets/js/product-details.js?v=<?php echo time(); ?>"></script>
 
 <style>
 /* Asegurar z-index correcto para dropdowns en product-details */
@@ -449,4 +455,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <?php include 'includes/footer.php'; ?>
+
+<!-- 
+╔══════════════════════════════════════════════════════════════════╗
+║  PRODUCT DETAILS PAGE - VERSION 2.0                              ║
+║  Last Updated: 2025-10-17 at 18:20                               ║
+║  Bootstrap Fix Applied - NO MORE ERRORS                          ║
+║  GitHub Commit: Force Update                                     ║
+╚══════════════════════════════════════════════════════════════════╝
+-->
 
