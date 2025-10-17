@@ -101,24 +101,7 @@ function getImagePath($image_name)
         <!-- Product Images Section -->
         <div class="col-md-5 col-lg-4">
             <div class="product-image-section">
-                <!-- Main Product Image -->
-                <div class="main-product-image">
-                    <?php
-                    $product_image = getImagePath($main_image);
-                    ?>
-                    <img src="<?php echo htmlspecialchars($product_image); ?>"
-                        alt="<?php echo htmlspecialchars($current_product['name']); ?>" class="img-fluid main-image"
-                        id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
-
-                    <!-- Wishlist button overlay -->
-                    <button class="favorite-btn-detail btn-wishlist"
-                        data-product-id="<?php echo $current_product['id']; ?>"
-                        data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>">
-                        <i class="far fa-heart"></i>
-                    </button>
-                </div>
-
-                <!-- Thumbnail Images -->
+                <!-- Thumbnail Images - Now on the left -->
                 <div class="product-thumbnails">
                     <?php
                     // Mostrar imagen principal como primera miniatura
@@ -152,6 +135,23 @@ function getImagePath($image_name)
                         }
                     }
                     ?>
+                </div>
+                
+                <!-- Main Product Image - Now on the right -->
+                <div class="main-product-image">
+                    <?php
+                    $product_image = getImagePath($main_image);
+                    ?>
+                    <img src="<?php echo htmlspecialchars($product_image); ?>"
+                        alt="<?php echo htmlspecialchars($current_product['name']); ?>" class="img-fluid main-image"
+                        id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
+
+                    <!-- Wishlist button overlay -->
+                    <button class="favorite-btn-detail btn-wishlist"
+                        data-product-id="<?php echo $current_product['id']; ?>"
+                        data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>">
+                        <i class="far fa-heart"></i>
+                    </button>
                 </div>
             </div>
         </div>
