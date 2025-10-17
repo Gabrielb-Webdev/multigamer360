@@ -203,15 +203,12 @@ function getImagePath($image_name)
             <div class="price-quantity-container">
                 <div class="product-pricing">
                     <?php
-                    // Usar price_pesos como precio principal de la base de datos
+                    // Obtener precio directamente de la base de datos sin modificaciones
                     $product_price = $current_product['price_pesos'] ?? $current_product['price'];
-
-                    // Calcular precio en efectivo (10% descuento)
-                    $cash_price = $product_price * 0.9;
                     ?>
                     <div class="price-cash">
-                        <span class="price-value">$<?php echo number_format($cash_price, 0, ',', '.'); ?></span>
-                        <span class="price-label">En efectivo</span>
+                        <span class="price-value">$<?php echo number_format($product_price, 0, ',', '.'); ?></span>
+                        <span class="price-label">EN EFECTIVO</span>
                     </div>
                 </div>
 
