@@ -14,6 +14,13 @@
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     
+    # NO CACHEAR ARCHIVOS PHP - IMPORTANTE PARA ACTUALIZACIONES
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+    
     # Content Security Policy que permite CDNs necesarios
     Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: http:; connect-src 'self' https:; frame-src 'self'; object-src 'none'; base-uri 'self';"
 </IfModule>
@@ -43,6 +50,9 @@ Options -Indexes
 <IfModule mod_expires.c>
     ExpiresActive On
     
+    # NO CACHEAR ARCHIVOS PHP (IMPORTANTE PARA ACTUALIZACIONES)
+    ExpiresByType application/x-httpd-php "access plus 0 seconds"
+    
     # Cache para imágenes
     ExpiresByType image/jpg "access plus 1 month"
     ExpiresByType image/jpeg "access plus 1 month"
@@ -52,10 +62,10 @@ Options -Indexes
     ExpiresByType image/svg+xml "access plus 1 month"
     ExpiresByType image/x-icon "access plus 1 year"
     
-    # Cache para CSS y JS
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType text/javascript "access plus 1 month"
+    # Cache para CSS y JS (reducido para facilitar actualizaciones)
+    ExpiresByType text/css "access plus 1 day"
+    ExpiresByType application/javascript "access plus 1 day"
+    ExpiresByType text/javascript "access plus 1 day"
     
     # Cache para fuentes
     ExpiresByType font/truetype "access plus 1 year"
