@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </section>
 </div>
 
-<script src="assets/js/product-details.js"></script>
+<script src="assets/js/product-details.js?v=2025-10-17"></script>
 
 <style>
 /* Asegurar z-index correcto para dropdowns en product-details */
