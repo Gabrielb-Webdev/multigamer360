@@ -1,9 +1,9 @@
 <?php 
 /**
  * Product Details Page - MultiGamer360
- * Last Updated: 2025-10-17 21:00
- * Version: 2.2 - FORCE SYNC FIX
- * Fix: Scripts load AFTER Bootstrap + Removed short_description dependency
+ * Last Updated: 2025-10-17 21:45
+ * Version: 2.4 - Database Field Names Fixed
+ * Fix: Changed 'stock' to 'stock_quantity', removed 'short_description' dependency
  * CRITICAL: This version MUST be deployed to Hostinger
  */
 
@@ -99,29 +99,33 @@ if (!$current_product) {
                 
                 <!-- Product badges -->
                 <div class="product-badges">
-                    <?php if ($current_product['is_new']): ?>
+                    <?php if (!empty($current_product['is_new']) && $current_product['is_new']): ?>
                         <span class="badge bg-success">NUEVO</span>
                     <?php endif; ?>
-                    <?php if ($current_product['is_featured']): ?>
+                    <?php if (!empty($current_product['is_featured']) && $current_product['is_featured']): ?>
                         <span class="badge bg-warning text-dark">DESTACADO</span>
                     <?php endif; ?>
-                    <?php if ($current_product['stock'] <= 0): ?>
+                    <?php 
+                    $stock = $current_product['stock_quantity'] ?? 0;
+                    if ($stock <= 0): ?>
                         <span class="badge bg-danger">SIN STOCK</span>
-                    <?php elseif ($current_product['stock'] <= 5): ?>
+                    <?php elseif ($stock <= 5): ?>
                         <span class="badge bg-orange">POCAS UNIDADES</span>
                     <?php endif; ?>
                 </div>
 
-                <?php if (!empty($current_product['short_description'])): ?>
-                    <p class="product-description"><?php echo htmlspecialchars($current_product['short_description']); ?></p>
+                <?php if (!empty($current_product['long_description'])): ?>
+                    <p class="product-description"><?php echo nl2br(htmlspecialchars(substr($current_product['long_description'], 0, 200))); ?>...</p>
+                <?php elseif (!empty($current_product['description'])): ?>
+                    <p class="product-description"><?php echo nl2br(htmlspecialchars(substr($current_product['description'], 0, 200))); ?>...</p>
                 <?php endif; ?>
                 
                 <!-- Stock information -->
                 <div class="stock-info-detail">
-                    <?php if ($current_product['stock'] > 0): ?>
+                    <?php if ($stock > 0): ?>
                         <span class="stock-available">
                             <i class="fas fa-check-circle text-success"></i> 
-                            <?php echo $current_product['stock']; ?> unidades disponibles
+                            <?php echo $stock; ?> unidades disponibles
                         </span>
                     <?php else: ?>
                         <span class="stock-unavailable">
@@ -168,14 +172,16 @@ if (!$current_product) {
                 </div>
 
                 <div class="product-actions">
-                    <?php if ($current_product['stock'] > 0): ?>
+                    <?php 
+                    $stock = $current_product['stock_quantity'] ?? 0;
+                    if ($stock > 0): ?>
                         <div class="quantity-selector">
                             <button type="button" class="quantity-btn minus">-</button>
                             <input type="number" 
                                    class="quantity-input" 
                                    value="1" 
                                    min="1" 
-                                   max="<?php echo $current_product['stock']; ?>"
+                                   max="<?php echo $stock; ?>"
                                    id="product-quantity">
                             <button type="button" class="quantity-btn plus">+</button>
                         </div>
@@ -395,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const quantityInput = document.querySelector('.quantity-input');
     const minusBtn = document.querySelector('.quantity-btn.minus');
     const plusBtn = document.querySelector('.quantity-btn.plus');
-    const maxStock = <?php echo $current_product['stock']; ?>;
+    const maxStock = <?php echo isset($current_product['stock_quantity']) ? (int)$current_product['stock_quantity'] : 0; ?>;
 
     if (minusBtn && plusBtn && quantityInput) {
         minusBtn.addEventListener('click', function() {
