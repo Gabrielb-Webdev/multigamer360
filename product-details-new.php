@@ -155,7 +155,9 @@ $current_product = $demo_products[$product_id] ?? $demo_products[1];
 ?>
 
 <div class="container-fluid product-details-container">
-    <!-- Breadcrumb Navigation -->
+
+    <div class="row product-detail-row">
+        <!-- Breadcrumb Navigation -->
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="index.php">INICIO</a></li>
@@ -163,8 +165,6 @@ $current_product = $demo_products[$product_id] ?? $demo_products[1];
             <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($current_product['name']); ?></li>
         </ol>
     </nav>
-
-    <div class="row product-detail-row">
         <!-- Product Images Section -->
         <div class="col-md-6">
             <div class="product-image-section">
