@@ -1484,7 +1484,8 @@ require_once 'includes/header.php';
     padding: 8px 6px; /* Reducir padding horizontal */
     border: 1px solid #ddd;
     border-radius: 4px;
-    background: rgba(255,255,255,0.9);
+    background: #ffffff; /* Fondo blanco */
+    color: #000000; /* Letras negras */
     font-size: 0.85rem; /* Reducir tamaño de fuente */
     width: 0; /* Forzar que respete flex: 1 */
     min-width: 0; /* Permitir que se comprima si es necesario */
@@ -1493,11 +1494,17 @@ require_once 'includes/header.php';
 
 .price-input::placeholder {
     font-size: 0.8rem;
-    color: #999;
+    color: #666; /* Placeholder más oscuro para mejor contraste */
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #8B0000; /* Borde rojo al hacer foco */
+    box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.1);
 }
 
 .price-separator {
-    color: #fff;
+    color: #000; /* Separador negro para mejor contraste */
     font-weight: bold;
     font-size: 0.9rem;
     flex-shrink: 0; /* No permitir que se comprima */
