@@ -73,12 +73,12 @@ try {
             <div class="col-md-4 text-end">
                 <div class="wishlist-stats">
                     <div class="stat-item">
-                        <span class="stat-number"><?php echo count($wishlist_products); ?></span>
+                        <span class="stat-number" id="wishlist-count"><?php echo count($wishlist_products); ?></span>
                         <span class="stat-label">Productos guardados</span>
                     </div>
                     <?php if (!empty($wishlist_products)): ?>
                     <div class="stat-item">
-                        <span class="stat-number">
+                        <span class="stat-number" id="wishlist-total">
                             $<?php echo number_format(array_sum(array_column($wishlist_products, 'price')), 2); ?>
                         </span>
                         <span class="stat-label">Valor total</span>
@@ -560,13 +560,19 @@ function removeFromWishlist(productId, button) {
             setTimeout(() => {
                 productCard.remove();
                 
+                // Actualizar contador local inmediatamente
+                const remainingProducts = document.querySelectorAll('[id^="product-"]');
+                const countElement = document.getElementById('wishlist-count');
+                if (countElement) {
+                    countElement.textContent = remainingProducts.length;
+                }
+                
                 // Actualizar contador en header si existe la función
                 if (typeof syncWishlistCount === 'function') {
                     syncWishlistCount();
                 }
                 
                 // Si no quedan productos, mostrar mensaje vacío
-                const remainingProducts = document.querySelectorAll('[id^="product-"]');
                 if (remainingProducts.length === 0) {
                     location.reload();
                 }
