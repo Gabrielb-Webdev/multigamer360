@@ -1,243 +1,87 @@
-<?php
-/**
- * AJAX - Obtener filtros disponibles dinámicamente
- * Retorna los filtros con conteos actualizados según los filtros actualmente aplicados
- */
-
-// Habilitar reporte de errores para depuración
+﻿<?php
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // No mostrar en pantalla, solo log
+ini_set('display_errors', 0);
+ob_start();
 
-// Limpiar cualquier salida previa
-if (ob_get_level()) {
-    ob_clean();
-}
-
-header('Content-Type: application/json');
-
-// Verificar que los archivos existan antes de incluirlos
-if (!file_exists('../config/database.php')) {
-    echo json_encode(['success' => false, 'message' => 'database.php no encontrado']);
+function sendJson($data) {
+    if (ob_get_level()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($data);
     exit;
 }
-
-if (!file_exists('../includes/ProductManager.php')) {
-    echo json_encode(['success' => false, 'message' => 'ProductManager.php no encontrado']);
-    exit;
-}
-
-require_once '../config/database.php';
-require_once '../includes/ProductManager.php';
 
 try {
-    // Verificar que $pdo esté disponible
+    require_once __DIR__ . '/../config/database.php';
+    
     if (!isset($pdo)) {
-        throw new Exception('Variable $pdo no está definida');
+        sendJson(['success' => false, 'message' => 'DB no disponible', 'filters' => ['brands' => [], 'consoles' => [], 'genres' => []], 'product_count' => 0]);
     }
     
-    // Obtener filtros aplicados desde POST
-    $appliedFilters = [];
-    
-    if (!empty($_POST['categories'])) {
-        $appliedFilters['categories'] = array_map('intval', explode(',', $_POST['categories']));
-    }
-    
-    if (!empty($_POST['brands'])) {
-        $appliedFilters['brands'] = array_map('intval', explode(',', $_POST['brands']));
-    }
-    
-    if (!empty($_POST['consoles'])) {
-        $appliedFilters['consoles'] = array_map('intval', explode(',', $_POST['consoles']));
-    }
-    
-    if (!empty($_POST['genres'])) {
-        $appliedFilters['genres'] = array_map('intval', explode(',', $_POST['genres']));
-    }
-    
-    if (isset($_POST['min_price']) && $_POST['min_price'] !== '') {
-        $appliedFilters['min_price'] = (float)$_POST['min_price'];
-    }
-    
-    if (isset($_POST['max_price']) && $_POST['max_price'] !== '') {
-        $appliedFilters['max_price'] = (float)$_POST['max_price'];
-    }
-    
-    // Inicializar ProductManager
-    $productManager = new ProductManager($pdo);
-    
-    // Construir filtros para la consulta
     $filters = [];
-    if (!empty($appliedFilters['categories'])) {
-        $filters['categories'] = $appliedFilters['categories'];
-    }
-    if (!empty($appliedFilters['brands'])) {
-        $filters['brands'] = $appliedFilters['brands'];
-    }
-    if (!empty($appliedFilters['consoles'])) {
-        $filters['consoles'] = $appliedFilters['consoles'];
-    }
-    if (!empty($appliedFilters['genres'])) {
-        $filters['genres'] = $appliedFilters['genres'];
-    }
-    if (isset($appliedFilters['min_price'])) {
-        $filters['min_price'] = $appliedFilters['min_price'];
-    }
-    if (isset($appliedFilters['max_price'])) {
-        $filters['max_price'] = $appliedFilters['max_price'];
-    }
+    if (!empty($_POST['categories'])) $filters['categories'] = array_map('intval', explode(',', $_POST['categories']));
+    if (!empty($_POST['brands'])) $filters['brands'] = array_map('intval', explode(',', $_POST['brands']));
+    if (!empty($_POST['consoles'])) $filters['consoles'] = array_map('intval', explode(',', $_POST['consoles']));
     
-    // Contar productos con estos filtros
-    $productCount = $productManager->countProducts($filters);
-    
-    // Obtener filtros disponibles calculando conteos dinámicamente
-    $availableFilters = getAvailableFiltersWithCounts($pdo, $filters);
-    
-    echo json_encode([
-        'success' => true,
-        'filters' => $availableFilters,
-        'product_count' => $productCount,
-        'applied_filters' => $appliedFilters
-    ]);
-    exit;
-    
-} catch (Exception $e) {
-    error_log("Error en get-dynamic-filters.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error al obtener filtros: ' . $e->getMessage(),
-        'filters' => [
-            'brands' => [],
-            'consoles' => [],
-            'genres' => []
-        ],
-        'product_count' => 0
-    ]);
-}
-
-exit;
-
-/**
- * Obtener filtros disponibles con conteos dinámicos
- */
-function getAvailableFiltersWithCounts($pdo, $currentFilters) {
-    $result = [];
-    
-    // Construir WHERE base según filtros aplicados
-    $whereParts = ['p.is_active = 1'];
+    $where = ['p.is_active = 1'];
     $params = [];
     
-    if (!empty($currentFilters['categories'])) {
-        $placeholders = str_repeat('?,', count($currentFilters['categories']) - 1) . '?';
-        $whereParts[] = "p.category_id IN ($placeholders)";
-        $params = array_merge($params, $currentFilters['categories']);
+    if (!empty($filters['categories'])) {
+        $ph = implode(',', array_fill(0, count($filters['categories']), '?'));
+        $where[] = "p.category_id IN ($ph)";
+        $params = array_merge($params, $filters['categories']);
+    }
+    if (!empty($filters['brands'])) {
+        $ph = implode(',', array_fill(0, count($filters['brands']), '?'));
+        $where[] = "p.brand_id IN ($ph)";
+        $params = array_merge($params, $filters['brands']);
+    }
+    if (!empty($filters['consoles'])) {
+        $ph = implode(',', array_fill(0, count($filters['consoles']), '?'));
+        $where[] = "p.console_id IN ($ph)";
+        $params = array_merge($params, $filters['consoles']);
     }
     
-    if (!empty($currentFilters['brands'])) {
-        $placeholders = str_repeat('?,', count($currentFilters['brands']) - 1) . '?';
-        $whereParts[] = "p.brand_id IN ($placeholders)";
-        $params = array_merge($params, $currentFilters['brands']);
+    $whereClause = implode(' AND ', $where);
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $whereClause");
+    $stmt->execute($params);
+    $productCount = (int)$stmt->fetchColumn();
+    
+    $brands = [];
+    $stmt = $pdo->query("SELECT id, name FROM brands ORDER BY name");
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $b) {
+        $cp = array_merge([$b['id']], $params);
+        $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE p.brand_id = ? AND $whereClause");
+        $s->execute($cp);
+        $brands[] = ['id' => $b['id'], 'name' => $b['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
-    if (!empty($currentFilters['consoles'])) {
-        $placeholders = str_repeat('?,', count($currentFilters['consoles']) - 1) . '?';
-        $whereParts[] = "p.console_id IN ($placeholders)";
-        $params = array_merge($params, $currentFilters['consoles']);
+    $consoles = [];
+    $stmt = $pdo->query("SELECT id, name FROM consoles ORDER BY name");
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $c) {
+        $cp = array_merge([$c['id']], $params);
+        $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE p.console_id = ? AND $whereClause");
+        $s->execute($cp);
+        $consoles[] = ['id' => $c['id'], 'name' => $c['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
-    if (isset($currentFilters['min_price'])) {
-        $whereParts[] = "p.price_pesos >= ?";
-        $params[] = $currentFilters['min_price'];
+    $genres = [];
+    $stmt = $pdo->query("SELECT id, name FROM genres ORDER BY name");
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $g) {
+        $cp = array_merge([$g['id']], $params);
+        $s = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE p.genre_id = ? AND $whereClause");
+        $s->execute($cp);
+        $genres[] = ['id' => $g['id'], 'name' => $g['name'], 'product_count' => (int)$s->fetchColumn()];
     }
     
-    if (isset($currentFilters['max_price'])) {
-        $whereParts[] = "p.price_pesos <= ?";
-        $params[] = $currentFilters['max_price'];
-    }
+    sendJson([
+        'success' => true,
+        'product_count' => $productCount,
+        'filters' => ['brands' => $brands, 'consoles' => $consoles, 'genres' => $genres],
+        'applied_filters' => $filters
+    ]);
     
-    $whereClause = implode(' AND ', $whereParts);
-    
-    // Obtener marcas con conteo
-    $result['brands'] = [];
-    try {
-        $sql = "SELECT DISTINCT b.id, b.name
-                FROM brands b
-                ORDER BY b.name";
-        
-        $stmt = $pdo->query($sql);
-        $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Contar productos para cada marca
-        foreach ($brands as &$brand) {
-            $countSql = "SELECT COUNT(*) as cnt 
-                         FROM products p 
-                         WHERE p.brand_id = ? AND $whereClause";
-            $countParams = array_merge([$brand['id']], $params);
-            $countStmt = $pdo->prepare($countSql);
-            $countStmt->execute($countParams);
-            $brand['product_count'] = (int)$countStmt->fetchColumn();
-        }
-        
-        $result['brands'] = $brands;
-    } catch (Exception $e) {
-        error_log("Error obteniendo marcas: " . $e->getMessage());
-        $result['brands'] = [];
-    }
-    
-    // Obtener consolas con conteo
-    $result['consoles'] = [];
-    try {
-        $sql = "SELECT DISTINCT c.id, c.name
-                FROM consoles c
-                ORDER BY c.name";
-        
-        $stmt = $pdo->query($sql);
-        $consoles = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Contar productos para cada consola
-        foreach ($consoles as &$console) {
-            $countSql = "SELECT COUNT(*) as cnt
-                         FROM products p
-                         WHERE p.console_id = ? AND $whereClause";
-            $countParams = array_merge([$console['id']], $params);
-            $countStmt = $pdo->prepare($countSql);
-            $countStmt->execute($countParams);
-            $console['product_count'] = (int)$countStmt->fetchColumn();
-        }
-        
-        $result['consoles'] = $consoles;
-    } catch (Exception $e) {
-        error_log("Error obteniendo consolas: " . $e->getMessage());
-        $result['consoles'] = [];
-    }
-    
-    // Obtener géneros con conteo
-    $result['genres'] = [];
-    try {
-        $sql = "SELECT DISTINCT g.id, g.name
-                FROM genres g
-                ORDER BY g.name";
-        
-        $stmt = $pdo->query($sql);
-        $genres = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Contar productos para cada género
-        foreach ($genres as &$genre) {
-            $countSql = "SELECT COUNT(*) as cnt
-                         FROM products p
-                         WHERE p.genre_id = ? AND $whereClause";
-            $countParams = array_merge([$genre['id']], $params);
-            $countStmt = $pdo->prepare($countSql);
-            $countStmt->execute($countParams);
-            $genre['product_count'] = (int)$countStmt->fetchColumn();
-        }
-        
-        $result['genres'] = $genres;
-    } catch (Exception $e) {
-        error_log("Error obteniendo géneros: " . $e->getMessage());
-        $result['genres'] = [];
-    }
-    
-    return $result;
+} catch (Exception $e) {
+    sendJson(['success' => false, 'message' => $e->getMessage(), 'filters' => ['brands' => [], 'consoles' => [], 'genres' => []], 'product_count' => 0]);
 }
 ?>
