@@ -84,7 +84,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.1">
 
 <div class="container-fluid product-details-container">
 
@@ -354,8 +354,8 @@ function getImagePath($image_name)
 
 <?php include 'includes/footer.php'; ?>
 
-<!-- Product Details JavaScript - Version 2.1 - LOADED AFTER BOOTSTRAP -->
-<script src="assets/js/product-details.js?v=<?php echo time(); ?>"></script>
+<!-- Product Details JavaScript - Version 2.2 - LOADED AFTER BOOTSTRAP -->
+<script src="assets/js/product-details.js?v=2.2"></script>
 
 <script>
     // Función para cambiar la imagen principal al hacer clic en miniaturas

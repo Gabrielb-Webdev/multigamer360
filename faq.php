@@ -16,7 +16,7 @@ $page_description = "Encuentra respuestas a las preguntas más comunes sobre nue
 <?php include 'includes/header.php'; ?>
 
 <!-- Custom CSS for FAQ -->
-<link rel="stylesheet" href="assets/css/faq-modern.css">
+<link rel="stylesheet" href="assets/css/faq-modern.css?v=1.1">
 
 <!-- FAQ Main Container -->
 <div class="faq-main-container">
@@ -366,7 +366,9 @@ $page_description = "Encuentra respuestas a las preguntas más comunes sobre nue
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
 
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom FAQ JS -->
-    <script src="assets/js/faq.js"></script>
+    <script src="assets/js/faq.js?v=1.1"></script>
+

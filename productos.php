@@ -249,7 +249,7 @@ require_once 'includes/header.php';
 ?>
 
 <!-- CSS específico para selector de consolas -->
-<link rel="stylesheet" href="assets/css/console-selector.css?v=0.2">
+<link rel="stylesheet" href="assets/css/console-selector.css?v=0.3">
 
 <!-- =====================================================
      CONTENIDO PRINCIPAL
@@ -3096,7 +3096,7 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <!-- Smart Filters JavaScript -->
-<script src="assets/js/smart-filters.js"></script>
+<script src="assets/js/smart-filters.js?v=1.1"></script>
 
 <?php
 // =====================================================

@@ -177,7 +177,7 @@ if ($_POST) {
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/style.css?v=1.2" rel="stylesheet">
     
     <style>
         :root {
@@ -946,6 +946,6 @@ if ($_POST) {
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/register-validation.js"></script>
+    <script src="assets/js/register-validation.js?v=1.1"></script>
 </body>
 </html>
