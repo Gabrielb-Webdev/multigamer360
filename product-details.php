@@ -177,8 +177,8 @@ function getImagePath($image_name)
             </div>
 
             <!-- Description at the top -->
-            <h3 class="section-title">Descripción</h3>
             <div class="product-description-top">
+                <h3 class="section-title">Descripción</h3>
                 <?php if (!empty($current_product['long_description'])): ?>
                     <p><?php echo nl2br(htmlspecialchars($current_product['long_description'])); ?></p>
                 <?php elseif (!empty($current_product['description'])): ?>
