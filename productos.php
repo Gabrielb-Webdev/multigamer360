@@ -800,7 +800,7 @@ require_once 'includes/header.php';
 .product-title {
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
