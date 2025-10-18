@@ -99,7 +99,7 @@ function getImagePath($image_name)
 </nav>
     <div class="row product-detail-row">
         <!-- Product Images Section -->
-        <div class="col-md-5 col-lg-4">
+        <div class="col-md-4 col-lg-3">
             <div class="product-image-section">
                 <!-- Thumbnail Images - Now on the left -->
                 <div class="product-thumbnails">
@@ -155,8 +155,11 @@ function getImagePath($image_name)
                 </div>
             </div>
         </div>
-        <div class="product-info-section">
-            <h1 class="product-title"><?php echo htmlspecialchars($current_product['name']); ?></h1>
+        
+        <!-- Product Info Section -->
+        <div class="col-md-8 col-lg-9">
+            <div class="product-info-section">
+                <h1 class="product-title"><?php echo htmlspecialchars($current_product['name']); ?></h1>
 
             <!-- Product badges -->
             <div class="product-badges">
@@ -239,12 +242,10 @@ function getImagePath($image_name)
             <div class="payment-methods">
                 <a href="#" class="payment-link">VER MEDIOS DE PAGO</a>
             </div>
+            </div>
         </div>
     </div>
 
-</div>
-</div>
-</div>
 </div>
 
 <!-- Similar Products Section -->
