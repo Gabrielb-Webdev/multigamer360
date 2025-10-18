@@ -225,6 +225,19 @@ function getImagePath($image_name)
                             id="product-quantity" data-max-stock="<?php echo $stock; ?>">
                         <button type="button" class="quantity-btn plus">+</button>
                     </div>
+                    
+                    <!-- Add to Cart Button -->
+                    <button class="btn-add-to-cart btn-cart-detail" 
+                            data-product-id="<?php echo $current_product['id']; ?>"
+                            data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
+                            data-product-price="<?php echo $product_price; ?>"
+                            data-product-image="<?php echo htmlspecialchars($main_image); ?>">
+                        <i class="fas fa-shopping-cart"></i> AGREGAR AL CARRITO
+                    </button>
+                <?php else: ?>
+                    <button class="btn-add-to-cart" disabled>
+                        <i class="fas fa-times-circle"></i> SIN STOCK
+                    </button>
                 <?php endif; ?>
             </div>
 
