@@ -60,24 +60,47 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
 
 // Obtener wishlist del usuario si está logueado
 $isInWishlist = false;
+$wishlist_debug = [
+    'logged_in' => isLoggedIn(),
+    'user_id' => isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'N/A',
+    'product_id' => $product_id,
+    'count' => 0,
+    'result' => false,
+    'sql_executed' => false
+];
+
 if (isLoggedIn()) {
-    // Debug COMPLETO: Verificar sesión y consulta
-    error_log("=== DEBUG WISHLIST INICIO ===");
-    error_log("User logged in: SÍ");
-    error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NO EXISTE'));
-    error_log("Product ID: " . $product_id);
-    
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM user_favorites WHERE user_id = ? AND product_id = ?");
-    $stmt->execute([$_SESSION['user_id'], $product_id]);
-    $count = $stmt->fetchColumn();
-    $isInWishlist = $count > 0;
-    
-    error_log("Registros encontrados en user_favorites: " . $count);
-    error_log("isInWishlist resultado: " . ($isInWishlist ? 'TRUE' : 'FALSE'));
-    error_log("=== DEBUG WISHLIST FIN ===");
-} else {
-    error_log("=== DEBUG WISHLIST: Usuario NO logueado ===");
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM user_favorites WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$_SESSION['user_id'], $product_id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $count = $result['total'];
+        $isInWishlist = $count > 0;
+        
+        $wishlist_debug['count'] = $count;
+        $wishlist_debug['result'] = $isInWishlist;
+        $wishlist_debug['sql_executed'] = true;
+        
+        error_log("=== WISHLIST CHECK ===");
+        error_log("User: " . $_SESSION['user_id'] . " | Product: " . $product_id . " | Count: " . $count . " | In Wishlist: " . ($isInWishlist ? 'YES' : 'NO'));
+        
+    } catch (Exception $e) {
+        error_log("ERROR WISHLIST: " . $e->getMessage());
+        $wishlist_debug['error'] = $e->getMessage();
+    }
 }
+
+// DEBUG: Imprimir información visible en HTML
+echo "<!-- ========================================= -->";
+echo "<!-- WISHLIST DEBUG INFO (Product ID: {$product_id}) -->";
+echo "<!-- ========================================= -->";
+echo "<!-- Logged In: " . ($wishlist_debug['logged_in'] ? 'YES' : 'NO') . " -->";
+echo "<!-- User ID: " . $wishlist_debug['user_id'] . " -->";
+echo "<!-- Product ID: " . $wishlist_debug['product_id'] . " -->";
+echo "<!-- SQL Executed: " . ($wishlist_debug['sql_executed'] ? 'YES' : 'NO') . " -->";
+echo "<!-- Records Found: " . $wishlist_debug['count'] . " -->";
+echo "<!-- isInWishlist: " . ($wishlist_debug['result'] ? 'TRUE' : 'FALSE') . " -->";
+echo "<!-- ========================================= -->";
 
 // Función para obtener ruta de imagen
 function getImagePath($image_name)
@@ -167,18 +190,22 @@ function getImagePath($image_name)
                         alt="<?php echo htmlspecialchars($current_product['name']); ?>" class="img-fluid main-image"
                         id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
 
-                    <!-- Wishlist button overlay -->
+                    <!-- ============================================================ -->
+                    <!-- WISHLIST BUTTON - ÚLTIMA ACTUALIZACIÓN: 2025-10-18 04:55    -->
+                    <!-- ============================================================ -->
                     <!-- 
-                        DEBUG WISHLIST STATE:
-                        - User Logged In: <?php echo isLoggedIn() ? 'YES' : 'NO'; ?>
+                        🔍 WISHLIST DEBUG:
+                        - User Logged In: <?php echo isLoggedIn() ? 'YES ✅' : 'NO ❌'; ?>
                         - User ID: <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'N/A'; ?>
                         - Product ID: <?php echo $product_id; ?>
-                        - isInWishlist: <?php echo $isInWishlist ? 'TRUE' : 'FALSE'; ?>
-                        - Heart Class SHOULD BE: <?php echo $isInWishlist ? 'fas fa-heart (filled)' : 'far fa-heart (empty)'; ?>
-                        - Button Class SHOULD BE: <?php echo $isInWishlist ? 'HAS active class' : 'NO active class'; ?>
+                        - SQL Count: <?php echo $wishlist_debug['count']; ?>
+                        - isInWishlist VARIABLE: <?php echo $isInWishlist ? 'TRUE ✅' : 'FALSE ❌'; ?>
+                        - RENDERING: <?php echo $isInWishlist ? 'BOTÓN ACTIVO (ROJO)' : 'BOTÓN INACTIVO (BLANCO)'; ?>
                     -->
+                    <!-- ============================================================ -->
+                    
                     <?php if ($isInWishlist): ?>
-                        <!-- PRODUCTO EN WISHLIST - Botón ACTIVO -->
+                        <!-- ✅ PRODUCTO EN WISHLIST - BOTÓN ACTIVO -->
                         <button class="favorite-btn-detail btn-wishlist active"
                             data-product-id="<?php echo $current_product['id']; ?>"
                             data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
@@ -186,7 +213,7 @@ function getImagePath($image_name)
                             <i class="fas fa-heart"></i>
                         </button>
                     <?php else: ?>
-                        <!-- PRODUCTO NO EN WISHLIST - Botón INACTIVO -->
+                        <!-- ❌ PRODUCTO NO EN WISHLIST - BOTÓN INACTIVO -->
                         <button class="favorite-btn-detail btn-wishlist"
                             data-product-id="<?php echo $current_product['id']; ?>"
                             data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
