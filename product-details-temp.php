@@ -58,6 +58,14 @@ $current_product['is_new'] = $current_product['is_new'] ?? 0;
 $current_product['is_featured'] = $current_product['is_featured'] ?? 0;
 $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
 
+// Obtener wishlist del usuario si está logueado
+$isInWishlist = false;
+if (isLoggedIn()) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM user_favorites WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$_SESSION['user_id'], $product_id]);
+    $isInWishlist = $stmt->fetchColumn() > 0;
+}
+
 // Función para obtener ruta de imagen
 function getImagePath($image_name)
 {
@@ -84,7 +92,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.2">
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.3">
 
 <div class="container-fluid product-details-container">
 
@@ -111,10 +119,15 @@ function getImagePath($image_name)
                         id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
 
                     <!-- Wishlist button overlay -->
-                    <button class="favorite-btn-detail btn-wishlist"
+                    <?php 
+                    $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
+                    $btnClass = $isInWishlist ? 'favorite-btn-detail btn-wishlist active' : 'favorite-btn-detail btn-wishlist';
+                    ?>
+                    <button class="<?php echo $btnClass; ?>"
                         data-product-id="<?php echo $current_product['id']; ?>"
-                        data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>">
-                        <i class="far fa-heart"></i>
+                        data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
+                        title="<?php echo $isInWishlist ? 'Quitar de wishlist' : 'Agregar a wishlist'; ?>">
+                        <i class="<?php echo $heartClass; ?>"></i>
                     </button>
                 </div>
 
@@ -437,6 +450,75 @@ function getImagePath($image_name)
                 }
             }
         });
+        
+        // ===== WISHLIST CON ANIMACIÓN =====
+        document.addEventListener('click', function(e) {
+            const wishlistBtn = e.target.closest('.btn-wishlist');
+            if (wishlistBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const productId = wishlistBtn.getAttribute('data-product-id');
+                
+                if (productId) {
+                    toggleWishlist(wishlistBtn, productId);
+                }
+            }
+        });
+        
+        /**
+         * Alternar producto en wishlist
+         */
+        function toggleWishlist(button, productId) {
+            const icon = button.querySelector('i');
+            const isInWishlist = button.classList.contains('active');
+            
+            // Mostrar estado de carga
+            button.disabled = true;
+            button.classList.add('loading');
+            icon.className = 'fas fa-spinner fa-spin';
+            
+            // Llamada AJAX para wishlist
+            fetch('ajax/toggle-wishlist.php', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    product_id: productId,
+                    action: isInWishlist ? 'remove' : 'add'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Alternar estado visual
+                    if (isInWishlist) {
+                        button.classList.remove('active');
+                        icon.className = 'far fa-heart';
+                        console.log('💔 Producto removido de wishlist:', productId);
+                    } else {
+                        button.classList.add('active');
+                        icon.className = 'fas fa-heart';
+                        console.log('💖 Producto agregado a wishlist:', productId);
+                    }
+                    
+                    // Actualizar contador en header si existe la función
+                    if (typeof syncWishlistCount === 'function') {
+                        syncWishlistCount();
+                    }
+                } else {
+                    throw new Error(data.message || 'Error al actualizar wishlist');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error con wishlist:', error);
+                // Restaurar estado original en caso de error
+                icon.className = isInWishlist ? 'fas fa-heart' : 'far fa-heart';
+            })
+            .finally(() => {
+                // Remover estado de carga
+                button.disabled = false;
+                button.classList.remove('loading');
+            });
+        }
     });
 </script>
 
