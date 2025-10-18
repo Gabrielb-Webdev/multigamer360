@@ -254,12 +254,62 @@ function getImagePath($image_name)
             </div>
 
             <div class="payment-methods">
-                <a href="#" class="payment-link">VER MEDIOS DE PAGO</a>
+                <a href="#" class="payment-link" id="openPaymentModal">VER MEDIOS DE PAGO</a>
             </div>
             </div>
         </div>
     </div>
 
+</div>
+
+<!-- Modal de Medios de Pago -->
+<div class="modal fade" id="paymentMethodsModal" tabindex="-1" aria-labelledby="paymentMethodsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title" id="paymentMethodsModalLabel">
+                    <i class="fas fa-credit-card text-danger"></i> Medios de Pago Disponibles
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-method-item">
+                    <h6 class="text-danger"><i class="fas fa-money-bill-wave"></i> Efectivo</h6>
+                    <p>Aprovecha un <strong>10% de descuento</strong> pagando en efectivo. Puedes coordinar el pago al momento de la entrega.</p>
+                </div>
+                
+                <div class="payment-method-item">
+                    <h6 class="text-danger"><i class="fas fa-credit-card"></i> Tarjetas de Crédito</h6>
+                    <p>Aceptamos todas las tarjetas de crédito principales:</p>
+                    <ul>
+                        <li>Visa</li>
+                        <li>Mastercard</li>
+                        <li>American Express</li>
+                        <li>Naranja</li>
+                    </ul>
+                    <p><strong>Hasta 4 cuotas sin interés</strong> en compras superiores a $50.000</p>
+                </div>
+                
+                <div class="payment-method-item">
+                    <h6 class="text-danger"><i class="fas fa-money-check-alt"></i> Tarjetas de Débito</h6>
+                    <p>Pago inmediato con tarjeta de débito de cualquier banco.</p>
+                </div>
+                
+                <div class="payment-method-item">
+                    <h6 class="text-danger"><i class="fas fa-university"></i> Transferencia Bancaria</h6>
+                    <p>Realiza una transferencia directa a nuestra cuenta. El pedido se procesa una vez confirmado el pago.</p>
+                </div>
+                
+                <div class="payment-method-item">
+                    <h6 class="text-danger"><i class="fab fa-mercadopago"></i> Mercado Pago</h6>
+                    <p>Paga con tu cuenta de Mercado Pago de forma segura y rápida.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-danger">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Similar Products Section -->
@@ -349,6 +399,105 @@ function getImagePath($image_name)
 
     // Funcionalidad inline para los botones de cantidad (cargado después de Bootstrap)
     document.addEventListener('DOMContentLoaded', function () {
+        // ===== MODAL DE MEDIOS DE PAGO =====
+        const paymentLink = document.getElementById('openPaymentModal');
+        if (paymentLink) {
+            paymentLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                const modal = new bootstrap.Modal(document.getElementById('paymentMethodsModal'));
+                modal.show();
+            });
+        }
+
+        // ===== WISHLIST CON ANIMACIÓN =====
+        document.addEventListener('click', function(e) {
+            const wishlistBtn = e.target.closest('.btn-wishlist');
+            if (wishlistBtn) {
+                e.preventDefault();
+                
+                // Añadir clase de loading
+                wishlistBtn.classList.add('loading');
+                
+                const productId = wishlistBtn.getAttribute('data-product-id');
+                const productName = wishlistBtn.getAttribute('data-product-name');
+                
+                // Simular delay para mostrar animación
+                setTimeout(function() {
+                    if (window.wishlistSystem) {
+                        window.wishlistSystem.toggleWishlist(wishlistBtn, productId, productName);
+                    }
+                    
+                    // Remover clase de loading después de completar
+                    setTimeout(function() {
+                        wishlistBtn.classList.remove('loading');
+                    }, 300);
+                }, 400);
+            }
+        });
+
+        // ===== BOTÓN AGREGAR AL CARRITO =====
+        const addToCartBtn = document.querySelector('.btn-add-to-cart');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const productId = this.getAttribute('data-product-id');
+                const productName = this.getAttribute('data-product-name');
+                const productPrice = this.getAttribute('data-product-price');
+                const productImage = this.getAttribute('data-product-image');
+                const quantity = parseInt(document.getElementById('product-quantity')?.value || 1);
+                
+                // Verificar si existe el sistema de carrito
+                if (window.advancedCartSystem) {
+                    // Usar el sistema avanzado
+                    window.advancedCartSystem.addToCartWithQuantity(this, productId, quantity);
+                } else {
+                    // Fallback: agregar directamente
+                    const product = {
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        image: productImage,
+                        quantity: quantity
+                    };
+                    
+                    // Obtener carrito del localStorage
+                    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                    
+                    // Verificar si el producto ya existe
+                    const existingProductIndex = cart.findIndex(item => item.id == productId);
+                    
+                    if (existingProductIndex > -1) {
+                        cart[existingProductIndex].quantity += quantity;
+                    } else {
+                        cart.push(product);
+                    }
+                    
+                    // Guardar en localStorage
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    
+                    // Actualizar contador del carrito
+                    if (window.updateCartCount) {
+                        window.updateCartCount();
+                    }
+                    
+                    // Mostrar mensaje de éxito (sin toast)
+                    console.log(`Producto ${productName} agregado al carrito`);
+                    
+                    // Actualizar el botón visualmente
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> AGREGADO';
+                    this.style.background = '#28a745';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.style.background = '';
+                    }, 2000);
+                }
+            });
+        }
+
+        // ===== QUANTITY SELECTOR =====
         const quantityInput = document.querySelector('.quantity-input');
         const minusBtn = document.querySelector('.quantity-btn.minus');
         const plusBtn = document.querySelector('.quantity-btn.plus');
@@ -370,13 +519,12 @@ function getImagePath($image_name)
                 if (currentValue < max) {
                     quantityInput.value = currentValue + 1;
                 } else {
-                    // Mostrar mensaje si intenta superar el stock
                     quantityInput.value = max;
                     console.log('Stock máximo alcanzado: ' + max);
                 }
             });
 
-            // Validar input manual (cuando el usuario escribe directamente)
+            // Validar input manual
             quantityInput.addEventListener('input', function () {
                 let value = parseInt(this.value);
                 const max = parseInt(this.getAttribute('max')) || maxStock;
@@ -388,7 +536,6 @@ function getImagePath($image_name)
                 }
             });
 
-            // Validar al perder el foco
             quantityInput.addEventListener('blur', function () {
                 let value = parseInt(this.value);
                 const max = parseInt(this.getAttribute('max')) || maxStock;
@@ -400,7 +547,6 @@ function getImagePath($image_name)
                 }
             });
 
-            // Validar con change event también
             quantityInput.addEventListener('change', function () {
                 let value = parseInt(this.value);
                 const max = parseInt(this.getAttribute('max')) || maxStock;
@@ -413,37 +559,17 @@ function getImagePath($image_name)
             });
         }
 
-        // Funcionalidad para cambiar imagen principal al hacer clic en miniatura
+        // ===== THUMBNAIL IMAGES =====
         const thumbnails = document.querySelectorAll('.thumbnail-item');
         const mainImage = document.querySelector('.main-image');
 
         thumbnails.forEach(function (thumbnail) {
             thumbnail.addEventListener('click', function () {
-                // Remover clase active de todas las miniaturas
                 thumbnails.forEach(t => t.classList.remove('active'));
-
-                // Agregar clase active a la miniatura clickeada
                 this.classList.add('active');
-
-                // Cambiar imagen principal
                 const newImageSrc = this.querySelector('img').src;
                 mainImage.src = newImageSrc;
             });
-        });
-
-        // Modificar función de agregar al carrito para incluir cantidad
-        document.addEventListener('click', function (e) {
-            if (e.target.matches('.btn-cart-detail, .btn-cart-detail *')) {
-                e.preventDefault();
-                const button = e.target.closest('.btn-cart-detail');
-                if (button && !button.disabled && window.advancedCartSystem) {
-                    const productId = button.getAttribute('data-product-id');
-                    const quantity = document.getElementById('product-quantity').value;
-
-                    // Usar el sistema de carrito avanzado con cantidad personalizada
-                    window.advancedCartSystem.addToCartWithQuantity(button, productId, parseInt(quantity));
-                }
-            }
         });
     });
 </script>

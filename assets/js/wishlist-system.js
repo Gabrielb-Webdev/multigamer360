@@ -78,17 +78,20 @@
                     this.updateWishlistButtons(data.items);
                 }
                 
-                // Mostrar notificación
-                this.showNotification(data.message, 'success');
+                // NO MOSTRAR notificación - DESACTIVADO
+                // this.showNotification(data.message, 'success');
                 
                 // Actualizar contador si existe
                 this.updateWishlistCount(data.count);
             } else {
-                this.showNotification(data.message || 'Error al actualizar lista de deseos', 'error');
+                // NO MOSTRAR notificación - DESACTIVADO
+                // this.showNotification(data.message || 'Error al actualizar lista de deseos', 'error');
+                console.log(data.message || 'Error al actualizar lista de deseos');
             }
         } catch (error) {
             console.error('Error:', error);
-            this.showNotification('Error de conexión', 'error');
+            // NO MOSTRAR notificación - DESACTIVADO
+            // this.showNotification('Error de conexión', 'error');
         } finally {
             this.setButtonLoading(button, false);
         }
