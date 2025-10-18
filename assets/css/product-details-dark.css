@@ -297,10 +297,10 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 20px;
+    gap: 12px; /* REDUCIDO de 20px */
     background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-    padding: 30px;
-    border-radius: 15px;
+    padding: 20px; /* REDUCIDO de 30px */
+    border-radius: 12px; /* REDUCIDO de 15px */
     border: 2px solid #dc262b;
     box-shadow: 0 4px 15px rgba(220, 38, 27, 0.2);
 }
@@ -326,21 +326,21 @@
 .btn-add-to-cart {
     order: 3;
     width: 100%;
-    padding: 15px 30px;
+    padding: 10px 20px; /* REDUCIDO de 15px 30px */
     background: #dc262b;
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 1.1rem;
+    font-size: 0.95rem; /* REDUCIDO de 1.1rem */
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px; /* REDUCIDO de 1px */
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px; /* REDUCIDO de 10px */
 }
 
 .btn-add-to-cart:hover {
