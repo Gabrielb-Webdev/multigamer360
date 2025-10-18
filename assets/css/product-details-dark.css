@@ -144,7 +144,12 @@
 }
 
 .favorite-btn-detail.active i {
+    color: white; /* Ícono blanco cuando está activo */
     font-weight: 900;
+}
+
+.favorite-btn-detail.active:hover i {
+    color: white; /* Mantener blanco al hacer hover */
 }
 
 /* Responsive adjustments */
