@@ -444,6 +444,9 @@ function getImagePath($image_name)
             const icon = button.querySelector('i');
             const isInWishlist = button.classList.contains('active');
             
+            // Debug: Mostrar estado inicial
+            console.log(`🔍 Estado inicial - Producto ID ${productId}: ${isInWishlist ? 'EN wishlist' : 'NO en wishlist'}`);
+            
             // Mostrar estado de carga
             button.disabled = true;
             button.classList.add('loading');
@@ -474,11 +477,11 @@ function getImagePath($image_name)
                         if (isInWishlist) {
                             button.classList.remove('active');
                             icon.className = 'far fa-heart';
-                            console.log('💔 Removido de wishlist - Producto ID:', productId);
+                            console.log(`💔 ELIMINADO de wishlist - Producto ID: ${productId}`);
                         } else {
                             button.classList.add('active');
                             icon.className = 'fas fa-heart';
-                            console.log('💖 Agregado a wishlist - Producto ID:', productId);
+                            console.log(`💖 AGREGADO a wishlist - Producto ID: ${productId}`);
                         }
                         
                         // Actualizar contador en header si existe la función
