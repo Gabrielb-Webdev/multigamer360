@@ -43,18 +43,18 @@ body {
     flex-direction: column;
     font-family: 'Roboto', sans-serif;
     overflow-x: hidden; /* Prevenir scroll horizontal */
-    padding-top: 200px; /* Espacio para el header fijo completo - reducido */
+    padding-top: 150px; /* Espacio para el header fijo completo - REDUCIDO */
     transition: padding-top 0.3s ease-in-out;
 }
 
 /* Clase para cuando solo se muestra la navbar */
 body.navbar-only {
-    padding-top: 60px; /* Solo espacio para la navbar */
+    padding-top: 50px; /* Solo espacio para la navbar - REDUCIDO */
 }
 
 /* Clase para cuando solo se muestra la navbar */
 body.navbar-only {
-    padding-top: 60px; /* Solo espacio para la navbar */
+    padding-top: 50px; /* Solo espacio para la navbar - REDUCIDO */
 }
 
 /* Asegurar que los contenedores no causen overflow */
@@ -120,7 +120,7 @@ body.navbar-only {
 
 .header-banner img {
     width: 100%;
-    height: clamp(100px, 15vh, 150px); /* Altura responsive entre 100px y 150px */
+    height: clamp(70px, 12vh, 100px); /* Altura responsive entre 70px y 100px - REDUCIDO */
     display: block;
     object-fit: cover;
     object-position: center;
@@ -146,20 +146,20 @@ body.navbar-only {
 }
 
 .header-logo-img {
-    height: clamp(60px, 10vh, 100px); /* Altura responsive entre 60px y 100px */
+    height: clamp(45px, 8vh, 70px); /* Altura responsive entre 45px y 70px - REDUCIDO */
     width: auto;
     max-width: 100%; /* Evita que el logo se desborde */
     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .header-actions {
-    padding: 15px;
+    padding: 10px; /* REDUCIDO de 15px */
 }
 
 .header-btn {
     color: #ffffff !important;
-    font-size: 0.85rem;
-    padding: 8px 15px;
+    font-size: 0.75rem; /* REDUCIDO de 0.85rem */
+    padding: 6px 12px; /* REDUCIDO */
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border: none;
@@ -202,7 +202,7 @@ body.navbar-only {
     width: 100% !important;
     left: 0 !important;
     right: 0 !important;
-    min-height: 60px;
+    min-height: 50px; /* REDUCIDO de 60px */
     position: relative;
     display: block !important;
     opacity: 1 !important;
@@ -227,9 +227,9 @@ body.navbar-only {
 
 .nav-link {
     color: rgba(255, 255, 255, 0.95) !important;
-    padding: 1rem 1.5rem !important;
+    padding: 0.75rem 1.2rem !important; /* REDUCIDO padding */
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* REDUCIDO de 0.9rem */
     text-transform: uppercase;
     transition: all 0.3s ease;
     letter-spacing: 0.5px;
@@ -254,8 +254,8 @@ body.navbar-only {
 
 .dropdown-item {
     color: rgba(255, 255, 255, 0.9);
-    padding: 0.5rem 1.5rem;
-    font-size: 0.9rem;
+    padding: 0.4rem 1.2rem; /* REDUCIDO padding */
+    font-size: 0.8rem; /* REDUCIDO de 0.9rem */
     transition: all 0.3s ease;
 }
 
