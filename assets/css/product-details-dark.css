@@ -727,13 +727,24 @@
 /* Wishlist button loading animation */
 .btn-wishlist.loading {
     pointer-events: none;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .btn-wishlist.loading i {
-    animation: heartPulse 0.6s ease-in-out infinite;
+    animation: spin 1s linear infinite;
 }
 
+/* Animación de spinner rotando */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Animación de corazón (para futura referencia) */
 @keyframes heartPulse {
     0%, 100% {
         transform: scale(1);

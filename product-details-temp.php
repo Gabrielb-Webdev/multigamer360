@@ -92,7 +92,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.3">
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.4">
 
 <div class="container-fluid product-details-container">
 
@@ -476,7 +476,11 @@ function getImagePath($image_name)
             // Mostrar estado de carga
             button.disabled = true;
             button.classList.add('loading');
-            icon.className = 'fas fa-spinner fa-spin';
+            icon.className = 'fas fa-spinner';
+            
+            // Timestamp para asegurar mínimo 2 segundos de animación
+            const startTime = Date.now();
+            const minLoadingTime = 2000; // 2 segundos mínimo
             
             // Llamada AJAX para wishlist
             fetch('ajax/toggle-wishlist.php', {
@@ -489,34 +493,49 @@ function getImagePath($image_name)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Alternar estado visual
-                    if (isInWishlist) {
-                        button.classList.remove('active');
-                        icon.className = 'far fa-heart';
-                        console.log('💔 Producto removido de wishlist:', productId);
-                    } else {
-                        button.classList.add('active');
-                        icon.className = 'fas fa-heart';
-                        console.log('💖 Producto agregado a wishlist:', productId);
-                    }
+                    // Calcular tiempo restante para cumplir mínimo de 2 segundos
+                    const elapsedTime = Date.now() - startTime;
+                    const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
                     
-                    // Actualizar contador en header si existe la función
-                    if (typeof syncWishlistCount === 'function') {
-                        syncWishlistCount();
-                    }
+                    // Esperar el tiempo restante antes de actualizar UI
+                    setTimeout(() => {
+                        // Alternar estado visual
+                        if (isInWishlist) {
+                            button.classList.remove('active');
+                            icon.className = 'far fa-heart';
+                            console.log('💔 Producto removido de wishlist:', productId);
+                        } else {
+                            button.classList.add('active');
+                            icon.className = 'fas fa-heart';
+                            console.log('💖 Producto agregado a wishlist:', productId);
+                        }
+                        
+                        // Actualizar contador en header si existe la función
+                        if (typeof syncWishlistCount === 'function') {
+                            syncWishlistCount();
+                        }
+                        
+                        // Remover estado de carga
+                        button.disabled = false;
+                        button.classList.remove('loading');
+                    }, remainingTime);
                 } else {
                     throw new Error(data.message || 'Error al actualizar wishlist');
                 }
             })
             .catch(error => {
                 console.error('❌ Error con wishlist:', error);
-                // Restaurar estado original en caso de error
-                icon.className = isInWishlist ? 'fas fa-heart' : 'far fa-heart';
-            })
-            .finally(() => {
-                // Remover estado de carga
-                button.disabled = false;
-                button.classList.remove('loading');
+                
+                // Calcular tiempo restante incluso en error
+                const elapsedTime = Date.now() - startTime;
+                const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+                
+                setTimeout(() => {
+                    // Restaurar estado original en caso de error
+                    icon.className = isInWishlist ? 'fas fa-heart' : 'far fa-heart';
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                }, remainingTime);
             });
         }
     });
