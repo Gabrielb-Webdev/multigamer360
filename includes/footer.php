@@ -81,7 +81,7 @@
     
     <!-- JavaScript Files - Orden optimizado para evitar conflictos -->
     <script src="assets/js/mobile-menu.js?v=1.1"></script>
-    <script src="assets/js/wishlist-system.js?v=0.3"></script>
+    <script src="assets/js/wishlist-system.js?v=0.4"></script>
     <script src="assets/js/modern-cart-button.js?v=0.3"></script>
     <script src="assets/js/main.js?v=1.1"></script>
     

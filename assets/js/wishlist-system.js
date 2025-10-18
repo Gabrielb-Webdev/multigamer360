@@ -41,12 +41,15 @@
             const response = await fetch('ajax/get-wishlist-count.php');
             const data = await response.json();
             
+            console.log('📋 Cargando estado de wishlist desde servidor:', data);
+            
             if (data.success) {
+                console.log('✅ Items en wishlist:', data.items);
                 this.updateWishlistButtons(data.items || []);
                 this.updateWishlistCount(data.count || 0);
             }
         } catch (error) {
-            console.error('Error cargando estado de wishlist:', error);
+            console.error('❌ Error cargando estado de wishlist:', error);
         }
     }
 
@@ -117,7 +120,18 @@
         document.querySelectorAll('.btn-wishlist').forEach(button => {
             const productId = parseInt(button.getAttribute('data-product-id'));
             const inWishlist = wishlistItems.includes(productId);
-            this.updateButtonState(button, inWishlist);
+            
+            // IMPORTANTE: Solo actualizar si el botón NO tiene ya el estado correcto
+            // Esto respeta el estado inicial renderizado por PHP
+            const currentlyActive = button.classList.contains('active');
+            
+            // Si el estado es diferente al esperado, actualizarlo
+            if (currentlyActive !== inWishlist) {
+                console.log(`🔄 Sincronizando botón de producto ${productId}: ${inWishlist ? 'Agregando' : 'Quitando'} estado active`);
+                this.updateButtonState(button, inWishlist);
+            } else {
+                console.log(`✅ Botón de producto ${productId} ya tiene el estado correcto (active: ${currentlyActive})`);
+            }
         });
     }
 
