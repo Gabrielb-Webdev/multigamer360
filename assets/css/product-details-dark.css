@@ -370,22 +370,22 @@
 .price-cash {
     display: flex;
     align-items: baseline;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 8px; /* REDUCIDO de 10px */
+    margin-bottom: 10px; /* REDUCIDO de 15px */
 }
 
 .price-value {
-    font-size: 2rem;
+    font-size: 1.6rem; /* REDUCIDO de 2rem */
     font-weight: bold;
     color: #dc262b;
     text-shadow: 0 0 20px rgba(220, 38, 27, 0.5);
 }
 
 .price-label {
-    font-size: 0.85rem;
+    font-size: 0.75rem; /* REDUCIDO de 0.85rem */
     color: #999;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px; /* REDUCIDO de 1px */
 }
 
 .price-card {
@@ -435,12 +435,12 @@
 }
 
 .quantity-btn {
-    width: 45px;
-    height: 45px;
+    width: 36px; /* REDUCIDO de 45px */
+    height: 36px; /* REDUCIDO de 45px */
     border: none;
     background: #1a1a1a;
-    border-radius: 8px;
-    font-size: 1.5rem;
+    border-radius: 6px; /* REDUCIDO de 8px */
+    font-size: 1.2rem; /* REDUCIDO de 1.5rem */
     cursor: pointer;
     transition: all 0.3s ease;
     color: #dc262b;
@@ -457,13 +457,13 @@
 }
 
 .quantity-input {
-    width: 80px;
-    height: 45px;
+    width: 60px; /* REDUCIDO de 80px */
+    height: 36px; /* REDUCIDO de 45px */
     text-align: center;
     border: none;
     background: #1a1a1a;
-    border-radius: 8px;
-    font-size: 1.2rem;
+    border-radius: 6px; /* REDUCIDO de 8px */
+    font-size: 1rem; /* REDUCIDO de 1.2rem */
     color: white;
     font-weight: bold;
     appearance: textfield;
