@@ -92,7 +92,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.4">
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.5">
 
 <div class="container-fluid product-details-container">
 
@@ -449,9 +449,9 @@ function getImagePath($image_name)
             button.classList.add('loading');
             icon.className = 'fas fa-spinner';
             
-            // Timestamp para asegurar mínimo 2 segundos de animación
+            // Timestamp para asegurar mínimo de animación visible
             const startTime = Date.now();
-            const minLoadingTime = 2000; // 2 segundos mínimo
+            const minLoadingTime = 800; // 0.8 segundos mínimo
             
             // Llamada AJAX para wishlist
             fetch('ajax/toggle-wishlist.php', {
@@ -464,7 +464,7 @@ function getImagePath($image_name)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Calcular tiempo restante para cumplir mínimo de 2 segundos
+                    // Calcular tiempo restante para cumplir mínimo de animación
                     const elapsedTime = Date.now() - startTime;
                     const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
                     
