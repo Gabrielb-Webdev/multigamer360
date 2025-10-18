@@ -325,8 +325,9 @@
 /* Quantity selector comes second (middle) */
 .quantity-selector {
     order: 2;
-    justify-content: center;
+    justify-content: flex-start;
     margin: 0;
+    align-self: flex-start;
 }
 
 /* Add to cart button comes third (bottom) */
@@ -377,19 +378,19 @@
 .price-cash {
     display: flex;
     align-items: baseline;
-    gap: 15px;
+    gap: 10px;
     margin-bottom: 15px;
 }
 
 .price-value {
-    font-size: 3rem;
+    font-size: 2rem;
     font-weight: bold;
     color: #dc262b;
     text-shadow: 0 0 20px rgba(220, 38, 27, 0.5);
 }
 
 .price-label {
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: #999;
     text-transform: uppercase;
     letter-spacing: 1px;
