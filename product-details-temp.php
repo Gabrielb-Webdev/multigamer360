@@ -122,17 +122,24 @@ function getImagePath($image_name)
                         id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
 
                     <!-- Wishlist button overlay -->
-                    <!-- DEBUG: isInWishlist = <?php echo $isInWishlist ? 'true' : 'false'; ?> -->
-                    <?php 
-                    $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
-                    $btnClass = $isInWishlist ? 'favorite-btn-detail btn-wishlist active' : 'favorite-btn-detail btn-wishlist';
-                    ?>
-                    <button class="<?php echo $btnClass; ?>"
-                        data-product-id="<?php echo $current_product['id']; ?>"
-                        data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
-                        title="<?php echo $isInWishlist ? 'Quitar de wishlist' : 'Agregar a wishlist'; ?>">
-                        <i class="<?php echo $heartClass; ?>"></i>
-                    </button>
+                    <!-- DEBUG: isInWishlist = <?php echo $isInWishlist ? 'TRUE' : 'FALSE'; ?> -->
+                    <?php if ($isInWishlist): ?>
+                        <!-- PRODUCTO EN WISHLIST - Botón ACTIVO -->
+                        <button class="favorite-btn-detail btn-wishlist active"
+                            data-product-id="<?php echo $current_product['id']; ?>"
+                            data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
+                            title="Quitar de wishlist">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    <?php else: ?>
+                        <!-- PRODUCTO NO EN WISHLIST - Botón INACTIVO -->
+                        <button class="favorite-btn-detail btn-wishlist"
+                            data-product-id="<?php echo $current_product['id']; ?>"
+                            data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
+                            title="Agregar a wishlist">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Thumbnail Images -->

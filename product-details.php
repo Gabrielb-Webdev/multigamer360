@@ -174,19 +174,26 @@ function getImagePath($image_name)
                         - User ID: <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'N/A'; ?>
                         - Product ID: <?php echo $product_id; ?>
                         - isInWishlist: <?php echo $isInWishlist ? 'TRUE' : 'FALSE'; ?>
-                        - Heart Class: <?php echo $isInWishlist ? 'fas fa-heart (filled)' : 'far fa-heart (empty)'; ?>
-                        - Button Class: <?php echo $isInWishlist ? 'HAS active class' : 'NO active class'; ?>
+                        - Heart Class SHOULD BE: <?php echo $isInWishlist ? 'fas fa-heart (filled)' : 'far fa-heart (empty)'; ?>
+                        - Button Class SHOULD BE: <?php echo $isInWishlist ? 'HAS active class' : 'NO active class'; ?>
                     -->
-                    <?php 
-                    $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
-                    $btnClass = $isInWishlist ? 'favorite-btn-detail btn-wishlist active' : 'favorite-btn-detail btn-wishlist';
-                    ?>
-                    <button class="<?php echo $btnClass; ?>"
-                        data-product-id="<?php echo $current_product['id']; ?>"
-                        data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
-                        title="<?php echo $isInWishlist ? 'Quitar de wishlist' : 'Agregar a wishlist'; ?>">
-                        <i class="<?php echo $heartClass; ?>"></i>
-                    </button>
+                    <?php if ($isInWishlist): ?>
+                        <!-- PRODUCTO EN WISHLIST - Botón ACTIVO -->
+                        <button class="favorite-btn-detail btn-wishlist active"
+                            data-product-id="<?php echo $current_product['id']; ?>"
+                            data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
+                            title="Quitar de wishlist">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    <?php else: ?>
+                        <!-- PRODUCTO NO EN WISHLIST - Botón INACTIVO -->
+                        <button class="favorite-btn-detail btn-wishlist"
+                            data-product-id="<?php echo $current_product['id']; ?>"
+                            data-product-name="<?php echo htmlspecialchars($current_product['name']); ?>"
+                            title="Agregar a wishlist">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
