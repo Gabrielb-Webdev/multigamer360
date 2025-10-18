@@ -120,7 +120,7 @@ body.navbar-only {
 
 .header-banner img {
     width: 100%;
-    height: clamp(70px, 12vh, 100px); /* Altura responsive entre 70px y 100px - REDUCIDO */
+    height: clamp(70px, 10vh, 100px); /* Altura responsive entre 70px y 100px - REDUCIDO */
     display: block;
     object-fit: cover;
     object-position: center;
