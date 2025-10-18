@@ -64,6 +64,9 @@ if (isLoggedIn()) {
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM user_favorites WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$_SESSION['user_id'], $product_id]);
     $isInWishlist = $stmt->fetchColumn() > 0;
+    
+    // Debug: Verificar en logs
+    error_log("DEBUG WISHLIST - User ID: " . $_SESSION['user_id'] . ", Product ID: " . $product_id . ", En wishlist: " . ($isInWishlist ? 'SÍ' : 'NO'));
 }
 
 // Función para obtener ruta de imagen
@@ -155,6 +158,7 @@ function getImagePath($image_name)
                         id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
 
                     <!-- Wishlist button overlay -->
+                    <!-- DEBUG: isInWishlist = <?php echo $isInWishlist ? 'true' : 'false'; ?> -->
                     <?php 
                     $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
                     $btnClass = $isInWishlist ? 'favorite-btn-detail btn-wishlist active' : 'favorite-btn-detail btn-wishlist';
@@ -412,6 +416,17 @@ function getImagePath($image_name)
 
     // Funcionalidad inline para los botones de cantidad (cargado después de Bootstrap)
     document.addEventListener('DOMContentLoaded', function () {
+        // ===== DEBUG: VERIFICAR ESTADO INICIAL DEL BOTÓN WISHLIST =====
+        const wishlistBtnInitial = document.querySelector('.btn-wishlist');
+        if (wishlistBtnInitial) {
+            const hasActiveClass = wishlistBtnInitial.classList.contains('active');
+            const iconClass = wishlistBtnInitial.querySelector('i')?.className;
+            console.log('🔍 Estado inicial al cargar página:');
+            console.log('   - Tiene clase "active":', hasActiveClass);
+            console.log('   - Clase del ícono:', iconClass);
+            console.log('   - Producto ID:', wishlistBtnInitial.getAttribute('data-product-id'));
+        }
+        
         // ===== MODAL DE MEDIOS DE PAGO =====
         const paymentLink = document.getElementById('openPaymentModal');
         if (paymentLink) {
