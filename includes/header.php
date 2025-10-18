@@ -129,7 +129,7 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
                     } else {
                         wishlistBadge.style.display = 'none';
                     }
-                    console.log('Wishlist count updated to:', data.count);
+                    console.log('✅ Contador actualizado - Total en wishlist:', data.count);
                 }
             })
             .catch(error => console.log('Wishlist sync error:', error));

@@ -503,11 +503,11 @@ function getImagePath($image_name)
                         if (isInWishlist) {
                             button.classList.remove('active');
                             icon.className = 'far fa-heart';
-                            console.log('💔 Producto removido de wishlist:', productId);
+                            console.log('💔 Removido de wishlist - Producto ID:', productId);
                         } else {
                             button.classList.add('active');
                             icon.className = 'fas fa-heart';
-                            console.log('💖 Producto agregado a wishlist:', productId);
+                            console.log('💖 Agregado a wishlist - Producto ID:', productId);
                         }
                         
                         // Actualizar contador en header si existe la función
