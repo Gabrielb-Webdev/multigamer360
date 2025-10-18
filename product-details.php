@@ -61,12 +61,22 @@ $current_product['is_on_sale'] = $current_product['is_on_sale'] ?? 0;
 // Obtener wishlist del usuario si está logueado
 $isInWishlist = false;
 if (isLoggedIn()) {
+    // Debug COMPLETO: Verificar sesión y consulta
+    error_log("=== DEBUG WISHLIST INICIO ===");
+    error_log("User logged in: SÍ");
+    error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NO EXISTE'));
+    error_log("Product ID: " . $product_id);
+    
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM user_favorites WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$_SESSION['user_id'], $product_id]);
-    $isInWishlist = $stmt->fetchColumn() > 0;
+    $count = $stmt->fetchColumn();
+    $isInWishlist = $count > 0;
     
-    // Debug: Verificar en logs
-    error_log("DEBUG WISHLIST - User ID: " . $_SESSION['user_id'] . ", Product ID: " . $product_id . ", En wishlist: " . ($isInWishlist ? 'SÍ' : 'NO'));
+    error_log("Registros encontrados en user_favorites: " . $count);
+    error_log("isInWishlist resultado: " . ($isInWishlist ? 'TRUE' : 'FALSE'));
+    error_log("=== DEBUG WISHLIST FIN ===");
+} else {
+    error_log("=== DEBUG WISHLIST: Usuario NO logueado ===");
 }
 
 // Función para obtener ruta de imagen
@@ -158,7 +168,15 @@ function getImagePath($image_name)
                         id="mainProductImage" onerror="this.src='assets/images/products/product1.jpg'">
 
                     <!-- Wishlist button overlay -->
-                    <!-- DEBUG: isInWishlist = <?php echo $isInWishlist ? 'true' : 'false'; ?> -->
+                    <!-- 
+                        DEBUG WISHLIST STATE:
+                        - User Logged In: <?php echo isLoggedIn() ? 'YES' : 'NO'; ?>
+                        - User ID: <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'N/A'; ?>
+                        - Product ID: <?php echo $product_id; ?>
+                        - isInWishlist: <?php echo $isInWishlist ? 'TRUE' : 'FALSE'; ?>
+                        - Heart Class: <?php echo $isInWishlist ? 'fas fa-heart (filled)' : 'far fa-heart (empty)'; ?>
+                        - Button Class: <?php echo $isInWishlist ? 'HAS active class' : 'NO active class'; ?>
+                    -->
                     <?php 
                     $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
                     $btnClass = $isInWishlist ? 'favorite-btn-detail btn-wishlist active' : 'favorite-btn-detail btn-wishlist';
@@ -420,11 +438,23 @@ function getImagePath($image_name)
         const wishlistBtnInitial = document.querySelector('.btn-wishlist');
         if (wishlistBtnInitial) {
             const hasActiveClass = wishlistBtnInitial.classList.contains('active');
-            const iconClass = wishlistBtnInitial.querySelector('i')?.className;
-            console.log('🔍 Estado inicial al cargar página:');
-            console.log('   - Tiene clase "active":', hasActiveClass);
-            console.log('   - Clase del ícono:', iconClass);
-            console.log('   - Producto ID:', wishlistBtnInitial.getAttribute('data-product-id'));
+            const iconElement = wishlistBtnInitial.querySelector('i');
+            const iconClass = iconElement?.className || 'NO ICON';
+            const productId = wishlistBtnInitial.getAttribute('data-product-id');
+            const allClasses = wishlistBtnInitial.className;
+            
+            console.log('===========================================');
+            console.log('🔍 DEBUG WISHLIST - Estado al cargar página');
+            console.log('===========================================');
+            console.log('Producto ID:', productId);
+            console.log('Tiene clase "active":', hasActiveClass ? '✅ SÍ' : '❌ NO');
+            console.log('Todas las clases del botón:', allClasses);
+            console.log('Clase del ícono:', iconClass);
+            console.log('¿Es corazón lleno (fas)?:', iconClass.includes('fas') ? '✅ SÍ' : '❌ NO');
+            console.log('¿Es corazón vacío (far)?:', iconClass.includes('far') ? '✅ SÍ' : '❌ NO');
+            console.log('===========================================');
+        } else {
+            console.error('❌ ERROR: No se encontró el botón .btn-wishlist');
         }
         
         // ===== MODAL DE MEDIOS DE PAGO =====
