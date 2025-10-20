@@ -374,68 +374,50 @@ function getImagePath($image_name)
 </div>
 
 <!-- Similar Products Section -->
+<?php if (!empty($similar_products)): ?>
 <section class="similar-products-section">
     <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
     <div class="row">
+        <?php foreach ($similar_products as $similar): 
+            // Obtener imagen del producto similar
+            $similar_image = !empty($similar['primary_image']) ? $similar['primary_image'] : 
+                            (!empty($similar['image_url']) ? $similar['image_url'] : 'product1.jpg');
+            $similar_image_path = getImagePath($similar_image);
+            
+            // Calcular precio con descuento (10% menos)
+            $price_cash = $similar['price_pesos'];
+            $price_card = $price_cash * 1.10; // 10% más con tarjeta
+        ?>
         <div class="col-md-3 col-sm-6 mb-4">
             <div class="similar-product-card">
-                <img src="assets/images/products/product2.jpg" alt="Final Fantasy XVI PlayStation" class="img-fluid">
+                <img src="<?php echo htmlspecialchars($similar_image_path); ?>" 
+                     alt="<?php echo htmlspecialchars($similar['name']); ?>" 
+                     class="img-fluid"
+                     onerror="this.src='assets/images/products/product1.jpg'">
                 <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
+                    <h6><?php echo htmlspecialchars($similar['name']); ?></h6>
                     <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
+                        <span class="similar-price-cash">$<?php echo number_format($price_cash, 0, ',', '.'); ?></span>
                         <span class="similar-price-label">En efectivo</span>
                     </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
+                    <div class="similar-price-card">$<?php echo number_format($price_card, 0, ',', '.'); ?></div>
+                    
+                    <?php if ($similar['stock_quantity'] > 0): ?>
+                        <a href="product-details.php?id=<?php echo $similar['id']; ?>" class="btn-view-similar">
+                            <i class="fas fa-eye"></i> Ver Producto
+                        </a>
+                    <?php else: ?>
+                        <a href="product-details.php?id=<?php echo $similar['id']; ?>" class="btn-view-similar" style="opacity: 0.6;">
+                            <i class="fas fa-eye"></i> Ver Producto (Sin Stock)
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="assets/images/products/product3.jpg" alt="Final Fantasy XVI PlayStation" class="img-fluid">
-                <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="assets/images/products/product4.jpg" alt="Final Fantasy XVI PlayStation" class="img-fluid">
-                <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="assets/images/products/retro-consola-2.jpg" alt="Final Fantasy XVI PlayStation"
-                    class="img-fluid">
-                <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
-                </div>
-            </div>
-        </div>
+        <?php endforeach; ?>
     </div>
 </section>
+<?php endif; ?>
 </div>
 
 <?php include 'includes/footer.php'; ?>
