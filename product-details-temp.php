@@ -69,6 +69,68 @@ if (isLoggedIn()) {
     error_log("DEBUG WISHLIST - User ID: " . $_SESSION['user_id'] . ", Product ID: " . $product_id . ", En wishlist: " . ($isInWishlist ? 'SÍ' : 'NO'));
 }
 
+// ============================================================
+// OBTENER PRODUCTOS SIMILARES DE LA BASE DE DATOS
+// ============================================================
+$similar_products = [];
+try {
+    // Primero intentar obtener productos de la misma categoría
+    if (!empty($current_product['category_id'])) {
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity,
+                   COALESCE(
+                       (SELECT pi.image_url 
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        AND pi.is_primary = 1
+                        LIMIT 1),
+                       p.image_url
+                   ) as primary_image
+            FROM products p
+            WHERE p.category_id = ? 
+            AND p.id != ? 
+            AND p.is_active = 1
+            ORDER BY RAND()
+            LIMIT 4
+        ");
+        $stmt->execute([$current_product['category_id'], $product_id]);
+        $similar_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Si no hay suficientes productos de la misma categoría, completar con aleatorios
+    if (count($similar_products) < 4) {
+        $needed = 4 - count($similar_products);
+        $exclude_ids = array_merge([$product_id], array_column($similar_products, 'id'));
+        $placeholders = str_repeat('?,', count($exclude_ids) - 1) . '?';
+        
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity,
+                   COALESCE(
+                       (SELECT pi.image_url 
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        AND pi.is_primary = 1
+                        LIMIT 1),
+                       p.image_url
+                   ) as primary_image
+            FROM products p
+            WHERE p.id NOT IN ($placeholders)
+            AND p.is_active = 1
+            ORDER BY RAND()
+            LIMIT ?
+        ");
+        
+        $params = array_merge($exclude_ids, [$needed]);
+        $stmt->execute($params);
+        $additional_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $similar_products = array_merge($similar_products, $additional_products);
+    }
+} catch (Exception $e) {
+    error_log("ERROR al obtener productos similares: " . $e->getMessage());
+    $similar_products = [];
+}
+
 // Función para obtener ruta de imagen
 function getImagePath($image_name)
 {

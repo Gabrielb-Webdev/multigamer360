@@ -102,6 +102,68 @@ echo "<!-- Records Found: " . $wishlist_debug['count'] . " -->";
 echo "<!-- isInWishlist: " . ($wishlist_debug['result'] ? 'TRUE' : 'FALSE') . " -->";
 echo "<!-- ========================================= -->";
 
+// ============================================================
+// OBTENER PRODUCTOS SIMILARES DE LA BASE DE DATOS
+// ============================================================
+$similar_products = [];
+try {
+    // Primero intentar obtener productos de la misma categoría
+    if (!empty($current_product['category_id'])) {
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity,
+                   COALESCE(
+                       (SELECT pi.image_url 
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        AND pi.is_primary = 1
+                        LIMIT 1),
+                       p.image_url
+                   ) as primary_image
+            FROM products p
+            WHERE p.category_id = ? 
+            AND p.id != ? 
+            AND p.is_active = 1
+            ORDER BY RAND()
+            LIMIT 4
+        ");
+        $stmt->execute([$current_product['category_id'], $product_id]);
+        $similar_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Si no hay suficientes productos de la misma categoría, completar con aleatorios
+    if (count($similar_products) < 4) {
+        $needed = 4 - count($similar_products);
+        $exclude_ids = array_merge([$product_id], array_column($similar_products, 'id'));
+        $placeholders = str_repeat('?,', count($exclude_ids) - 1) . '?';
+        
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity,
+                   COALESCE(
+                       (SELECT pi.image_url 
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        AND pi.is_primary = 1
+                        LIMIT 1),
+                       p.image_url
+                   ) as primary_image
+            FROM products p
+            WHERE p.id NOT IN ($placeholders)
+            AND p.is_active = 1
+            ORDER BY RAND()
+            LIMIT ?
+        ");
+        
+        $params = array_merge($exclude_ids, [$needed]);
+        $stmt->execute($params);
+        $additional_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $similar_products = array_merge($similar_products, $additional_products);
+    }
+} catch (Exception $e) {
+    error_log("ERROR al obtener productos similares: " . $e->getMessage());
+    $similar_products = [];
+}
+
 // Función para obtener ruta de imagen
 function getImagePath($image_name)
 {
@@ -382,76 +444,50 @@ function getImagePath($image_name)
 </div>
 
 <!-- Similar Products Section -->
+<?php if (!empty($similar_products)): ?>
 <section class="similar-products-section">
     <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
     <div class="row">
+        <?php foreach ($similar_products as $similar): 
+            // Obtener imagen del producto similar
+            $similar_image = !empty($similar['primary_image']) ? $similar['primary_image'] : 
+                            (!empty($similar['image_url']) ? $similar['image_url'] : 'product1.jpg');
+            $similar_image_path = getImagePath($similar_image);
+            
+            // Calcular precio con descuento (10% menos)
+            $price_cash = $similar['price_pesos'];
+            $price_card = $price_cash * 1.10; // 10% más con tarjeta
+        ?>
         <div class="col-md-3 col-sm-6 mb-4">
             <div class="similar-product-card">
-                <img src="assets/images/products/product2.jpg" alt="Final Fantasy XVI PlayStation" class="img-fluid">
+                <img src="<?php echo htmlspecialchars($similar_image_path); ?>" 
+                     alt="<?php echo htmlspecialchars($similar['name']); ?>" 
+                     class="img-fluid"
+                     onerror="this.src='assets/images/products/product1.jpg'">
                 <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
+                    <h6><?php echo htmlspecialchars($similar['name']); ?></h6>
                     <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
+                        <span class="similar-price-cash">$<?php echo number_format($price_cash, 0, ',', '.'); ?></span>
                         <span class="similar-price-label">En efectivo</span>
                     </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <a href="product-details.php?id=2" class="btn-view-similar">
-                        <i class="fas fa-eye"></i> Ver Producto
-                    </a>
+                    <div class="similar-price-card">$<?php echo number_format($price_card, 0, ',', '.'); ?></div>
+                    
+                    <?php if ($similar['stock_quantity'] > 0): ?>
+                        <a href="product-details.php?id=<?php echo $similar['id']; ?>" class="btn-view-similar">
+                            <i class="fas fa-eye"></i> Ver Producto
+                        </a>
+                    <?php else: ?>
+                        <a href="product-details.php?id=<?php echo $similar['id']; ?>" class="btn-view-similar" style="opacity: 0.6;">
+                            <i class="fas fa-eye"></i> Ver Producto (Sin Stock)
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="assets/images/products/product3.jpg" alt="Final Fantasy XVI PlayStation" class="img-fluid">
-                <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <a href="product-details.php?id=3" class="btn-view-similar">
-                        <i class="fas fa-eye"></i> Ver Producto
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="assets/images/products/product4.jpg" alt="Final Fantasy XVI PlayStation" class="img-fluid">
-                <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <a href="product-details.php?id=4" class="btn-view-similar">
-                        <i class="fas fa-eye"></i> Ver Producto
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="assets/images/products/retro-consola-2.jpg" alt="Final Fantasy XVI PlayStation"
-                    class="img-fluid">
-                <div class="similar-product-info">
-                    <h6>Final Fantasy XVI PlayStation</h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$30.000</span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$40.000</div>
-                    <a href="product-details.php?id=5" class="btn-view-similar">
-                        <i class="fas fa-eye"></i> Ver Producto
-                    </a>
-                </div>
-            </div>
-        </div>
+        <?php endforeach; ?>
     </div>
 </section>
+<?php endif; ?>
 </div>
 
 <?php include 'includes/footer.php'; ?>
