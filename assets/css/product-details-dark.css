@@ -671,6 +671,44 @@
     margin-bottom: 15px;
 }
 
+/* Botón Ver Producto en productos similares */
+.btn-view-similar {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+}
+
+.btn-view-similar:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.btn-view-similar i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-view-similar:hover i {
+    transform: scale(1.1);
+}
+
 .btn-view-details {
     width: 100%;
     padding: 12px;

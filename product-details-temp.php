@@ -95,7 +95,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.6">
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.7">
 
 <div class="container-fluid product-details-container">
 

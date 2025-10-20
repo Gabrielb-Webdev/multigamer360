@@ -128,7 +128,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.6">
+<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.7">
 
 <div class="container-fluid product-details-container">
 
@@ -395,7 +395,9 @@ function getImagePath($image_name)
                         <span class="similar-price-label">En efectivo</span>
                     </div>
                     <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
+                    <a href="product-details.php?id=2" class="btn-view-similar">
+                        <i class="fas fa-eye"></i> Ver Producto
+                    </a>
                 </div>
             </div>
         </div>
@@ -409,7 +411,9 @@ function getImagePath($image_name)
                         <span class="similar-price-label">En efectivo</span>
                     </div>
                     <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
+                    <a href="product-details.php?id=3" class="btn-view-similar">
+                        <i class="fas fa-eye"></i> Ver Producto
+                    </a>
                 </div>
             </div>
         </div>
@@ -423,7 +427,9 @@ function getImagePath($image_name)
                         <span class="similar-price-label">En efectivo</span>
                     </div>
                     <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
+                    <a href="product-details.php?id=4" class="btn-view-similar">
+                        <i class="fas fa-eye"></i> Ver Producto
+                    </a>
                 </div>
             </div>
         </div>
@@ -438,7 +444,9 @@ function getImagePath($image_name)
                         <span class="similar-price-label">En efectivo</span>
                     </div>
                     <div class="similar-price-card">$40.000</div>
-                    <!-- REMOVED: Conflicting cart button -->
+                    <a href="product-details.php?id=5" class="btn-view-similar">
+                        <i class="fas fa-eye"></i> Ver Producto
+                    </a>
                 </div>
             </div>
         </div>
