@@ -80,10 +80,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- JavaScript Files - Orden optimizado para evitar conflictos -->
-    <script src="/assets/js/mobile-menu.js?v=1.1"></script>
-    <script src="/assets/js/wishlist-system.js?v=0.4"></script>
-    <script src="/assets/js/modern-cart-button.js?v=0.3"></script>
-    <script src="/assets/js/main.js?v=1.1"></script>
+    <script src="/assets/js/mobile-menu.js?v=1.2"></script>
+    <script src="/assets/js/wishlist-system.js?v=0.5"></script>
+    <script src="/assets/js/modern-cart-button.js?v=0.4"></script>
+    <script src="/assets/js/main.js?v=1.2"></script>
     
     <!-- Verificación de errores y limpieza -->
     <script>
@@ -177,8 +177,9 @@
     <!-- Script para actualizar carrito al cargar página -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const baseUrl = window.SITE_URL || '';
             // Actualizar el estado del carrito inmediatamente al cargar la página
-            fetch('/ajax/get-cart-count.php', {
+            fetch(`${baseUrl}/ajax/get-cart-count.php`, {
                 credentials: 'same-origin',
                 headers: {
                     'Cache-Control': 'no-cache'

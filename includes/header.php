@@ -65,11 +65,17 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
     <title>MultiGamer360 - Tu tienda de videojuegos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="/assets/css/style.css?v=1.2">
+    <link rel="stylesheet" href="/assets/css/style.css?v=1.3">
     <!-- CSS específico para la página de contacto moderna -->
-    <link rel="stylesheet" href="/assets/css/contact-modern.css?v=0.3">
+    <link rel="stylesheet" href="/assets/css/contact-modern.css?v=0.4">
     <!-- CSS para botón moderno de carrito -->
-    <link rel="stylesheet" href="/assets/css/cart-button-modern.css?v=0.3">
+    <link rel="stylesheet" href="/assets/css/cart-button-modern.css?v=0.4">
+    
+    <!-- Base URL para JavaScript -->
+    <script>
+        // URL base del sitio para rutas AJAX
+        window.SITE_URL = '<?php echo rtrim(BASE_URL, '/'); ?>';
+    </script>
     
     <!-- Script para detectar horario local del usuario -->
     <script>
@@ -85,9 +91,10 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
         // Detectar horario local del usuario y enviarlo al servidor
         document.addEventListener('DOMContentLoaded', function() {
             const userHour = new Date().getHours();
+            const baseUrl = window.SITE_URL || '';
             
             // Enviar la hora local al servidor vía AJAX para guardarla en la sesión
-            fetch('/ajax/set-user-timezone.php', {
+            fetch(`${baseUrl}/ajax/set-user-timezone.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -124,7 +131,8 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
         
         // Sincronización de wishlist count (solo si es necesario)
         function syncWishlistCount() {
-            fetch('/ajax/get-wishlist-count.php', {
+            const baseUrl = window.SITE_URL || '';
+            fetch(`${baseUrl}/ajax/get-wishlist-count.php`, {
                 credentials: 'same-origin',
                 headers: {
                     'Cache-Control': 'no-cache',

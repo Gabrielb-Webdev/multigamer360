@@ -38,7 +38,8 @@
     // Cargar estado de la wishlist
     async loadWishlistState() {
         try {
-            const response = await fetch('/ajax/get-wishlist-count.php');
+            const baseUrl = window.SITE_URL || '';
+            const response = await fetch(`${baseUrl}/ajax/get-wishlist-count.php`);
             const data = await response.json();
             
             console.log('📋 Cargando estado de wishlist desde servidor:', data);
@@ -65,7 +66,8 @@
             formData.append('product_id', productId);
             formData.append('action', 'toggle');
 
-            const response = await fetch('/ajax/toggle-wishlist.php', {
+            const baseUrl = window.SITE_URL || '';
+            const response = await fetch(`${baseUrl}/ajax/toggle-wishlist.php`, {
                 method: 'POST',
                 body: formData
             });

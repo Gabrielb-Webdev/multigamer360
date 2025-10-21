@@ -139,7 +139,8 @@
             quantity: 1
         });
 
-        const response = await fetch('/ajax/add-to-cart.php', {
+        const baseUrl = window.SITE_URL || '';
+        const response = await fetch(`${baseUrl}/ajax/add-to-cart.php`, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin', // Incluir cookies de sesión
@@ -358,7 +359,8 @@
     forceSyncCart() {
         // Pequeño delay para permitir que el servidor procese completamente
         setTimeout(() => {
-            fetch('/ajax/get-cart-count.php', {
+            const baseUrl = window.SITE_URL || '';
+            fetch(`${baseUrl}/ajax/get-cart-count.php`, {
                 credentials: 'same-origin',
                 headers: {
                     'Cache-Control': 'no-cache',

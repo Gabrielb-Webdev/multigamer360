@@ -594,8 +594,9 @@ function getImagePath($image_name)
             const startTime = Date.now();
             const minLoadingTime = 800; // 0.8 segundos mínimo
             
+            const baseUrl = window.SITE_URL || '';
             // Llamada AJAX para wishlist
-            fetch('/ajax/toggle-wishlist.php', {
+            fetch(`${baseUrl}/ajax/toggle-wishlist.php`, {
                 method: 'POST',
                 body: new URLSearchParams({
                     product_id: productId,
