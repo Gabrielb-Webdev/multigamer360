@@ -32,6 +32,9 @@
     # Redireccionar URLs amigables
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
+    # URL por slug (más amigable SEO): /producto/kingdom-hearts-2
+    RewriteRule ^producto/([a-zA-Z0-9\-]+)$ product-details.php?slug=$1 [L,QSA]
+    # URL por ID (fallback): /productos/5
     RewriteRule ^productos/([0-9]+)$ product-details.php?id=$1 [L,QSA]
     RewriteRule ^categoria/([^/]+)$ productos.php?categoria=$1 [L,QSA]
     RewriteRule ^marca/([^/]+)$ productos.php?marca=$1 [L,QSA]

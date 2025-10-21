@@ -590,7 +590,7 @@ require_once 'inc/header.php';
                                     Volver a Productos
                                 </a>
                                 
-                                <a href="../product.php?id=<?php echo $product_id; ?>" 
+                                <a href="../<?php echo getProductUrl($product); ?>" 
                                    class="btn btn-outline-info" target="_blank">
                                     <i class="fas fa-eye me-2"></i>
                                     Ver en Sitio

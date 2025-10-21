@@ -483,7 +483,7 @@ try {
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="../product-details.php?id=<?php echo $product['id']; ?>" 
+                                    <a href="../<?php echo getProductUrl($product); ?>" 
                                        class="btn btn-sm btn-outline-info" target="_blank"
                                        data-bs-toggle="tooltip" title="Ver en sitio">
                                         <i class="fas fa-eye"></i>

@@ -191,16 +191,23 @@ class ProductManager {
     
     // Obtener producto por slug
     public function getProductBySlug($slug) {
-        $sql = "SELECT p.*, c.name as category_name, b.name as brand_name 
+        $sql = "SELECT p.*, 
+                       c.name as category_name, 
+                       b.name as brand_name,
+                       co.name as console_name,
+                       co.slug as console_slug,
+                       pi.image_url as primary_image
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.slug = :slug AND p.is_active = TRUE";
+                LEFT JOIN consoles co ON p.console_id = co.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+                WHERE p.slug = :slug AND p.is_active = 1";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':slug', $slug);
         $stmt->execute();
-        return $stmt->fetch();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
     // Obtener productos relacionados

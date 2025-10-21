@@ -38,6 +38,7 @@ try {
     // Incluir archivos necesarios
     require_once 'config/database.php';
     require_once 'includes/auth.php';
+    require_once 'includes/functions.php';
     require_once 'includes/product_manager.php';
     require_once 'includes/smart_filters_v2.php'; // ACTUALIZADO: Nueva versión con tablas relacionales
     
@@ -529,7 +530,7 @@ require_once 'includes/header.php';
                                 </button>
                                 
                                 <!-- Botón de vista rápida siempre visible -->
-                                <a href="product-details.php?id=<?php echo $product['id']; ?>" 
+                                <a href="<?php echo getProductUrl($product); ?>" 
                                    class="btn-view-fixed"
                                    title="Ver detalles del producto">
                                     <i class="far fa-eye"></i>

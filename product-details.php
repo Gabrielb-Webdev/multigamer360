@@ -18,6 +18,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Incluir configuración de base de datos primero
 require_once 'config/database.php';
 require_once 'includes/auth.php';
+require_once 'includes/functions.php';
 require_once 'includes/product_manager.php';
 
 // Crear instancia del manager de productos
@@ -25,17 +26,31 @@ $productManager = new ProductManager($pdo);
 
 include 'includes/header.php';
 
-// Obtener parámetros del producto
-$product_id = isset($_GET['id']) ? (int) $_GET['id'] : 1;
+// Obtener parámetros del producto (prioridad a slug para SEO)
+$product_slug = isset($_GET['slug']) ? trim($_GET['slug']) : null;
+$product_id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 
 // Obtener producto desde la base de datos
-$current_product = $productManager->getProductById($product_id);
+if ($product_slug) {
+    // Buscar por slug (mejor para SEO)
+    $current_product = $productManager->getProductBySlug($product_slug);
+} elseif ($product_id) {
+    // Fallback: buscar por ID
+    $current_product = $productManager->getProductById($product_id);
+} else {
+    // Sin parámetros válidos
+    header('Location: productos.php');
+    exit;
+}
 
 // Si no se encuentra el producto, redirigir a productos
 if (!$current_product) {
     header('Location: productos.php');
     exit;
 }
+
+// Obtener el ID del producto para las consultas siguientes
+$product_id = $current_product['id'];
 
 // Obtener todas las imágenes del producto
 $product_images = $productManager->getProductImages($product_id);
@@ -473,11 +488,11 @@ function getImagePath($image_name)
                     <div class="similar-price-card">$<?php echo number_format($price_card, 0, ',', '.'); ?></div>
                     
                     <?php if ($similar['stock_quantity'] > 0): ?>
-                        <a href="product-details.php?id=<?php echo $similar['id']; ?>" class="btn-view-similar">
+                        <a href="<?php echo getProductUrl($similar); ?>" class="btn-view-similar">
                             <i class="fas fa-eye"></i> Ver Producto
                         </a>
                     <?php else: ?>
-                        <a href="product-details.php?id=<?php echo $similar['id']; ?>" class="btn-view-similar" style="opacity: 0.6;">
+                        <a href="<?php echo getProductUrl($similar); ?>" class="btn-view-similar" style="opacity: 0.6;">
                             <i class="fas fa-eye"></i> Ver Producto (Sin Stock)
                         </a>
                     <?php endif; ?>

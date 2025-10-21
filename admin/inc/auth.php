@@ -8,6 +8,7 @@
 session_start();
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/user_manager_simple.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {

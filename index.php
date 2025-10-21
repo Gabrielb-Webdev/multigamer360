@@ -28,6 +28,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Incluir archivos necesarios
 require_once 'config/database.php';
 require_once 'includes/auth.php';
+require_once 'includes/functions.php';
 require_once 'includes/product_manager.php';
 require_once 'config/user_manager.php';
 
@@ -260,7 +261,7 @@ include 'includes/header.php';
                                             <p class="product-price-cash">$<?php echo number_format($cash_price, 0, ',', '.'); ?> En efectivo</p>
                                             <p class="product-price-card">$<?php echo number_format($regular_price, 0, ',', '.'); ?></p>
                                             <div class="card-buttons">
-                                                <a href="product-details.php?id=<?php echo $product['id']; ?>&name=<?php echo urlencode($product['name']); ?>" 
+                                                <a href="<?php echo getProductUrl($product); ?>" 
                                                    class="btn btn-secondary view-details me-2">
                                                    <i class="fas fa-eye"></i>
                                                 </a>
@@ -321,7 +322,7 @@ include 'includes/header.php';
                                                         <p class="featured-price-card text-decoration-line-through">$<?php echo number_format($product['sale_price'], 0, ',', '.'); ?></p>
                                                     <?php endif; ?>
                                                     <div class="featured-buttons">
-                                                        <a href="product-details.php?id=<?php echo $product['id']; ?>&slug=<?php echo $product['slug']; ?>" 
+                                                        <a href="<?php echo getProductUrl($product); ?>" 
                                                            class="btn btn-outline-light view-details-featured me-2">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
