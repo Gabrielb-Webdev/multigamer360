@@ -4179,6 +4179,32 @@ main {
     transform: translateY(-1px);
 }
 
+.btn-view-similar {
+    background-color: var(--primary-color);
+    color: white !important;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: auto;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-view-similar:hover {
+    background-color: #a00000;
+    transform: translateY(-2px);
+    color: white !important;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(212, 26, 32, 0.4);
+}
+
 /* Responsive Design for Product Details */
 @media (max-width: 768px) {
     .product-image-section,

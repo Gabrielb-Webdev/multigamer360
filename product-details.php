@@ -125,7 +125,7 @@ try {
     // Primero intentar obtener productos de la misma categoría
     if (!empty($current_product['category_id'])) {
         $stmt = $pdo->prepare("
-            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity,
+            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
                    COALESCE(
                        (SELECT pi.image_url 
                         FROM product_images pi 
@@ -143,6 +143,7 @@ try {
         ");
         $stmt->execute([$current_product['category_id'], $product_id]);
         $similar_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        error_log("PRODUCTOS SIMILARES - Misma categoría: " . count($similar_products) . " productos encontrados");
     }
     
     // Si no hay suficientes productos de la misma categoría, completar con aleatorios
@@ -152,7 +153,7 @@ try {
         $placeholders = str_repeat('?,', count($exclude_ids) - 1) . '?';
         
         $stmt = $pdo->prepare("
-            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity,
+            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
                    COALESCE(
                        (SELECT pi.image_url 
                         FROM product_images pi 
@@ -173,11 +174,13 @@ try {
         $additional_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $similar_products = array_merge($similar_products, $additional_products);
+        error_log("PRODUCTOS SIMILARES - Completando con aleatorios: " . count($additional_products) . " productos agregados. Total: " . count($similar_products));
     }
 } catch (Exception $e) {
     error_log("ERROR al obtener productos similares: " . $e->getMessage());
     $similar_products = [];
 }
+error_log("PRODUCTOS SIMILARES - Total final: " . count($similar_products) . " productos");
 
 // Función para obtener ruta de imagen
 function getImagePath($image_name)
@@ -460,50 +463,56 @@ function getImagePath($image_name)
 
 <!-- Similar Products Section -->
 <?php if (!empty($similar_products)): ?>
-<section class="similar-products-section">
-    <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
-    <div class="row">
-        <?php foreach ($similar_products as $similar): 
-            // Obtener imagen del producto similar
-            $similar_image = !empty($similar['primary_image']) ? $similar['primary_image'] : 
-                            (!empty($similar['image_url']) ? $similar['image_url'] : 'product1.jpg');
-            $similar_image_path = getImagePath($similar_image);
-            
-            // Calcular precio con descuento (10% menos)
-            $price_cash = $similar['price_pesos'];
-            $price_card = $price_cash * 1.10; // 10% más con tarjeta
-        ?>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="similar-product-card">
-                <img src="<?php echo htmlspecialchars($similar_image_path); ?>" 
-                     alt="<?php echo htmlspecialchars($similar['name']); ?>" 
-                     class="img-fluid"
-                     onerror="this.src='assets/images/products/product1.jpg'">
-                <div class="similar-product-info">
-                    <h6><?php echo htmlspecialchars($similar['name']); ?></h6>
-                    <div class="similar-price">
-                        <span class="similar-price-cash">$<?php echo number_format($price_cash, 0, ',', '.'); ?></span>
-                        <span class="similar-price-label">En efectivo</span>
-                    </div>
-                    <div class="similar-price-card">$<?php echo number_format($price_card, 0, ',', '.'); ?></div>
+<div class="container-fluid mt-5">
+    <section class="similar-products-section">
+        <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
+        <div class="container">
+            <div class="row">
+                <?php foreach ($similar_products as $similar): 
+                    // Obtener imagen del producto similar
+                    $similar_image = !empty($similar['primary_image']) ? $similar['primary_image'] : 
+                                    (!empty($similar['image_url']) ? $similar['image_url'] : 'product1.jpg');
+                    $similar_image_path = getImagePath($similar_image);
                     
-                    <?php if ($similar['stock_quantity'] > 0): ?>
-                        <a href="<?php echo getProductUrl($similar); ?>" class="btn-view-similar">
-                            <i class="fas fa-eye"></i> Ver Producto
-                        </a>
-                    <?php else: ?>
-                        <a href="<?php echo getProductUrl($similar); ?>" class="btn-view-similar" style="opacity: 0.6;">
-                            <i class="fas fa-eye"></i> Ver Producto (Sin Stock)
-                        </a>
-                    <?php endif; ?>
+                    // Calcular precio con descuento (10% menos)
+                    $price_cash = $similar['price_pesos'];
+                    $price_card = $price_cash * 1.10; // 10% más con tarjeta
+                ?>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="similar-product-card">
+                        <img src="<?php echo htmlspecialchars($similar_image_path); ?>" 
+                             alt="<?php echo htmlspecialchars($similar['name']); ?>" 
+                             class="img-fluid"
+                             onerror="this.src='/assets/images/products/product1.jpg'">
+                        <div class="similar-product-info">
+                            <h6><?php echo htmlspecialchars($similar['name']); ?></h6>
+                            <div class="similar-price">
+                                <span class="similar-price-cash">$<?php echo number_format($price_cash, 0, ',', '.'); ?></span>
+                                <span class="similar-price-label">En efectivo</span>
+                            </div>
+                            <div class="similar-price-card">$<?php echo number_format($price_card, 0, ',', '.'); ?></div>
+                            
+                            <?php if ($similar['stock_quantity'] > 0): ?>
+                                <a href="/<?php echo getProductUrl($similar); ?>" class="btn-view-similar">
+                                    <i class="fas fa-eye"></i> Ver Producto
+                                </a>
+                            <?php else: ?>
+                                <a href="/<?php echo getProductUrl($similar); ?>" class="btn-view-similar" style="opacity: 0.6;">
+                                    <i class="fas fa-eye"></i> Ver Producto (Sin Stock)
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
+                <?php endforeach; ?>
             </div>
         </div>
-        <?php endforeach; ?>
-    </div>
-</section>
-<?php endif; ?>
+    </section>
 </div>
+<?php else: ?>
+    <!-- DEBUG: Mostrar si no hay productos similares -->
+    <?php error_log("⚠️ NO HAY PRODUCTOS SIMILARES PARA MOSTRAR"); ?>
+<?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>
 
