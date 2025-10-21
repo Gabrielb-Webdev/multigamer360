@@ -87,7 +87,7 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
             const userHour = new Date().getHours();
             
             // Enviar la hora local al servidor vía AJAX para guardarla en la sesión
-            fetch('ajax/set-user-timezone.php', {
+            fetch('/ajax/set-user-timezone.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
         
         // Sincronización de wishlist count (solo si es necesario)
         function syncWishlistCount() {
-            fetch('ajax/get-wishlist-count.php', {
+            fetch('/ajax/get-wishlist-count.php', {
                 credentials: 'same-origin',
                 headers: {
                     'Cache-Control': 'no-cache',

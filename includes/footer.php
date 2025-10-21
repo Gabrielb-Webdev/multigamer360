@@ -9,7 +9,7 @@
                     <div class="col-md-5">
                         <div class="footer-branding">
                             <div class="footer-logo">
-                                <img src="assets/images/footer/logo-footer.png" alt="MultiGamer360 Logo" class="footer-logo-img">
+                                <img src="/assets/images/footer/logo-footer.png" alt="MultiGamer360 Logo" class="footer-logo-img">
                             </div>
                             <div class="footer-social-icons">
                                 <a href="#" class="social-icon" target="_blank" aria-label="Instagram">
@@ -178,7 +178,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Actualizar el estado del carrito inmediatamente al cargar la página
-            fetch('ajax/get-cart-count.php', {
+            fetch('/ajax/get-cart-count.php', {
                 credentials: 'same-origin',
                 headers: {
                     'Cache-Control': 'no-cache'

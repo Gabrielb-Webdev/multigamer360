@@ -508,7 +508,7 @@ function getImagePath($image_name)
 <?php include 'includes/footer.php'; ?>
 
 <!-- Product Details JavaScript - Version 2.2 - LOADED AFTER BOOTSTRAP -->
-<script src="assets/js/product-details.js?v=2.2"></script>
+<script src="/assets/js/product-details.js?v=2.2"></script>
 
 <script>
     // Función para cambiar la imagen principal al hacer clic en miniaturas
