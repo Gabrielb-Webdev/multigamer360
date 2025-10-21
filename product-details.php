@@ -595,7 +595,7 @@ function getImagePath($image_name)
             const minLoadingTime = 800; // 0.8 segundos mínimo
             
             // Llamada AJAX para wishlist
-            fetch('ajax/toggle-wishlist.php', {
+            fetch('/ajax/toggle-wishlist.php', {
                 method: 'POST',
                 body: new URLSearchParams({
                     product_id: productId,
