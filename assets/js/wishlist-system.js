@@ -40,17 +40,28 @@
         try {
             const baseUrl = window.SITE_URL || '';
             const response = await fetch(`${baseUrl}/ajax/get-wishlist-count.php`);
+            
+            // Verificar que la respuesta sea OK
+            if (!response.ok) {
+                console.warn('⚠️ No se pudo cargar el estado de wishlist:', response.status);
+                return; // NO actualizar botones si hay error
+            }
+            
             const data = await response.json();
             
             console.log('📋 Cargando estado de wishlist desde servidor:', data);
             
-            if (data.success) {
+            if (data.success && Array.isArray(data.items)) {
                 console.log('✅ Items en wishlist:', data.items);
                 this.updateWishlistButtons(data.items || []);
                 this.updateWishlistCount(data.count || 0);
+            } else {
+                console.warn('⚠️ Respuesta de wishlist no válida, manteniendo estado inicial del servidor');
             }
         } catch (error) {
             console.error('❌ Error cargando estado de wishlist:', error);
+            console.warn('⚠️ Manteniendo estado inicial renderizado por PHP');
+            // NO actualizar botones si hay error - respetar el estado del servidor
         }
     }
 
