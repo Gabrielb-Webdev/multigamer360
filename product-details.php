@@ -183,37 +183,37 @@ try {
 function getImagePath($image_name)
 {
     if (empty($image_name)) {
-        return 'assets/images/products/product1.jpg';
+        return '/assets/images/products/product1.jpg';
     }
 
     // Verificar diferentes rutas posibles
     $paths = [
-        'uploads/products/' . $image_name,
-        'assets/images/products/' . $image_name,
-        $image_name // Si ya viene con ruta completa
+        'uploads/products/' . $image_name => '/uploads/products/' . $image_name,
+        'assets/images/products/' . $image_name => '/assets/images/products/' . $image_name,
+        $image_name => '/' . $image_name // Si ya viene con ruta completa
     ];
 
-    foreach ($paths as $path) {
-        if (file_exists($path)) {
-            return $path;
+    foreach ($paths as $file_path => $url_path) {
+        if (file_exists($file_path)) {
+            return $url_path;
         }
     }
 
-    // Si no existe, usar la ruta con uploads como default
-    return 'uploads/products/' . $image_name;
+    // Si no existe, usar la ruta con uploads como default (absoluta)
+    return '/uploads/products/' . $image_name;
 }
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="assets/css/product-details-dark.css?v=2.7">
+<link rel="stylesheet" href="/assets/css/product-details-dark.css?v=2.7">
 
 <div class="container-fluid product-details-container">
 
 <!-- Breadcrumb Navigation -->
 <nav aria-label="breadcrumb" class="breadcrumb-nav">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="index.php">INICIO</a></li>
-        <li class="breadcrumb-item"><a href="productos.php">PRODUCTOS</a></li>
+        <li class="breadcrumb-item"><a href="/index.php">INICIO</a></li>
+        <li class="breadcrumb-item"><a href="/productos.php">PRODUCTOS</a></li>
         <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($current_product['name']); ?>
         </li>
     </ol>

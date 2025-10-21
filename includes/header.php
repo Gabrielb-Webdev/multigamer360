@@ -9,6 +9,18 @@ if (!function_exists('isLoggedIn')) {
     require_once 'includes/auth.php';
 }
 
+// Definir la URL base del sitio para rutas absolutas
+if (!defined('BASE_URL')) {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseDir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
+    // Si estamos en un subdirectorio con URL reescrita (ej: /producto/slug), obtener la raíz
+    if (strpos($_SERVER['REQUEST_URI'], '/producto/') !== false) {
+        $baseDir = '';
+    }
+    define('BASE_URL', $protocol . '://' . $host . $baseDir);
+}
+
 // Obtener usuario actual
 $currentUser = getCurrentUser();
 $isLoggedIn = isLoggedIn();
@@ -53,11 +65,11 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
     <title>MultiGamer360 - Tu tienda de videojuegos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?v=1.2">
+    <link rel="stylesheet" href="/assets/css/style.css?v=1.2">
     <!-- CSS específico para la página de contacto moderna -->
-    <link rel="stylesheet" href="assets/css/contact-modern.css?v=0.3">
+    <link rel="stylesheet" href="/assets/css/contact-modern.css?v=0.3">
     <!-- CSS para botón moderno de carrito -->
-    <link rel="stylesheet" href="assets/css/cart-button-modern.css?v=0.3">
+    <link rel="stylesheet" href="/assets/css/cart-button-modern.css?v=0.3">
     
     <!-- Script para detectar horario local del usuario -->
     <script>
@@ -158,13 +170,13 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
     <header class="main-header">
         <div class="container-fluid p-0">
             <div class="header-banner position-relative">
-                <img src="assets/images/Pre-header.png" alt="MultiGamer360 Header" class="w-100">
+                <img src="/assets/images/Pre-header.png" alt="MultiGamer360 Header" class="w-100">
                 <div class="header-overlay">
                     <div class="container-fluid px-4 h-100">
                         <div class="d-flex justify-content-between align-items-center h-100">
                             <div class="header-logo">
-                                <a href="index.php">
-                                    <img src="assets/images/logo.png" alt="MultiGamer360 Logo" class="header-logo-img">
+                                <a href="/index.php">
+                                    <img src="/assets/images/logo.png" alt="MultiGamer360 Logo" class="header-logo-img">
                                 </a>
                             </div>
                             <div class="header-actions d-flex align-items-center">
