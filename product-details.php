@@ -947,6 +947,41 @@ function getImagePath($image_name)
                 mainImage.src = newImageSrc;
             });
         });
+
+        // ===== SIMILAR PRODUCTS CARDS =====
+        // Inicializar sistema de cards con imagen de fondo
+        const imageBackgrounds = document.querySelectorAll('.product-image-background');
+        
+        imageBackgrounds.forEach((bg, index) => {
+            try {
+                const backgroundImage = bg.style.backgroundImage;
+                const fallbackUrl = bg.dataset.fallback || 'assets/images/products/product1.jpg';
+                
+                if (backgroundImage) {
+                    // Extraer URL de la imagen del style
+                    const imageUrl = backgroundImage.slice(5, -2); // Remover url(" y ")
+                    
+                    // Crear imagen temporal para verificar si carga
+                    const testImage = new Image();
+                    testImage.onload = function() {
+                        // Imagen carga correctamente
+                        console.log(`✅ Imagen similar ${index + 1} cargada:`, imageUrl);
+                    };
+                    testImage.onerror = function() {
+                        // Imagen no carga, usar fallback
+                        console.log(`❌ Error cargando imagen similar ${index + 1}, usando fallback`);
+                        bg.style.backgroundImage = `url('${fallbackUrl}')`;
+                    };
+                    testImage.src = imageUrl;
+                } else {
+                    // No hay imagen, usar fallback
+                    bg.style.backgroundImage = `url('${fallbackUrl}')`;
+                    console.log(`📝 Usando fallback para imagen similar ${index + 1}`);
+                }
+            } catch (error) {
+                console.error(`❌ Error procesando imagen similar ${index + 1}:`, error);
+            }
+        });
     });
 </script>
 
