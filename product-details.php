@@ -182,6 +182,21 @@ try {
 }
 error_log("PRODUCTOS SIMILARES - Total final: " . count($similar_products) . " productos");
 
+// DEBUG: Mostrar información visible en HTML
+echo "<!-- ========================================= -->";
+echo "<!-- SIMILAR PRODUCTS DEBUG -->";
+echo "<!-- Total productos similares: " . count($similar_products) . " -->";
+echo "<!-- Category ID: " . ($current_product['category_id'] ?? 'N/A') . " -->";
+echo "<!-- Product ID actual: " . $product_id . " -->";
+if (!empty($similar_products)) {
+    echo "<!-- Productos encontrados: ";
+    foreach ($similar_products as $sp) {
+        echo $sp['id'] . " (" . $sp['name'] . "), ";
+    }
+    echo " -->";
+}
+echo "<!-- ========================================= -->";
+
 // Función para obtener ruta de imagen
 function getImagePath($image_name)
 {
@@ -511,6 +526,14 @@ function getImagePath($image_name)
 </div>
 <?php else: ?>
     <!-- DEBUG: Mostrar si no hay productos similares -->
+    <div class="container mt-5 text-center" style="padding: 20px; background: rgba(255,0,0,0.1); border: 2px solid red;">
+        <h3 style="color: red;">⚠️ DEBUG: NO HAY PRODUCTOS SIMILARES</h3>
+        <p style="color: white;">
+            Total productos en array: <?php echo count($similar_products); ?><br>
+            Category ID del producto actual: <?php echo $current_product['category_id'] ?? 'N/A'; ?><br>
+            Product ID actual: <?php echo $product_id ?? 'N/A'; ?>
+        </p>
+    </div>
     <?php error_log("⚠️ NO HAY PRODUCTOS SIMILARES PARA MOSTRAR"); ?>
 <?php endif; ?>
 
