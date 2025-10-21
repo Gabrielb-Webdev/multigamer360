@@ -122,8 +122,13 @@ echo "<!-- ========================================= -->";
 // ============================================================
 $similar_products = [];
 try {
-    // Primero intentar obtener productos de la misma categoría
-    if (!empty($current_product['category_id'])) {
+    // ESTRATEGIA SIMPLIFICADA: Obtener productos aleatorios excluyendo el actual
+    // Primero intentar de la misma categoría, luego cualquier producto
+    
+    $category_id = $current_product['category_id'] ?? null;
+    
+    // Query 1: Intentar obtener 4 productos de la misma categoría
+    if (!empty($category_id)) {
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
                    COALESCE(
@@ -135,24 +140,34 @@ try {
                        p.image_url
                    ) as primary_image
             FROM products p
-            WHERE p.category_id = ? 
-            AND p.id != ? 
+            WHERE p.category_id = :category_id
+            AND p.id != :product_id
             AND p.is_active = 1
             ORDER BY RAND()
             LIMIT 4
         ");
-        $stmt->execute([$current_product['category_id'], $product_id]);
+        $stmt->execute([
+            'category_id' => $category_id,
+            'product_id' => $product_id
+        ]);
         $similar_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        error_log("PRODUCTOS SIMILARES - Misma categoría: " . count($similar_products) . " productos encontrados");
+        error_log("✓ Productos de misma categoría (ID: $category_id): " . count($similar_products));
     }
     
-    // Si no hay suficientes productos de la misma categoría, completar con aleatorios
+    // Query 2: Si no hay suficientes, completar con productos aleatorios
     if (count($similar_products) < 4) {
         $needed = 4 - count($similar_products);
-        $exclude_ids = array_merge([$product_id], array_column($similar_products, 'id'));
-        $placeholders = str_repeat('?,', count($exclude_ids) - 1) . '?';
         
-        $stmt = $pdo->prepare("
+        // Obtener IDs a excluir
+        $exclude_ids = [$product_id];
+        foreach ($similar_products as $prod) {
+            $exclude_ids[] = $prod['id'];
+        }
+        
+        // Crear placeholders para NOT IN
+        $placeholders = implode(',', array_fill(0, count($exclude_ids), '?'));
+        
+        $sql = "
             SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
                    COALESCE(
                        (SELECT pi.image_url 
@@ -166,21 +181,25 @@ try {
             WHERE p.id NOT IN ($placeholders)
             AND p.is_active = 1
             ORDER BY RAND()
-            LIMIT ?
-        ");
+            LIMIT $needed
+        ";
         
-        $params = array_merge($exclude_ids, [$needed]);
-        $stmt->execute($params);
-        $additional_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($exclude_ids);
+        $additional = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $similar_products = array_merge($similar_products, $additional_products);
-        error_log("PRODUCTOS SIMILARES - Completando con aleatorios: " . count($additional_products) . " productos agregados. Total: " . count($similar_products));
+        error_log("✓ Productos aleatorios adicionales: " . count($additional));
+        
+        $similar_products = array_merge($similar_products, $additional);
     }
+    
+    error_log("✓ TOTAL productos similares: " . count($similar_products));
+    
 } catch (Exception $e) {
-    error_log("ERROR al obtener productos similares: " . $e->getMessage());
+    error_log("❌ ERROR al obtener productos similares: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     $similar_products = [];
 }
-error_log("PRODUCTOS SIMILARES - Total final: " . count($similar_products) . " productos");
 
 // DEBUG: Mostrar información visible en HTML
 echo "<!-- ========================================= -->";
@@ -526,15 +545,21 @@ function getImagePath($image_name)
 </div>
 <?php else: ?>
     <!-- DEBUG: Mostrar si no hay productos similares -->
-    <div class="container mt-5 text-center" style="padding: 20px; background: rgba(255,0,0,0.1); border: 2px solid red;">
-        <h3 style="color: red;">⚠️ DEBUG: NO HAY PRODUCTOS SIMILARES</h3>
-        <p style="color: white;">
-            Total productos en array: <?php echo count($similar_products); ?><br>
-            Category ID del producto actual: <?php echo $current_product['category_id'] ?? 'N/A'; ?><br>
-            Product ID actual: <?php echo $product_id ?? 'N/A'; ?>
-        </p>
+    <div class="container mt-5 text-center" style="padding: 30px; background: rgba(255,0,0,0.1); border: 2px solid red; border-radius: 10px;">
+        <h3 style="color: #ff4444; margin-bottom: 20px;">⚠️ DEBUG: NO HAY PRODUCTOS SIMILARES</h3>
+        <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 5px; text-align: left; max-width: 600px; margin: 0 auto;">
+            <p style="color: white; margin: 10px 0;">
+                <strong>📊 Diagnóstico:</strong><br>
+                • Total productos en array: <code style="color: #ff4444;"><?php echo count($similar_products); ?></code><br>
+                • Category ID del producto actual: <code style="color: #4af;"><?php echo $current_product['category_id'] ?? 'N/A'; ?></code><br>
+                • Product ID actual: <code style="color: #4af;"><?php echo $product_id ?? 'N/A'; ?></code>
+            </p>
+            <p style="color: #ffaa00; margin-top: 15px; font-size: 14px;">
+                ⚠️ Verifica que existan productos activos en la base de datos (is_active = 1)
+            </p>
+        </div>
     </div>
-    <?php error_log("⚠️ NO HAY PRODUCTOS SIMILARES PARA MOSTRAR"); ?>
+    <?php error_log("⚠️ NO HAY PRODUCTOS SIMILARES PARA MOSTRAR - Category: " . ($current_product['category_id'] ?? 'N/A') . " | Product ID: " . $product_id); ?>
 <?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>
