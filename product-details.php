@@ -131,6 +131,7 @@ try {
     if (!empty($category_id)) {
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
+                   c.name as console_name,
                    COALESCE(
                        (SELECT pi.image_url 
                         FROM product_images pi 
@@ -140,6 +141,7 @@ try {
                        p.image_url
                    ) as primary_image
             FROM products p
+            LEFT JOIN consoles c ON p.console_id = c.id
             WHERE p.category_id = :category_id
             AND p.id != :product_id
             AND p.is_active = 1
@@ -169,6 +171,7 @@ try {
         
         $sql = "
             SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
+                   c.name as console_name,
                    COALESCE(
                        (SELECT pi.image_url 
                         FROM product_images pi 
@@ -178,6 +181,7 @@ try {
                        p.image_url
                    ) as primary_image
             FROM products p
+            LEFT JOIN consoles c ON p.console_id = c.id
             WHERE p.id NOT IN ($placeholders)
             AND p.is_active = 1
             ORDER BY RAND()
@@ -497,45 +501,149 @@ function getImagePath($image_name)
 
 <!-- Similar Products Section -->
 <?php if (!empty($similar_products)): ?>
-<div class="container-fluid mt-5">
+<div class="container-fluid mt-5 mb-5">
     <section class="similar-products-section">
         <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
         <div class="container">
-            <div class="row">
-                <?php foreach ($similar_products as $similar): 
-                    // Obtener imagen del producto similar
-                    $similar_image = !empty($similar['primary_image']) ? $similar['primary_image'] : 
-                                    (!empty($similar['image_url']) ? $similar['image_url'] : 'product1.jpg');
-                    $similar_image_path = getImagePath($similar_image);
+            <div class="row g-4">
+                <?php 
+                // Obtener wishlist del usuario
+                $userWishlist = [];
+                if (isLoggedIn()) {
+                    try {
+                        $stmt = $pdo->prepare("SELECT product_id FROM user_favorites WHERE user_id = ?");
+                        $stmt->execute([$_SESSION['user_id']]);
+                        $userWishlist = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    } catch (Exception $e) {
+                        error_log("Error getting wishlist: " . $e->getMessage());
+                    }
+                }
+                
+                // Obtener productos en carrito
+                $productsInCart = [];
+                if (!empty($_SESSION['cart'])) {
+                    $productsInCart = array_keys($_SESSION['cart']);
+                }
+                
+                foreach ($similar_products as $product): 
+                    // Obtener imagen del producto
+                    $image_filename = !empty($product['primary_image']) ? $product['primary_image'] : 
+                                     (!empty($product['image_url']) ? $product['image_url'] : 'product1.jpg');
                     
-                    // Calcular precio con descuento (10% menos)
-                    $price_cash = $similar['price_pesos'];
-                    $price_card = $price_cash * 1.10; // 10% más con tarjeta
+                    // Construir rutas posibles
+                    $possible_paths = [
+                        'uploads/products/' . $image_filename,
+                        'assets/images/products/' . $image_filename,
+                        'admin/uploads/products/' . $image_filename
+                    ];
+                    
+                    // Buscar la ruta correcta
+                    $product_image = 'assets/images/products/product1.jpg'; // Default
+                    $doc_root = $_SERVER['DOCUMENT_ROOT'];
+                    
+                    foreach ($possible_paths as $path) {
+                        $full_path = $doc_root . '/' . $path;
+                        if (file_exists($full_path)) {
+                            $product_image = $path;
+                            break;
+                        }
+                    }
+                    
+                    // Si no se encontró, intentar con la ruta directa
+                    if ($product_image === 'assets/images/products/product1.jpg' && !empty($image_filename)) {
+                        if (strpos($image_filename, '/') !== false || strpos($image_filename, 'http') === 0) {
+                            $product_image = $image_filename;
+                        }
+                    }
                 ?>
-                <div class="col-md-3 col-sm-6 mb-4">
-                    <div class="similar-product-card">
-                        <img src="<?php echo htmlspecialchars($similar_image_path); ?>" 
-                             alt="<?php echo htmlspecialchars($similar['name']); ?>" 
-                             class="img-fluid"
-                             onerror="this.src='/assets/images/products/product1.jpg'">
-                        <div class="similar-product-info">
-                            <h6><?php echo htmlspecialchars($similar['name']); ?></h6>
-                            <div class="similar-price">
-                                <span class="similar-price-cash">$<?php echo number_format($price_cash, 0, ',', '.'); ?></span>
-                                <span class="similar-price-label">En efectivo</span>
-                            </div>
-                            <div class="similar-price-card">$<?php echo number_format($price_card, 0, ',', '.'); ?></div>
-                            
-                            <?php if ($similar['stock_quantity'] > 0): ?>
-                                <a href="/<?php echo getProductUrl($similar); ?>" class="btn-view-similar">
-                                    <i class="fas fa-eye"></i> Ver Producto
-                                </a>
-                            <?php else: ?>
-                                <a href="/<?php echo getProductUrl($similar); ?>" class="btn-view-similar" style="opacity: 0.6;">
-                                    <i class="fas fa-eye"></i> Ver Producto (Sin Stock)
-                                </a>
-                            <?php endif; ?>
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <!-- PRODUCT CARD - Same design as productos.php -->
+                    <div class="product-card" data-product-id="<?php echo $product['id']; ?>">
+                        
+                        <!-- Botón de wishlist -->
+                        <?php 
+                        $isInWishlist = in_array($product['id'], $userWishlist);
+                        $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
+                        $btnClass = $isInWishlist ? 'btn-wishlist-fixed active' : 'btn-wishlist-fixed';
+                        ?>
+                        <button class="<?php echo $btnClass; ?>" 
+                                data-product-id="<?php echo $product['id']; ?>"
+                                title="<?php echo $isInWishlist ? 'Quitar de wishlist' : 'Agregar a wishlist'; ?>">
+                            <i class="<?php echo $heartClass; ?>"></i>
+                        </button>
+                        
+                        <!-- Botón de vista rápida -->
+                        <a href="/<?php echo getProductUrl($product); ?>" 
+                           class="btn-view-fixed"
+                           title="Ver detalles del producto">
+                            <i class="far fa-eye"></i>
+                        </a>
+                        
+                        <!-- Imagen de fondo -->
+                        <div class="product-image-background" 
+                             style="background-image: url('<?php echo htmlspecialchars($product_image); ?>');"
+                             data-fallback="assets/images/products/product1.jpg">
                         </div>
+                        
+                        <!-- Overlay con información -->
+                        <div class="product-overlay">
+                            <div class="product-info-overlay">
+                                <!-- Nombre del producto -->
+                                <?php 
+                                $clean_name = $product['name'];
+                                $console_patterns = [' - PS2', ' - PlayStation', ' - Nintendo 64', ' - N64', ' - Super Nintendo', ' - SNES', ' - Xbox', ' - GameCube', ' - Dreamcast', ' - PSP', ' - PS3', ' - PS4', ' - PS5', ' - Switch'];
+                                foreach ($console_patterns as $pattern) {
+                                    $clean_name = str_ireplace($pattern, '', $clean_name);
+                                }
+                                ?>
+                                <h5 class="product-title"><?php echo htmlspecialchars($clean_name); ?></h5>
+                                
+                                <!-- Consola -->
+                                <div class="product-console">
+                                    <?php 
+                                    $console_text = !empty($product['console_name']) ? $product['console_name'] : 
+                                                  (!empty($product['console']) ? $product['console'] : 'PC');
+                                    ?>
+                                    <span class="console-name">
+                                        <?php echo htmlspecialchars($console_text); ?>
+                                    </span>
+                                </div>
+                                
+                                <!-- Precio -->
+                                <div class="product-price-simple">
+                                    $<?php echo number_format($product['price_pesos'] ?? 0, 0, ',', '.'); ?>
+                                </div>
+                                
+                                <!-- Botón de agregar al carrito -->
+                                <div class="product-actions">
+                                    <?php if (($product['stock_quantity'] ?? 0) > 0): ?>
+                                        <?php 
+                                        $isInCart = in_array($product['id'], $productsInCart);
+                                        $btnClass = $isInCart ? 'btn-add-to-cart-modern in-cart' : 'btn-add-to-cart-modern';
+                                        ?>
+                                        <button class="<?php echo $btnClass; ?>" 
+                                                data-product-id="<?php echo $product['id']; ?>"
+                                                data-in-cart="<?php echo $isInCart ? 'true' : 'false'; ?>">
+                                            <?php if ($isInCart): ?>
+                                                <i class="fas fa-shopping-cart cart-icon"></i>
+                                                <i class="fas fa-check success-check"></i>
+                                            <?php else: ?>
+                                                <i class="fas fa-shopping-cart cart-icon"></i>
+                                                <div class="loading-spinner"></div>
+                                                <i class="fas fa-check success-check"></i>
+                                                <span class="btn-text">AGREGAR AL CARRITO</span>
+                                            <?php endif; ?>
+                                        </button>
+                                    <?php else: ?>
+                                        <button class="btn-no-stock" disabled>
+                                            <i class="fas fa-ban"></i>
+                                            <span>Sin stock</span>
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -543,23 +651,6 @@ function getImagePath($image_name)
         </div>
     </section>
 </div>
-<?php else: ?>
-    <!-- DEBUG: Mostrar si no hay productos similares -->
-    <div class="container mt-5 text-center" style="padding: 30px; background: rgba(255,0,0,0.1); border: 2px solid red; border-radius: 10px;">
-        <h3 style="color: #ff4444; margin-bottom: 20px;">⚠️ DEBUG: NO HAY PRODUCTOS SIMILARES</h3>
-        <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 5px; text-align: left; max-width: 600px; margin: 0 auto;">
-            <p style="color: white; margin: 10px 0;">
-                <strong>📊 Diagnóstico:</strong><br>
-                • Total productos en array: <code style="color: #ff4444;"><?php echo count($similar_products); ?></code><br>
-                • Category ID del producto actual: <code style="color: #4af;"><?php echo $current_product['category_id'] ?? 'N/A'; ?></code><br>
-                • Product ID actual: <code style="color: #4af;"><?php echo $product_id ?? 'N/A'; ?></code>
-            </p>
-            <p style="color: #ffaa00; margin-top: 15px; font-size: 14px;">
-                ⚠️ Verifica que existan productos activos en la base de datos (is_active = 1)
-            </p>
-        </div>
-    </div>
-    <?php error_log("⚠️ NO HAY PRODUCTOS SIMILARES PARA MOSTRAR - Category: " . ($current_product['category_id'] ?? 'N/A') . " | Product ID: " . $product_id); ?>
 <?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>
