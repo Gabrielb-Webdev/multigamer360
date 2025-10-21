@@ -501,7 +501,7 @@ function getImagePath($image_name)
 
 <!-- Similar Products Section -->
 <?php if (!empty($similar_products)): ?>
-<div class="container-fluid mt-5 mb-5">
+<div class="container-fluid mt-5 mb-5" style="background: #1a1a1a; padding: 40px 0;">
     <section class="similar-products-section">
         <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
         <div class="container">
@@ -526,7 +526,8 @@ function getImagePath($image_name)
                 }
                 
                 foreach ($similar_products as $product): 
-                    // Obtener imagen del producto
+                    // ===== COPIAR EXACTO DE PRODUCTOS.PHP =====
+                    // Obtener la imagen principal desde la tabla product_images
                     $image_filename = !empty($product['primary_image']) ? $product['primary_image'] : 
                                      (!empty($product['image_url']) ? $product['image_url'] : 'product1.jpg');
                     
@@ -537,11 +538,12 @@ function getImagePath($image_name)
                         'admin/uploads/products/' . $image_filename
                     ];
                     
-                    // Buscar la ruta correcta
-                    $product_image = 'assets/images/products/product1.jpg'; // Default
+                    // Buscar la ruta correcta (usar $_SERVER['DOCUMENT_ROOT'] para rutas absolutas)
+                    $product_image = 'assets/images/products/product1.jpg'; // Imagen por defecto
                     $doc_root = $_SERVER['DOCUMENT_ROOT'];
                     
                     foreach ($possible_paths as $path) {
+                        // Verificar si el archivo existe en el servidor
                         $full_path = $doc_root . '/' . $path;
                         if (file_exists($full_path)) {
                             $product_image = $path;
@@ -551,16 +553,19 @@ function getImagePath($image_name)
                     
                     // Si no se encontró, intentar con la ruta directa
                     if ($product_image === 'assets/images/products/product1.jpg' && !empty($image_filename)) {
+                        // Asumir que image_url ya tiene la ruta completa
                         if (strpos($image_filename, '/') !== false || strpos($image_filename, 'http') === 0) {
                             $product_image = $image_filename;
                         }
                     }
                 ?>
                 <div class="col-lg-3 col-md-4 col-sm-6">
-                    <!-- PRODUCT CARD - Same design as productos.php -->
+                    <!-- =====================================================
+                         NUEVA CARD DE PRODUCTO (CON IMAGEN COMPLETA)
+                         ===================================================== -->
                     <div class="product-card" data-product-id="<?php echo $product['id']; ?>">
                         
-                        <!-- Botón de wishlist -->
+                        <!-- Botón de wishlist siempre visible -->
                         <?php 
                         $isInWishlist = in_array($product['id'], $userWishlist);
                         $heartClass = $isInWishlist ? 'fas fa-heart' : 'far fa-heart';
@@ -572,25 +577,26 @@ function getImagePath($image_name)
                             <i class="<?php echo $heartClass; ?>"></i>
                         </button>
                         
-                        <!-- Botón de vista rápida -->
-                        <a href="/<?php echo getProductUrl($product); ?>" 
+                        <!-- Botón de vista rápida siempre visible -->
+                        <a href="<?php echo getProductUrl($product); ?>" 
                            class="btn-view-fixed"
                            title="Ver detalles del producto">
                             <i class="far fa-eye"></i>
                         </a>
                         
-                        <!-- Imagen de fondo -->
+                        <!-- Imagen de fondo que ocupa toda la card -->
                         <div class="product-image-background" 
                              style="background-image: url('<?php echo htmlspecialchars($product_image); ?>');"
                              data-fallback="assets/images/products/product1.jpg">
                         </div>
                         
-                        <!-- Overlay con información -->
+                        <!-- Overlay con información del producto -->
                         <div class="product-overlay">
                             <div class="product-info-overlay">
-                                <!-- Nombre del producto -->
+                                <!-- 1. Nombre del producto -->
                                 <?php 
                                 $clean_name = $product['name'];
+                                // Remover referencias a consola del nombre si existen
                                 $console_patterns = [' - PS2', ' - PlayStation', ' - Nintendo 64', ' - N64', ' - Super Nintendo', ' - SNES', ' - Xbox', ' - GameCube', ' - Dreamcast', ' - PSP', ' - PS3', ' - PS4', ' - PS5', ' - Switch'];
                                 foreach ($console_patterns as $pattern) {
                                     $clean_name = str_ireplace($pattern, '', $clean_name);
@@ -598,9 +604,10 @@ function getImagePath($image_name)
                                 ?>
                                 <h5 class="product-title"><?php echo htmlspecialchars($clean_name); ?></h5>
                                 
-                                <!-- Consola -->
+                                <!-- 2. Consola -->
                                 <div class="product-console">
                                     <?php 
+                                    // Usar console_name del JOIN con la tabla consoles
                                     $console_text = !empty($product['console_name']) ? $product['console_name'] : 
                                                   (!empty($product['console']) ? $product['console'] : 'PC');
                                     ?>
@@ -609,29 +616,33 @@ function getImagePath($image_name)
                                     </span>
                                 </div>
                                 
-                                <!-- Precio -->
+                                <!-- 3. Precio en pesos -->
                                 <div class="product-price-simple">
-                                    $<?php echo number_format($product['price_pesos'] ?? 0, 0, ',', '.'); ?>
+                                    $<?php echo number_format($product['price_pesos'] ?? $product['price'], 0, ',', '.'); ?>
                                 </div>
                                 
-                                <!-- Botón de agregar al carrito -->
+                                <!-- 4. Botón de agregar al carrito -->
                                 <div class="product-actions">
                                     <?php if (($product['stock_quantity'] ?? 0) > 0): ?>
                                         <?php 
+                                        // Verificar si el producto ya está en el carrito
                                         $isInCart = in_array($product['id'], $productsInCart);
                                         $btnClass = $isInCart ? 'btn-add-to-cart-modern in-cart' : 'btn-add-to-cart-modern';
+                                        $btnText = $isInCart ? 'EN EL CARRITO' : 'AGREGAR AL CARRITO';
                                         ?>
                                         <button class="<?php echo $btnClass; ?>" 
                                                 data-product-id="<?php echo $product['id']; ?>"
                                                 data-in-cart="<?php echo $isInCart ? 'true' : 'false'; ?>">
                                             <?php if ($isInCart): ?>
+                                                <!-- Producto en carrito: solo mostrar checks -->
                                                 <i class="fas fa-shopping-cart cart-icon"></i>
                                                 <i class="fas fa-check success-check"></i>
                                             <?php else: ?>
+                                                <!-- Producto no en carrito: mostrar carrito normal -->
                                                 <i class="fas fa-shopping-cart cart-icon"></i>
                                                 <div class="loading-spinner"></div>
                                                 <i class="fas fa-check success-check"></i>
-                                                <span class="btn-text">AGREGAR AL CARRITO</span>
+                                                <span class="btn-text"><?php echo $btnText; ?></span>
                                             <?php endif; ?>
                                         </button>
                                     <?php else: ?>
