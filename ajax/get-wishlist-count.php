@@ -23,19 +23,23 @@ try {
     $countStmt->execute([$user_id]);
     $count = $countStmt->fetchColumn();
     
+    // Obtener todos los IDs de productos en la wishlist
+    $itemsStmt = $pdo->prepare("SELECT product_id FROM user_favorites WHERE user_id = ?");
+    $itemsStmt->execute([$user_id]);
+    $items = $itemsStmt->fetchAll(PDO::FETCH_COLUMN);
+    
     // Si se solicita un producto específico, verificar si está en la wishlist
     $product_id = intval($_GET['product_id'] ?? 0);
     $in_wishlist = false;
     
     if ($product_id > 0) {
-        $checkStmt = $pdo->prepare("SELECT id FROM user_favorites WHERE user_id = ? AND product_id = ?");
-        $checkStmt->execute([$user_id, $product_id]);
-        $in_wishlist = (bool)$checkStmt->fetch();
+        $in_wishlist = in_array($product_id, $items);
     }
     
     echo json_encode([
         'success' => true,
         'count' => (int)$count,
+        'items' => array_map('intval', $items), // Array de IDs de productos
         'in_wishlist' => $in_wishlist,
         'product_id' => $product_id
     ]);
