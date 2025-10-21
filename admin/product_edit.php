@@ -349,6 +349,45 @@ require_once 'inc/header.php';
                             <div id="image-preview" class="row g-3"></div>
                         </div>
                     </div>
+                    
+                    <!-- SEO -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-search me-2"></i>
+                                SEO - Optimización para Buscadores
+                            </h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="auto-generate-seo">
+                                <i class="fas fa-magic"></i> Auto-generar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="meta_title" class="form-label">
+                                    Meta Título
+                                    <span class="text-muted small" id="meta-title-counter">(0/60)</span>
+                                </label>
+                                <input type="text" class="form-control" id="meta_title" name="meta_title" 
+                                       value="<?php echo htmlspecialchars($product['meta_title'] ?? ''); ?>" 
+                                       maxlength="60">
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb"></i> Recomendado: 50-60 caracteres.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="meta_description" class="form-label">
+                                    Meta Descripción
+                                    <span class="text-muted small" id="meta-desc-counter">(0/160)</span>
+                                </label>
+                                <textarea class="form-control" id="meta_description" name="meta_description" 
+                                          rows="3" maxlength="160"><?php echo htmlspecialchars($product['meta_description'] ?? ''); ?></textarea>
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb"></i> Recomendado: 150-160 caracteres.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Panel lateral -->
@@ -1323,6 +1362,68 @@ function saveNewGenre() {
         alert('Error de conexión');
     });
 }
+
+// ============================================
+// SEO - CONTADORES Y AUTO-GENERAR
+// ============================================
+
+// Actualizar contadores de SEO
+function updateSEOCounters() {
+    const metaTitle = document.getElementById('meta_title').value;
+    const metaDesc = document.getElementById('meta_description').value;
+    
+    document.getElementById('meta-title-counter').textContent = `(${metaTitle.length}/60)`;
+    document.getElementById('meta-desc-counter').textContent = `(${metaDesc.length}/160)`;
+}
+
+// Auto-generar meta tags desde el nombre y descripción
+document.getElementById('auto-generate-seo').addEventListener('click', function() {
+    const productName = document.getElementById('name').value.trim();
+    const description = document.getElementById('description').value.trim();
+    
+    if (!productName) {
+        alert('Primero ingrese el nombre del producto');
+        document.getElementById('name').focus();
+        return;
+    }
+    
+    // Generar meta title (máximo 60 caracteres)
+    let metaTitle = productName;
+    if (metaTitle.length > 60) {
+        metaTitle = metaTitle.substring(0, 57) + '...';
+    }
+    
+    // Generar meta description (máximo 160 caracteres)
+    let metaDesc = description;
+    if (metaDesc.length > 160) {
+        metaDesc = metaDesc.substring(0, 157) + '...';
+    }
+    
+    document.getElementById('meta_title').value = metaTitle;
+    document.getElementById('meta_description').value = metaDesc;
+    
+    updateSEOCounters();
+    
+    // Feedback visual
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Generado';
+    btn.classList.remove('btn-outline-primary');
+    btn.classList.add('btn-success');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-primary');
+    }, 2000);
+});
+
+// Actualizar contadores en tiempo real
+document.getElementById('meta_title').addEventListener('input', updateSEOCounters);
+document.getElementById('meta_description').addEventListener('input', updateSEOCounters);
+
+// Inicializar contadores al cargar la página
+updateSEOCounters();
 
 // Inicializar tooltips de Bootstrap
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
