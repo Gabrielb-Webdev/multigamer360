@@ -294,6 +294,26 @@ require_once 'inc/header.php';
                                 </div>
                             </div>
                             
+                            <!-- Campo de Slug (URL amigable) -->
+                            <div class="mb-3">
+                                <label for="slug_preview" class="form-label">
+                                    <i class="fas fa-link me-2"></i>URL del Producto (Slug)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">/producto/</span>
+                                    <input type="text" class="form-control" id="slug_preview" 
+                                           value="<?php echo htmlspecialchars($product['slug'] ?? ''); ?>" 
+                                           readonly style="background-color: #f8f9fa;">
+                                    <button class="btn btn-outline-secondary" type="button" id="regenerate_slug" title="Regenerar desde el título">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Se genera automáticamente desde el nombre del producto. 
+                                    Ejemplo: "Kingdom Hearts 3" → "kingdom-hearts-3"
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
                                 <label for="description" class="form-label">Descripción *</label>
                                 <textarea class="form-control" id="description" name="description" 
@@ -790,6 +810,53 @@ require_once 'inc/header.php';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Sistema de imágenes con Drag & Drop cargado');
+    
+// ============================================
+// GENERACIÓN AUTOMÁTICA DE SLUG
+// ============================================
+
+// Función para generar slug desde el nombre
+function generateSlugFromName(name) {
+    return name
+        .toLowerCase()                          // Convertir a minúsculas
+        .normalize('NFD')                       // Normalizar caracteres especiales
+        .replace(/[\u0300-\u036f]/g, '')       // Eliminar diacríticos (acentos)
+        .replace(/[^a-z0-9\s-]/g, '')          // Eliminar caracteres especiales
+        .trim()                                 // Eliminar espacios al inicio y final
+        .replace(/\s+/g, '-')                  // Reemplazar espacios con guiones
+        .replace(/-+/g, '-');                  // Reemplazar múltiples guiones con uno solo
+}
+
+// Actualizar slug cuando cambia el nombre del producto
+const nameInput = document.getElementById('name');
+const slugPreview = document.getElementById('slug_preview');
+
+if (nameInput && slugPreview) {
+    nameInput.addEventListener('input', function() {
+        const slug = generateSlugFromName(this.value);
+        slugPreview.value = slug;
+    });
+}
+
+// Botón para regenerar slug manualmente
+const regenerateSlugBtn = document.getElementById('regenerate_slug');
+if (regenerateSlugBtn && nameInput && slugPreview) {
+    regenerateSlugBtn.addEventListener('click', function() {
+        const slug = generateSlugFromName(nameInput.value);
+        slugPreview.value = slug;
+        
+        // Feedback visual
+        this.innerHTML = '<i class="fas fa-check"></i>';
+        this.classList.add('btn-success');
+        this.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            this.classList.remove('btn-success');
+            this.classList.add('btn-outline-secondary');
+        }, 1500);
+    });
+}
     
     // Array para acumular archivos seleccionados (nuevos + existentes)
     let selectedFiles = [];
