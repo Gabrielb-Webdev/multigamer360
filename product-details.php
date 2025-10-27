@@ -118,45 +118,92 @@ echo "<!-- isInWishlist: " . ($wishlist_debug['result'] ? 'TRUE' : 'FALSE') . " 
 echo "<!-- ========================================= -->";
 
 // ============================================================
-// OBTENER PRODUCTOS SIMILARES DE LA BASE DE DATOS
+// OBTENER PRODUCTOS SIMILARES DE LA BASE DE DATOS (BASADO EN GÉNEROS)
 // ============================================================
 $similar_products = [];
 try {
-    // ESTRATEGIA SIMPLIFICADA: Obtener productos aleatorios excluyendo el actual
-    // Primero intentar de la misma categoría, luego cualquier producto
+    // ESTRATEGIA: Buscar productos que compartan géneros con el producto actual
+    // Primero intentar productos con géneros en común, luego productos aleatorios
     
-    $category_id = $current_product['category_id'] ?? null;
+    // Query 1: Obtener productos que compartan géneros con el producto actual
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
+               c.name as console_name,
+               COALESCE(
+                   (SELECT pi.image_url 
+                    FROM product_images pi 
+                    WHERE pi.product_id = p.id 
+                    AND pi.is_primary = 1
+                    LIMIT 1),
+                   p.image_url
+               ) as primary_image,
+               COUNT(DISTINCT pg2.genre_id) as shared_genres
+        FROM products p
+        LEFT JOIN consoles c ON p.console_id = c.id
+        INNER JOIN product_genres pg2 ON p.id = pg2.product_id
+        WHERE pg2.genre_id IN (
+            SELECT pg.genre_id 
+            FROM product_genres pg 
+            WHERE pg.product_id = :product_id
+        )
+        AND p.id != :product_id
+        AND p.is_active = 1
+        GROUP BY p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug, c.name
+        ORDER BY shared_genres DESC, RAND()
+        LIMIT 4
+    ");
+    $stmt->execute([
+        'product_id' => $product_id
+    ]);
+    $similar_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("✓ Productos con géneros similares: " . count($similar_products));
     
-    // Query 1: Intentar obtener 4 productos de la misma categoría
-    if (!empty($category_id)) {
-        $stmt = $pdo->prepare("
-            SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
-                   c.name as console_name,
-                   COALESCE(
-                       (SELECT pi.image_url 
-                        FROM product_images pi 
-                        WHERE pi.product_id = p.id 
-                        AND pi.is_primary = 1
-                        LIMIT 1),
-                       p.image_url
-                   ) as primary_image
-            FROM products p
-            LEFT JOIN consoles c ON p.console_id = c.id
-            WHERE p.category_id = :category_id
-            AND p.id != :product_id
-            AND p.is_active = 1
-            ORDER BY RAND()
-            LIMIT 4
-        ");
-        $stmt->execute([
-            'category_id' => $category_id,
-            'product_id' => $product_id
-        ]);
-        $similar_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        error_log("✓ Productos de misma categoría (ID: $category_id): " . count($similar_products));
+    // Query 2: Si no hay suficientes, completar con productos de la misma categoría
+    if (count($similar_products) < 4) {
+        $needed = 4 - count($similar_products);
+        $category_id = $current_product['category_id'] ?? null;
+        
+        // Obtener IDs a excluir
+        $exclude_ids = [$product_id];
+        foreach ($similar_products as $prod) {
+            $exclude_ids[] = $prod['id'];
+        }
+        
+        // Crear placeholders para NOT IN
+        $placeholders = implode(',', array_fill(0, count($exclude_ids), '?'));
+        
+        if (!empty($category_id)) {
+            $sql = "
+                SELECT p.id, p.name, p.price_pesos, p.image_url, p.stock_quantity, p.slug,
+                       c.name as console_name,
+                       COALESCE(
+                           (SELECT pi.image_url 
+                            FROM product_images pi 
+                            WHERE pi.product_id = p.id 
+                            AND pi.is_primary = 1
+                            LIMIT 1),
+                           p.image_url
+                       ) as primary_image
+                FROM products p
+                LEFT JOIN consoles c ON p.console_id = c.id
+                WHERE p.category_id = ?
+                AND p.id NOT IN ($placeholders)
+                AND p.is_active = 1
+                ORDER BY RAND()
+                LIMIT $needed
+            ";
+            
+            $params = array_merge([$category_id], $exclude_ids);
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $additional = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("✓ Productos de misma categoría: " . count($additional));
+            $similar_products = array_merge($similar_products, $additional);
+        }
     }
     
-    // Query 2: Si no hay suficientes, completar con productos aleatorios
+    // Query 3: Si aún no hay suficientes, completar con productos aleatorios
     if (count($similar_products) < 4) {
         $needed = 4 - count($similar_products);
         
