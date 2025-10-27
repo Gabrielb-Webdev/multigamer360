@@ -531,20 +531,20 @@ function getImagePath($image_name)
                     $image_filename = !empty($product['primary_image']) ? $product['primary_image'] : 
                                      (!empty($product['image_url']) ? $product['image_url'] : 'product1.jpg');
                     
-                    // Construir rutas posibles (ABSOLUTAS con /)
+                    // Construir rutas posibles
                     $possible_paths = [
-                        '/uploads/products/' . $image_filename,
-                        '/assets/images/products/' . $image_filename,
-                        '/admin/uploads/products/' . $image_filename
+                        'uploads/products/' . $image_filename,
+                        'assets/images/products/' . $image_filename,
+                        'admin/uploads/products/' . $image_filename
                     ];
                     
                     // Buscar la ruta correcta (usar $_SERVER['DOCUMENT_ROOT'] para rutas absolutas)
-                    $product_image = '/assets/images/products/product1.jpg'; // Imagen por defecto ABSOLUTA
+                    $product_image = 'assets/images/products/product1.jpg'; // Imagen por defecto
                     $doc_root = $_SERVER['DOCUMENT_ROOT'];
                     
                     foreach ($possible_paths as $path) {
                         // Verificar si el archivo existe en el servidor
-                        $full_path = $doc_root . $path;
+                        $full_path = $doc_root . '/' . $path;
                         if (file_exists($full_path)) {
                             $product_image = $path;
                             break;
@@ -552,14 +552,16 @@ function getImagePath($image_name)
                     }
                     
                     // Si no se encontró, intentar con la ruta directa
-                    if ($product_image === '/assets/images/products/product1.jpg' && !empty($image_filename)) {
+                    if ($product_image === 'assets/images/products/product1.jpg' && !empty($image_filename)) {
                         // Asumir que image_url ya tiene la ruta completa
-                        if (strpos($image_filename, '/') === 0 || strpos($image_filename, 'http') === 0) {
+                        if (strpos($image_filename, '/') !== false || strpos($image_filename, 'http') === 0) {
                             $product_image = $image_filename;
-                        } else {
-                            // Si es relativa, hacerla absoluta
-                            $product_image = '/' . $image_filename;
                         }
+                    }
+                    
+                    // IMPORTANTE: Convertir a ruta absoluta para que funcione en /producto/slug
+                    if (strpos($product_image, 'http') !== 0 && $product_image[0] !== '/') {
+                        $product_image = '/' . $product_image;
                     }
                 ?>
                 <div class="col-lg-3 col-md-4 col-sm-6">
@@ -588,6 +590,10 @@ function getImagePath($image_name)
                         </a>
                         
                         <!-- Imagen de fondo que ocupa toda la card -->
+                        <?php
+                        // DEBUG: Mostrar ruta de imagen en comentario HTML
+                        echo "<!-- DEBUG IMG: filename='" . htmlspecialchars($image_filename) . "' | path='" . htmlspecialchars($product_image) . "' -->";
+                        ?>
                         <div class="product-image-background" 
                              style="background-image: url('<?php echo htmlspecialchars($product_image); ?>');"
                              data-fallback="/assets/images/products/product1.jpg">
