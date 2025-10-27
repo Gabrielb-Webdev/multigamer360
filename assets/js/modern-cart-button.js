@@ -36,11 +36,6 @@
     init() {
         this.attachEventListeners();
         this.checkInitialCartState();
-        // Actualizar display del carrito con datos ya cargados desde PHP
-        if (window.cartData) {
-            this.updateCartDisplay(window.cartData.cart_count, window.cartData.cart_total);
-            console.log('ModernCartButton: Carrito sincronizado desde PHP (sin AJAX)', window.cartData);
-        }
         console.log('ModernCartButton: Sistema inicializado');
     }
 
@@ -376,9 +371,18 @@
             .then(data => {
                 const cartDisplay = document.getElementById('cart-display');
                 if (cartDisplay && data.cart_total !== undefined) {
-                    const formattedTotal = data.cart_total > 0 ? `$${parseFloat(data.cart_total).toFixed(2)}` : '$0';
-                    cartDisplay.textContent = formattedTotal;
-                    console.log('ModernCartButton: Force sync completed -', formattedTotal);
+                    // Solo actualizar si el valor cambió (no sobrescribir en carga inicial)
+                    const currentText = cartDisplay.textContent.trim();
+                    const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
+                    const newValue = parseFloat(data.cart_total);
+                    
+                    if (currentValue !== newValue) {
+                        const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
+                        cartDisplay.textContent = formattedTotal;
+                        console.log('ModernCartButton: Force sync updated from', currentText, 'to', formattedTotal);
+                    } else {
+                        console.log('ModernCartButton: Force sync - value already correct:', currentText);
+                    }
                 }
             })
             .catch(error => console.log('Force sync error:', error));

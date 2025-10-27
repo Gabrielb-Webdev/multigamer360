@@ -114,9 +114,19 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
             
             const cartDisplay = document.getElementById('cart-display');
             if (cartDisplay && data.cart_total !== undefined) {
-                const formattedTotal = data.cart_total > 0 ? `$${parseFloat(data.cart_total).toFixed(2)}` : '$0';
-                cartDisplay.textContent = formattedTotal;
-                console.log('Cart display updated:', formattedTotal);
+                // Solo actualizar si el valor cambió (no sobrescribir en carga inicial)
+                const currentText = cartDisplay.textContent.trim();
+                const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
+                const newValue = parseFloat(data.cart_total);
+                
+                // Solo actualizar si el valor realmente cambió
+                if (currentValue !== newValue) {
+                    const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
+                    cartDisplay.textContent = formattedTotal;
+                    console.log('Cart display updated from', currentText, 'to', formattedTotal);
+                } else {
+                    console.log('Cart display already shows correct value:', currentText);
+                }
             }
             
             // Actualizar wishlist count si existe
