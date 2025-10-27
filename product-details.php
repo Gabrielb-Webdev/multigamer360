@@ -293,7 +293,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="/assets/css/product-details-dark.css?v=3.1">
+<link rel="stylesheet" href="/assets/css/product-details-dark.css?v=3.2">
 
 <div class="container-fluid product-details-container">
 
@@ -614,7 +614,6 @@ function getImagePath($image_name)
                         $product_image = '/' . $product_image;
                     }
                 ?>
-                <div class="col-lg-3 col-md-4 col-sm-6">
                     <!-- =====================================================
                          NUEVA CARD DE PRODUCTO (CON IMAGEN COMPLETA)
                          ===================================================== -->
