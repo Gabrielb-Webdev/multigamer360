@@ -36,6 +36,11 @@
     init() {
         this.attachEventListeners();
         this.checkInitialCartState();
+        // Actualizar display del carrito con datos ya cargados desde PHP
+        if (window.cartData) {
+            this.updateCartDisplay(window.cartData.cart_count, window.cartData.cart_total);
+            console.log('ModernCartButton: Carrito sincronizado desde PHP (sin AJAX)', window.cartData);
+        }
         console.log('ModernCartButton: Sistema inicializado');
     }
 
