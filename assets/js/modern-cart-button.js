@@ -342,51 +342,83 @@
         
         // Actualizar el display del carrito en el header solo con precio total
         const cartDisplay = document.getElementById('cart-display');
-        if (cartDisplay) {
-            const formattedTotal = total ? `$${parseFloat(total).toFixed(2)}` : '$0';
-            cartDisplay.textContent = formattedTotal; // Solo mostrar el precio
+        if (cartDisplay && total !== undefined) {
+            // Solo actualizar si el valor cambió o si actualmente muestra $0 y el nuevo valor es diferente
+            const currentText = cartDisplay.textContent.trim();
+            const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
+            const newValue = parseFloat(total) || 0;
+            
+            // Solo actualizar si:
+            // 1. El valor realmente cambió
+            // 2. O si el valor actual es NaN/inválido
+            if (isNaN(currentValue) || currentValue !== newValue) {
+                const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
+                cartDisplay.textContent = formattedTotal;
+                console.log(`ModernCartButton: Display actualizado de "${currentText}" a "${formattedTotal}"`);
+                // Solo forzar sync si hubo un cambio real
+                this.forceSyncCart();
+            } else {
+                console.log(`ModernCartButton: Display ya muestra el valor correcto: ${currentText}`);
+            }
         }
         
-        console.log(`ModernCartButton: Display actualizado - ${count || 0} productos, total: $${total || 0}`);
-        
-        // Forzar una sincronización adicional para asegurar persistencia
-        this.forceSyncCart();
+        console.log(`ModernCartButton: Display verificado - ${count || 0} productos, total: $${total || 0}`);
     }
     
     /**
      * Forzar sincronización del carrito para mantener consistencia
      */
     forceSyncCart() {
-        // Pequeño delay para permitir que el servidor procese completamente
-        setTimeout(() => {
-            const baseUrl = window.SITE_URL || '';
-            fetch(`${baseUrl}/ajax/get-cart-count.php`, {
-                credentials: 'same-origin',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
+        // Verificar primero si el display ya tiene un valor válido antes de hacer AJAX
+        const cartDisplay = document.getElementById('cart-display');
+        if (cartDisplay) {
+            const currentText = cartDisplay.textContent.trim();
+            const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
+            
+            // Si ya tiene un valor válido mayor a 0, no hacer AJAX inmediatamente
+            if (!isNaN(currentValue) && currentValue > 0) {
+                console.log('ModernCartButton: Valor ya válido, sync pospuesto');
+                // Solo hacer sync después de un tiempo más largo
+                setTimeout(() => this.doSyncCart(), 2000);
+                return;
+            }
+        }
+        
+        // Si no hay valor válido, hacer sync inmediato
+        this.doSyncCart();
+    }
+    
+    /**
+     * Ejecutar sincronización del carrito
+     */
+    doSyncCart() {
+        const baseUrl = window.SITE_URL || '';
+        fetch(`${baseUrl}/ajax/get-cart-count.php`, {
+            credentials: 'same-origin',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const cartDisplay = document.getElementById('cart-display');
+            if (cartDisplay && data.cart_total !== undefined) {
+                // Solo actualizar si el valor cambió
+                const currentText = cartDisplay.textContent.trim();
+                const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
+                const newValue = parseFloat(data.cart_total);
+                
+                if (currentValue !== newValue) {
+                    const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
+                    cartDisplay.textContent = formattedTotal;
+                    console.log('ModernCartButton: Sync updated from', currentText, 'to', formattedTotal);
+                } else {
+                    console.log('ModernCartButton: Sync - value already correct:', currentText);
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const cartDisplay = document.getElementById('cart-display');
-                if (cartDisplay && data.cart_total !== undefined) {
-                    // Solo actualizar si el valor cambió (no sobrescribir en carga inicial)
-                    const currentText = cartDisplay.textContent.trim();
-                    const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
-                    const newValue = parseFloat(data.cart_total);
-                    
-                    if (currentValue !== newValue) {
-                        const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
-                        cartDisplay.textContent = formattedTotal;
-                        console.log('ModernCartButton: Force sync updated from', currentText, 'to', formattedTotal);
-                    } else {
-                        console.log('ModernCartButton: Force sync - value already correct:', currentText);
-                    }
-                }
-            })
-            .catch(error => console.log('Force sync error:', error));
-        }, 100); // Muy breve delay para asegurar que el servidor haya procesado
+            }
+        })
+        .catch(error => console.log('Sync error:', error));
     }
 
     /**
