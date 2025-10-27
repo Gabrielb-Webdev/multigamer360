@@ -603,6 +603,7 @@
 .similar-products-section {
     padding: 60px 0;
     margin-top: 40px;
+    position: relative;
 }
 
 .similar-products-title {
@@ -615,7 +616,64 @@
     letter-spacing: 2px;
 }
 
-/* Nueva card de producto - alta con imagen completa (igual que productos.php) */
+/* Carousel Container */
+.similar-products-carousel-wrapper {
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 60px;
+}
+
+.similar-products-carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    padding: 10px 0;
+}
+
+.similar-products-carousel::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+/* Navigation Buttons */
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(220, 38, 27, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-nav:hover {
+    background: rgba(220, 38, 27, 1);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 20px rgba(220, 38, 27, 0.5);
+}
+
+.carousel-prev {
+    left: 10px;
+}
+
+.carousel-next {
+    right: 10px;
+}
+
+/* Nueva card de producto - más compacta para carousel */
 .similar-products-section .product-card {
     position: relative;
     background: #fff;
@@ -624,7 +682,9 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     border: 1px solid #ddd;
     transition: all 0.3s ease;
-    height: 380px;
+    height: 320px;
+    width: 220px;
+    flex-shrink: 0;
     cursor: pointer;
 }
 
@@ -1109,5 +1169,50 @@
 
     .btn-add-cart {
         width: 100%;
+    }
+    
+    /* Carousel responsive */
+    .similar-products-carousel-wrapper {
+        padding: 0 50px;
+    }
+    
+    .carousel-nav {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .carousel-prev {
+        left: 5px;
+    }
+    
+    .carousel-next {
+        right: 5px;
+    }
+    
+    .similar-products-section .product-card {
+        width: 200px;
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .similar-products-carousel-wrapper {
+        padding: 0 45px;
+    }
+    
+    .carousel-nav {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    .similar-products-section .product-card {
+        width: 180px;
+        height: 280px;
+    }
+    
+    .similar-products-title {
+        font-size: 1.5rem;
     }
 }

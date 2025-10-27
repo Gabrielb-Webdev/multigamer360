@@ -293,7 +293,7 @@ function getImagePath($image_name)
 ?>
 
 <!-- Dark Theme Stylesheet -->
-<link rel="stylesheet" href="/assets/css/product-details-dark.css?v=3.0">
+<link rel="stylesheet" href="/assets/css/product-details-dark.css?v=3.1">
 
 <div class="container-fluid product-details-container">
 
@@ -551,8 +551,11 @@ function getImagePath($image_name)
 <div class="container-fluid mt-5 mb-5" style="background: #1a1a1a; padding: 40px 0;">
     <section class="similar-products-section">
         <h2 class="similar-products-title">PRODUCTOS SIMILARES</h2>
-        <div class="container">
-            <div class="row g-4">
+        <div class="similar-products-carousel-wrapper">
+            <button class="carousel-nav carousel-prev" aria-label="Anterior">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="similar-products-carousel">
                 <?php 
                 // Obtener wishlist del usuario
                 $userWishlist = [];
@@ -712,9 +715,11 @@ function getImagePath($image_name)
                         </div>
                         
                     </div>
-                </div>
                 <?php endforeach; ?>
             </div>
+            <button class="carousel-nav carousel-next" aria-label="Siguiente">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
     </section>
 </div>
@@ -1038,6 +1043,71 @@ function getImagePath($image_name)
                 console.error(`❌ Error procesando imagen similar ${index + 1}:`, error);
             }
         });
+        
+        // ===== CAROUSEL DE PRODUCTOS SIMILARES =====
+        const carousel = document.querySelector('.similar-products-carousel');
+        const prevBtn = document.querySelector('.carousel-prev');
+        const nextBtn = document.querySelector('.carousel-next');
+        
+        if (carousel && prevBtn && nextBtn) {
+            const cardWidth = 220; // Ancho de cada card
+            const gap = 12; // Gap entre cards
+            const scrollAmount = cardWidth + gap;
+            
+            // Auto-scroll infinito
+            let isAutoScrolling = true;
+            let autoScrollInterval;
+            
+            function startAutoScroll() {
+                autoScrollInterval = setInterval(() => {
+                    if (isAutoScrolling) {
+                        carousel.scrollLeft += 1;
+                        
+                        // Si llegamos al final, volver al inicio suavemente
+                        if (carousel.scrollLeft >= carousel.scrollWidth - carousel.clientWidth) {
+                            setTimeout(() => {
+                                carousel.style.scrollBehavior = 'auto';
+                                carousel.scrollLeft = 0;
+                                setTimeout(() => {
+                                    carousel.style.scrollBehavior = 'smooth';
+                                }, 50);
+                            }, 1000);
+                        }
+                    }
+                }, 30);
+            }
+            
+            // Pausar auto-scroll al hacer hover
+            carousel.addEventListener('mouseenter', () => {
+                isAutoScrolling = false;
+            });
+            
+            carousel.addEventListener('mouseleave', () => {
+                isAutoScrolling = true;
+            });
+            
+            // Navegación manual
+            prevBtn.addEventListener('click', () => {
+                isAutoScrolling = false;
+                carousel.scrollLeft -= scrollAmount;
+                setTimeout(() => {
+                    isAutoScrolling = true;
+                }, 3000);
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                isAutoScrolling = false;
+                carousel.scrollLeft += scrollAmount;
+                setTimeout(() => {
+                    isAutoScrolling = true;
+                }, 3000);
+            });
+            
+            // Iniciar auto-scroll
+            startAutoScroll();
+            
+            console.log('✅ Carousel de productos similares inicializado');
+        }
     });
 </script>
 
