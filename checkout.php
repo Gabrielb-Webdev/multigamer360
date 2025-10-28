@@ -48,13 +48,9 @@ if (isLoggedIn()) {
     $user = getCurrentUser();
     
     if ($user) {
-        // Separar nombre completo en nombre y apellido si es necesario
-        $full_name = $user['full_name'] ?? '';
-        $name_parts = explode(' ', trim($full_name), 2);
-        
         $user_data = [
-            'firstName' => $name_parts[0] ?? '',
-            'lastName' => $name_parts[1] ?? '',
+            'firstName' => $user['first_name'] ?? '',
+            'lastName' => $user['last_name'] ?? '',
             'email' => $user['email'] ?? '',
             'phone' => $user['phone'] ?? '',
             'postal_code' => $user['postal_code'] ?? ''
