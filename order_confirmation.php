@@ -104,8 +104,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 3.3 */
-    /* Updated: 2025-10-28 - Fixed image loading from product_images table */
+    /* Order Confirmation Styles - Version 3.4 */
+    /* Updated: 2025-10-28 - Fixed equal height cards and content overflow */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -158,11 +158,19 @@ require_once 'includes/header.php';
         margin-bottom: 2rem;
         transition: all 0.3s ease;
         overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .confirmation-card:hover {
         border-color: rgba(220, 53, 69, 0.3);
         box-shadow: 0 8px 32px rgba(220, 53, 69, 0.15);
+    }
+    
+    /* Asegurar que las cards tengan la misma altura */
+    .row > [class*='col-'] {
+        display: flex;
     }
 
     .section-title {
@@ -210,6 +218,9 @@ require_once 'includes/header.php';
         flex: 1;
         margin-left: 1rem;
         line-height: 1.6;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
     }
 
     .products-list {
@@ -438,10 +449,16 @@ require_once 'includes/header.php';
         .confirmation-page {
             padding: 1rem 0;
         }
+        
+        /* Resetear flexbox en mobile */
+        .row > [class*='col-'] {
+            display: block;
+        }
 
         .confirmation-card {
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+            height: auto;
         }
 
         .success-title {
