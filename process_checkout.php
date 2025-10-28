@@ -239,8 +239,8 @@ try {
     
     $inserted_order_id = $pdo->lastInsertId();
     
-    // Insertar items de la orden y descontar del stock
-    $stmt_insert = $pdo->prepare("
+    // Insertar items de la orden Y DESCONTAR STOCK
+    $stmt_insert_item = $pdo->prepare("
         INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal)
         VALUES (?, ?, ?, ?, ?, ?)
     ");
@@ -251,9 +251,21 @@ try {
         WHERE id = ? AND stock >= ?
     ");
     
+    $stmt_check_stock = $pdo->prepare("
+        SELECT id, name, stock FROM products WHERE id = ?
+    ");
+    
     foreach ($cart_items as $item) {
-        // Insertar item de la orden
-        $stmt_insert->execute([
+        // Verificar stock actual
+        $stmt_check_stock->execute([$item['id']]);
+        $product_check = $stmt_check_stock->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$product_check || $product_check['stock'] < $item['quantity']) {
+            throw new Exception("Stock insuficiente para: " . $item['name']);
+        }
+        
+        // Insertar item de orden
+        $stmt_insert_item->execute([
             $inserted_order_id,
             $item['id'],
             $item['name'],
@@ -262,16 +274,16 @@ try {
             $item['total']
         ]);
         
-        // Descontar del stock
+        // Descontar stock
         $stmt_update_stock->execute([
             $item['quantity'],
             $item['id'],
             $item['quantity']
         ]);
         
-        // Verificar si se actualizó el stock (si no había suficiente stock, cancelar transacción)
+        // Verificar que se actualizó el stock
         if ($stmt_update_stock->rowCount() === 0) {
-            throw new Exception("Stock insuficiente para el producto: " . $item['name']);
+            throw new Exception("Error al actualizar stock de: " . $item['name']);
         }
     }
     
