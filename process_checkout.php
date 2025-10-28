@@ -4,18 +4,27 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// DEBUG: Log de datos recibidos
+error_log("=== CHECKOUT DEBUG ===");
+error_log("POST data: " . print_r($_POST, true));
+error_log("SESSION cart: " . print_r($_SESSION['cart'] ?? 'NO CART', true));
+error_log("REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
+
 // Incluir dependencias
 require_once 'config/database.php';
 require_once 'includes/cart_manager.php';
 
 // Verificar si hay productos en el carrito
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+    error_log("ERROR: Cart is empty or not set");
+    $_SESSION['checkout_error'] = "Tu carrito está vacío.";
     header('Location: carrito.php');
     exit();
 }
 
 // Verificar que sea una petición POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    error_log("ERROR: Not a POST request");
     header('Location: checkout.php');
     exit();
 }
@@ -25,7 +34,8 @@ $required_fields = ['firstName', 'lastName', 'email', 'phone', 'paymentMethod'];
 
 foreach ($required_fields as $field) {
     if (!isset($_POST[$field]) || empty(trim($_POST[$field]))) {
-        $_SESSION['checkout_error'] = "Todos los campos requeridos deben ser completados.";
+        error_log("ERROR: Missing required field: $field");
+        $_SESSION['checkout_error'] = "Todos los campos requeridos deben ser completados. Falta: $field";
         header('Location: checkout.php');
         exit();
     }

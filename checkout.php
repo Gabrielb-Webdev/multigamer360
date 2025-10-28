@@ -587,6 +587,15 @@ require_once 'includes/header.php';
             <h1>Finalizar Compra</h1>
         </div>
 
+        <?php if (isset($_SESSION['checkout_error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle"></i> 
+                <strong>Error:</strong> <?php echo htmlspecialchars($_SESSION['checkout_error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['checkout_error']); ?>
+        <?php endif; ?>
+
         <div class="row">
             <!-- Resumen del Pedido -->
             <div class="col-lg-5">
@@ -712,7 +721,7 @@ require_once 'includes/header.php';
                             <!-- Confirmación de método de pago seleccionado -->
                             <div id="payment-method-confirmed" style="display: none;">
                                 <div class="shipping-option selected">
-                                    <input type="hidden" name="confirmedPaymentMethod" id="confirmedPaymentMethod">
+                                    <input type="hidden" name="paymentMethod" id="confirmedPaymentMethod">
                                     <div>
                                         <div class="shipping-title" id="confirmed-payment-title"></div>
                                         <small id="confirmed-payment-description"></small>
@@ -1123,8 +1132,10 @@ function selectPayment(paymentId) {
     
     console.log('Payment info:', { paymentTitle, paymentDescription });
     
-    // Marcar el radio button correspondiente
-    paymentElement.checked = true;
+    // Desmarcar todos los radios principales
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.checked = false;
+    });
     
     // Ocultar selector y mostrar confirmación
     document.getElementById('payment-method-selector').style.display = 'none';
@@ -1133,11 +1144,14 @@ function selectPayment(paymentId) {
     // Actualizar información en la confirmación
     document.getElementById('confirmed-payment-title').textContent = paymentTitle;
     document.getElementById('confirmed-payment-description').textContent = paymentDescription;
+    
+    // Establecer el valor en el campo hidden
     document.getElementById('confirmedPaymentMethod').value = paymentId;
     
     selectedPayment = paymentId;
     
     console.log('Selected payment set to:', selectedPayment);
+    console.log('Hidden field value:', document.getElementById('confirmedPaymentMethod').value);
     
     // Mostrar campos de dirección y hacerlos required solo si es envío a domicilio
     const deliveryAddress = document.getElementById('delivery-address');
@@ -1365,11 +1379,20 @@ function formatCVV(input) {
 
 // Validación del formulario
 document.getElementById('checkout-form').addEventListener('submit', function(e) {
-    if (!selectedPayment) {
+    console.log('Form submit triggered');
+    
+    // Verificar que haya un método de pago seleccionado
+    const paymentMethodValue = document.getElementById('confirmedPaymentMethod').value;
+    console.log('Payment method value:', paymentMethodValue);
+    
+    if (!paymentMethodValue || paymentMethodValue === '') {
         e.preventDefault();
         alert('Por favor selecciona un método de pago');
-        return;
+        console.error('No payment method selected');
+        return false;
     }
+    
+    selectedPayment = paymentMethodValue;
     
     // Si seleccionó pago online, verificar que haya elegido un método específico
     if (selectedPayment === 'online') {
@@ -1377,7 +1400,8 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         if (!selectedOnlineMethod) {
             e.preventDefault();
             alert('Por favor selecciona un método de pago online específico');
-            return;
+            console.error('No online payment method selected');
+            return false;
         }
     }
     
@@ -1387,9 +1411,21 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         if (!selectedLocalMethod) {
             e.preventDefault();
             alert('Por favor selecciona cómo vas a pagar en el local');
-            return;
+            console.error('No local payment method selected');
+            return false;
         }
     }
+    
+    // Log de todos los datos del formulario antes de enviar
+    const formData = new FormData(this);
+    console.log('=== FORM DATA TO BE SUBMITTED ===');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+    console.log('=================================');
+    
+    console.log('Form validation passed, submitting...');
+    return true;
 });
 
 // Inicializar cuando carga la página
