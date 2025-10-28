@@ -4,6 +4,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Incluir dependencias
+require_once 'config/database.php';
+require_once 'includes/cart_manager.php';
+
 // Verificar si hay productos en el carrito
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     header('Location: carrito.php');
@@ -17,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Validar datos requeridos
-$required_fields = ['firstName', 'lastName', 'email', 'phone', 'shippingMethod', 'paymentMethod'];
+$required_fields = ['firstName', 'lastName', 'email', 'phone', 'paymentMethod'];
 
 foreach ($required_fields as $field) {
     if (!isset($_POST[$field]) || empty(trim($_POST[$field]))) {
@@ -32,8 +36,19 @@ $firstName = trim($_POST['firstName']);
 $lastName = trim($_POST['lastName']);
 $email = trim($_POST['email']);
 $phone = trim($_POST['phone']);
-$shippingMethod = $_POST['shippingMethod'];
 $paymentMethod = $_POST['paymentMethod'];
+
+// Obtener método de envío de la sesión (ya fue guardado en el carrito)
+$shippingMethod = $_SESSION['shipping_method'] ?? '';
+$shippingCost = $_SESSION['shipping_cost'] ?? 0;
+$shippingName = $_SESSION['shipping_name'] ?? 'No especificado';
+$postalCode = $_SESSION['postal_code'] ?? '';
+
+if (empty($shippingMethod)) {
+    $_SESSION['checkout_error'] = "Método de envío no seleccionado.";
+    header('Location: carrito.php');
+    exit();
+}
 
 // Validar email
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -82,54 +97,32 @@ if (!in_array($paymentMethod, $valid_payment_methods)) {
     exit();
 }
 
-// Productos de ejemplo (simulando base de datos)
-$products_data = [
-    1 => [
-        'id' => 1,
-        'name' => 'Rayman 2 the Great Escape PlayStation 1',
-        'price' => 45000,
-        'image_url' => 'assets/images/products/product1.jpg',
-        'category' => 'PlayStation',
-        'brand' => 'Sony'
-    ],
-    2 => [
-        'id' => 2,
-        'name' => 'Super Mario 64 Nintendo 64',
-        'price' => 65000,
-        'image_url' => 'assets/images/products/product2.jpg',
-        'category' => 'Nintendo 64',
-        'brand' => 'Nintendo'
-    ],
-    3 => [
-        'id' => 3,
-        'name' => 'Final Fantasy VII PlayStation 1',
-        'price' => 55000,
-        'image_url' => 'assets/images/products/product3.jpg',
-        'category' => 'PlayStation',
-        'brand' => 'Sony'
-    ],
-    4 => [
-        'id' => 4,
-        'name' => 'The Legend of Zelda: Ocarina of Time Nintendo 64',
-        'price' => 75000,
-        'image_url' => 'assets/images/products/product4.jpg',
-        'category' => 'Nintendo 64',
-        'brand' => 'Nintendo'
-    ]
-];
-
-// Calcular totales
+// =====================================================
+// OBTENER PRODUCTOS DE LA BASE DE DATOS
+// =====================================================
 $subtotal = 0;
 $cart_items = [];
 
-foreach ($_SESSION['cart'] as $product_id => $quantity) {
-    if (isset($products_data[$product_id])) {
-        $product = $products_data[$product_id];
+if (!empty($_SESSION['cart'])) {
+    $product_ids = array_keys($_SESSION['cart']);
+    $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
+    
+    $stmt = $pdo->prepare("
+        SELECT p.id, p.name, p.price_pesos as price, p.image_url
+        FROM products p
+        WHERE p.id IN ($placeholders)
+    ");
+    
+    $stmt->execute($product_ids);
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($products as $product) {
+        $quantity = $_SESSION['cart'][$product['id']];
         $item_total = $product['price'] * $quantity;
         $subtotal += $item_total;
         
         $cart_items[] = [
-            'id' => $product_id,
+            'id' => $product['id'],
             'name' => $product['name'],
             'price' => $product['price'],
             'quantity' => $quantity,
@@ -137,17 +130,6 @@ foreach ($_SESSION['cart'] as $product_id => $quantity) {
         ];
     }
 }
-
-// Calcular costo de envío
-$shipping_costs = [
-    '5648' => 5648,  // correoNube
-    '6214' => 6214,  // correoExpreso
-    '3500' => 3500,  // motoCABA
-    '0' => 0,        // multigamer360
-    '2207' => 2207   // puntoRetiro
-];
-
-$shipping_cost = $shipping_costs[$shippingMethod] ?? 0;
 
 // Procesar cupón aplicado si existe
 $coupon_discount = 0;
@@ -197,101 +179,166 @@ if (isset($_SESSION['applied_coupon'])) {
 }
 
 $subtotal_with_discount = $subtotal - $coupon_discount;
-$total = $subtotal_with_discount + $shipping_cost;
+$total = $subtotal_with_discount + $shippingCost;
 
 // Obtener nombres de métodos
-$shipping_names = [
-    '5648' => 'Correo Nube - Capital Federal',
-    '6214' => 'Correo Expreso - Interior del País',
-    '3500' => 'Moto - CABA',
-    '0' => 'Retirar por MultiGamer360',
-    '2207' => 'Punto de Retiro'
-];
-
 $payment_names = [
     'local' => 'Pagar en el Local',
     'online' => 'Pago Online',
     'cod' => 'Contra Entrega'
 ];
 
-$shipping_name = $shipping_names[$shippingMethod] ?? 'Desconocido';
 $payment_name = $payment_names[$paymentMethod] ?? 'Desconocido';
 
 // Generar ID de orden único
 $order_id = 'MG360-' . date('Ymd') . '-' . rand(1000, 9999);
 
-// Crear datos de la orden
-$order_data = [
-    'order_id' => $order_id,
-    'date' => date('Y-m-d H:i:s'),
-    'customer' => [
-        'first_name' => $firstName,
-        'last_name' => $lastName,
-        'email' => $email,
-        'phone' => $phone,
-        'address' => $address,
-        'city' => $city,
-        'province' => $province,
-        'zip_code' => $zipCode
-    ],
-    'items' => $cart_items,
-    'shipping' => [
-        'method' => $shippingMethod,
-        'name' => $shipping_name,
-        'cost' => $shipping_cost
-    ],
-    'payment' => [
-        'method' => $paymentMethod,
-        'name' => $payment_name
-    ],
-    'coupon' => $coupon_data ? [
-        'code' => $coupon_data['code'],
-        'name' => $coupon_data['name'],
-        'type' => $coupon_data['type'],
-        'value' => $coupon_data['value'],
-        'discount_amount' => $coupon_discount
-    ] : null,
-    'totals' => [
-        'subtotal' => $subtotal,
-        'coupon_discount' => $coupon_discount,
-        'subtotal_with_discount' => $subtotal_with_discount,
-        'shipping' => $shipping_cost,
-        'total' => $total
-    ]
-];
+// Preparar datos de usuario
+$user_id = $_SESSION['user_id'] ?? null;
 
-// Guardar en base de datos si hay cupón aplicado
-if ($coupon_data && $coupon_discount > 0) {
-    try {
-        // Registrar uso del cupón
+// =====================================================
+// GUARDAR ORDEN EN LA BASE DE DATOS
+// =====================================================
+try {
+    // Iniciar transacción
+    $pdo->beginTransaction();
+    
+    // Insertar orden principal
+    $stmt = $pdo->prepare("
+        INSERT INTO orders (
+            order_number, user_id, 
+            customer_first_name, customer_last_name, customer_email, customer_phone,
+            shipping_address, shipping_city, shipping_province, shipping_postal_code,
+            shipping_method, shipping_cost,
+            payment_method, payment_status,
+            subtotal, discount_amount, total_amount,
+            status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    ");
+    
+    $stmt->execute([
+        $order_id,
+        $user_id,
+        $firstName,
+        $lastName,
+        $email,
+        $phone,
+        $address ?: null,
+        $city ?: null,
+        $province ?: null,
+        $postalCode,
+        $shippingName,
+        $shippingCost,
+        $payment_name,
+        'pending',
+        $subtotal,
+        $coupon_discount,
+        $total,
+        'pending'
+    ]);
+    
+    $inserted_order_id = $pdo->lastInsertId();
+    
+    // Insertar items de la orden
+    $stmt = $pdo->prepare("
+        INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    
+    foreach ($cart_items as $item) {
+        $stmt->execute([
+            $inserted_order_id,
+            $item['id'],
+            $item['name'],
+            $item['quantity'],
+            $item['price'],
+            $item['total']
+        ]);
+    }
+    
+    // Guardar uso de cupón si existe
+    if ($coupon_data && $coupon_discount > 0) {
         $stmt = $pdo->prepare("
-            INSERT INTO coupon_usage (coupon_id, user_id, discount_amount) 
-            VALUES (?, ?, ?)
+            INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount, created_at) 
+            VALUES (?, ?, ?, ?, NOW())
         ");
         $stmt->execute([
             $coupon_data['id'],
-            $_SESSION['user_id'] ?? 0,
+            $user_id,
+            $inserted_order_id,
             $coupon_discount
         ]);
         
         // Incrementar contador de uso del cupón
         $stmt = $pdo->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
         $stmt->execute([$coupon_data['id']]);
-        
-    } catch (Exception $e) {
-        error_log("Error al registrar uso de cupón: " . $e->getMessage());
     }
+    
+    // Confirmar transacción
+    $pdo->commit();
+    
+    // Crear datos de la orden para mostrar en confirmación
+    $order_data = [
+        'order_id' => $order_id,
+        'date' => date('Y-m-d H:i:s'),
+        'customer' => [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $email,
+            'phone' => $phone,
+            'address' => $address,
+            'city' => $city,
+            'province' => $province,
+            'zip_code' => $zipCode
+        ],
+        'items' => $cart_items,
+        'shipping' => [
+            'method' => $shippingMethod,
+            'name' => $shippingName,
+            'cost' => $shippingCost
+        ],
+        'payment' => [
+            'method' => $paymentMethod,
+            'name' => $payment_name
+        ],
+        'coupon' => $coupon_data ? [
+            'code' => $coupon_data['code'],
+            'name' => $coupon_data['name'],
+            'type' => $coupon_data['type'],
+            'value' => $coupon_data['value'],
+            'discount_amount' => $coupon_discount
+        ] : null,
+        'totals' => [
+            'subtotal' => $subtotal,
+            'coupon_discount' => $coupon_discount,
+            'subtotal_with_discount' => $subtotal_with_discount,
+            'shipping' => $shippingCost,
+            'total' => $total
+        ]
+    ];
+    
+    // Guardar en sesión para mostrar confirmación
+    $_SESSION['completed_order'] = $order_data;
+    
+    // Limpiar carrito y datos de envío
+    $_SESSION['cart'] = [];
+    unset($_SESSION['applied_coupon']);
+    unset($_SESSION['shipping_method']);
+    unset($_SESSION['shipping_cost']);
+    unset($_SESSION['shipping_name']);
+    unset($_SESSION['postal_code']);
+    
+    // Redirigir a página de confirmación
+    header('Location: order_confirmation.php?order_id=' . $order_id);
+    exit();
+    
+} catch (Exception $e) {
+    // Revertir transacción en caso de error
+    $pdo->rollBack();
+    
+    error_log("Error al procesar orden: " . $e->getMessage());
+    $_SESSION['checkout_error'] = "Hubo un error al procesar tu orden. Por favor, intenta nuevamente.";
+    header('Location: checkout.php');
+    exit();
 }
-
-// Aquí puedes guardar la orden en base de datos
-// Por ahora la guardamos en sesión para mostrar confirmación
-$_SESSION['completed_order'] = $order_data;
-
-// Limpiar carrito y cupón aplicado
-$_SESSION['cart'] = [];
-unset($_SESSION['applied_coupon']);
-
-// Redirigir a página de confirmación
-header('Location: order_confirmation.php');
-exit();
 ?>

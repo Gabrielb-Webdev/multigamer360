@@ -27,6 +27,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Incluir dependencias necesarias
+require_once 'config/database.php';
+require_once 'includes/cart_manager.php';
+
 // =====================================================
 // VALIDACIONES PREVIAS
 // =====================================================
@@ -45,63 +49,65 @@ if (!isset($_SESSION['shipping_method'])) {
 }
 
 // =====================================================
-// INCLUIR HEADER
+// INICIALIZAR CART MANAGER
 // =====================================================
-require_once 'includes/header.php';
+$cartManager = new CartManager($pdo);
 
 // =====================================================
-// DATOS DE PRODUCTOS (TEMPORAL)
+// OBTENER PRODUCTOS DEL CARRITO DESDE LA BD
 // =====================================================
-// TODO: Migrar a ProductManager para obtener datos de la base de datos
-
-// Productos de ejemplo (simulando base de datos)
-$products_data = [
-    1 => [
-        'id' => 1,
-        'name' => 'Rayman 2 the Great Escape PlayStation 1',
-        'price' => 45000,
-        'image_url' => 'assets/images/products/product1.jpg',
-        'category' => 'PlayStation',
-        'brand' => 'Sony'
-    ],
-    2 => [
-        'id' => 2,
-        'name' => 'Super Mario 64 Nintendo 64',
-        'price' => 65000,
-        'image_url' => 'assets/images/products/product2.jpg',
-        'category' => 'Nintendo 64',
-        'brand' => 'Nintendo'
-    ],
-    3 => [
-        'id' => 3,
-        'name' => 'Final Fantasy VII PlayStation 1',
-        'price' => 55000,
-        'image_url' => 'assets/images/products/product3.jpg',
-        'category' => 'PlayStation',
-        'brand' => 'Sony'
-    ],
-    4 => [
-        'id' => 4,
-        'name' => 'The Legend of Zelda: Ocarina of Time Nintendo 64',
-        'price' => 75000,
-        'image_url' => 'assets/images/products/product4.jpg',
-        'category' => 'Nintendo 64',
-        'brand' => 'Nintendo'
-    ]
-];
-
-// Calcular total del carrito
+$cart_items = [];
 $cart_total = 0;
-foreach ($_SESSION['cart'] as $product_id => $quantity) {
-    if (isset($products_data[$product_id])) {
-        $cart_total += $products_data[$product_id]['price'] * $quantity;
+
+if (!empty($_SESSION['cart'])) {
+    $product_ids = array_keys($_SESSION['cart']);
+    $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
+    
+    $stmt = $pdo->prepare("
+        SELECT p.id, p.name, p.price_pesos as price, p.image_url,
+               COALESCE(
+                   (SELECT pi.image_url 
+                    FROM product_images pi 
+                    WHERE pi.product_id = p.id 
+                    AND pi.is_primary = 1
+                    LIMIT 1),
+                   p.image_url
+               ) as primary_image
+        FROM products p
+        WHERE p.id IN ($placeholders)
+    ");
+    
+    $stmt->execute($product_ids);
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($products as $product) {
+        $quantity = $_SESSION['cart'][$product['id']];
+        $subtotal = $product['price'] * $quantity;
+        $cart_total += $subtotal;
+        
+        $cart_items[] = [
+            'id' => $product['id'],
+            'name' => $product['name'],
+            'price' => $product['price'],
+            'image' => $product['primary_image'] ?? $product['image_url'],
+            'quantity' => $quantity,
+            'subtotal' => $subtotal
+        ];
     }
 }
 
 // Obtener información de envío seleccionada
-$selected_shipping = $_SESSION['shipping_method'];
-$shipping_cost = $selected_shipping['cost'];
+$shipping_method = $_SESSION['shipping_method'] ?? '';
+$shipping_cost = $_SESSION['shipping_cost'] ?? 0;
+$shipping_name = $_SESSION['shipping_name'] ?? 'No especificado';
+$postal_code = $_SESSION['postal_code'] ?? '';
+
 $total_with_shipping = $cart_total + $shipping_cost;
+
+// =====================================================
+// INCLUIR HEADER
+// =====================================================
+require_once 'includes/header.php';
 ?>
 
 <style>
@@ -553,34 +559,15 @@ $total_with_shipping = $cart_total + $shipping_cost;
                     <h3><i class="fas fa-shopping-bag"></i> Resumen del Pedido</h3>
                     
                     <div class="products-list">
-                        <?php foreach ($_SESSION['cart'] as $product_id => $quantity): ?>
-                            <?php if (isset($products_data[$product_id])): ?>
-                                <?php $product = $products_data[$product_id]; ?>
-                                <div class="product-item">
-                                    <?php
-                                    // Procesar la imagen de manera similar a productos.php
-                                    $image_filename = !empty($product['image_url']) ? $product['image_url'] : 'product1.jpg';
-                                    $assets_path = 'assets/images/products/' . $image_filename;
-                                    $uploads_path = 'uploads/products/' . $image_filename;
-                                    
-                                    // Determinar qué ruta usar (prioridad a assets/images/products/)
-                                    if (file_exists($assets_path)) {
-                                        $product_image = $assets_path;
-                                    } else if (file_exists($uploads_path)) {
-                                        $product_image = $uploads_path;
-                                    } else {
-                                        // Imagen por defecto
-                                        $product_image = 'assets/images/products/product1.jpg';
-                                    }
-                                    ?>
-                                    <img src="<?php echo htmlspecialchars($product_image); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="product-image">
-                                    <div class="product-details">
-                                        <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
-                                        <div class="product-quantity">Cantidad: <?php echo $quantity; ?></div>
-                                    </div>
-                                    <div class="product-price">$<?php echo number_format($product['price'] * $quantity, 0, ',', '.'); ?></div>
+                        <?php foreach ($cart_items as $item): ?>
+                            <div class="product-item">
+                                <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="product-image">
+                                <div class="product-details">
+                                    <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
+                                    <div class="product-quantity">Cantidad: <?php echo $item['quantity']; ?></div>
                                 </div>
-                            <?php endif; ?>
+                                <div class="product-price">$<?php echo number_format($item['subtotal'], 0, ',', '.'); ?></div>
+                            </div>
                         <?php endforeach; ?>
                     </div>
 
@@ -590,7 +577,7 @@ $total_with_shipping = $cart_total + $shipping_cost;
                             <span>$<?php echo number_format($cart_total, 0, ',', '.'); ?></span>
                         </div>
                         <div class="total-line">
-                            <span>Envío (<?php echo htmlspecialchars($selected_shipping['name']); ?>):</span>
+                            <span>Envío (<?php echo htmlspecialchars($shipping_name); ?>):</span>
                             <span>
                                 <?php if ($shipping_cost == 0): ?>
                                     Gratis
@@ -599,10 +586,10 @@ $total_with_shipping = $cart_total + $shipping_cost;
                                 <?php endif; ?>
                             </span>
                         </div>
-                        <?php if (!empty($selected_shipping['postal_code'])): ?>
+                        <?php if (!empty($postal_code)): ?>
                         <div class="total-line">
                             <span>Código Postal:</span>
-                            <span><?php echo htmlspecialchars($selected_shipping['postal_code']); ?></span>
+                            <span><?php echo htmlspecialchars($postal_code); ?></span>
                         </div>
                         <?php endif; ?>
                         <div class="total-line final">
