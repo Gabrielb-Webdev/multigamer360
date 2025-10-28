@@ -15,6 +15,9 @@ require_once 'includes/header.php';
 ?>
 
 <style>
+/* Order Confirmation Styles - Version 2.0 */
+/* Updated: 2025-10-28 - Improved product display and responsive design */
+
 .confirmation-page {
     background-color: var(--bg-dark);
     min-height: 100vh;
@@ -394,6 +397,8 @@ require_once 'includes/header.php';
         font-size: 1.1rem;
     }
 }
+
+/* End of Order Confirmation Styles v2.0 */
 </style>
 
 <main class="confirmation-page">
