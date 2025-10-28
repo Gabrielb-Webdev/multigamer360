@@ -24,7 +24,12 @@ if (isset($_SESSION['completed_order'])) {
 
         if ($order_data) {
             // Obtener items de la orden
-            $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+            $stmt = $pdo->prepare("
+                SELECT oi.*, p.image_url 
+                FROM order_items oi 
+                LEFT JOIN products p ON oi.product_id = p.id 
+                WHERE oi.order_id = ?
+            ");
             $stmt->execute([$order_data['id']]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -56,7 +61,8 @@ if (isset($_SESSION['completed_order'])) {
                         'name' => $item['product_name'],
                         'quantity' => $item['quantity'],
                         'price' => $item['price'],
-                        'total' => $item['subtotal']
+                        'total' => $item['subtotal'],
+                        'image' => $item['image_url'] ?? 'uploads/products/default.jpg'
                     ];
                 }, $items),
                 'totals' => [
@@ -86,8 +92,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 2.3 */
-    /* Updated: 2025-10-28 - Added spacing between product info rows */
+    /* Order Confirmation Styles - Version 3.0 */
+    /* Updated: 2025-10-28 - Added product background images with overlay */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -223,38 +229,71 @@ require_once 'includes/header.php';
 
     .product-info {
         flex: 1;
-        padding-right: 1.5rem;
+        padding: 1.5rem;
         margin-bottom: 15px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        border-radius: 8px;
+        position: relative;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .product-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.75) 50%,
+            rgba(0, 0, 0, 0.4) 100%
+        );
+        border-radius: 8px;
+        z-index: 0;
     }
 
     .product-name {
         font-weight: 600;
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
-        color: var(--text-light);
+        color: #fff;
         line-height: 1.4;
+        position: relative;
+        z-index: 1;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     }
 
     .product-details {
-        color: var(--text-muted);
+        color: #fff;
         font-size: 0.95rem;
         display: flex;
         align-items: center;
         gap: 1rem;
+        position: relative;
+        z-index: 1;
     }
 
     .product-quantity {
         display: inline-flex;
         align-items: center;
-        background: rgba(220, 53, 69, 0.15);
+        background: rgba(220, 53, 69, 0.9);
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
         font-weight: 600;
-        color: var(--accent-red);
+        color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .product-unit-price {
-        color: var(--text-muted);
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
     }
 
     .product-total {
@@ -413,8 +452,18 @@ require_once 'includes/header.php';
         }
 
         .product-info {
-            padding-right: 0;
+            padding: 1.25rem;
             width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .product-info::before {
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.85) 0%,
+                rgba(0, 0, 0, 0.75) 70%,
+                rgba(0, 0, 0, 0.6) 100%
+            );
         }
 
         .product-total {
@@ -477,7 +526,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v2.3 */
+    /* End of Order Confirmation Styles v3.0 */
 </style>
 
 <main class="confirmation-page">
@@ -567,7 +616,7 @@ require_once 'includes/header.php';
 
             <div class="products-list">
                 <?php foreach ($order['items'] as $item): ?>
-                    <div class="product-info">
+                    <div class="product-info" style="background-image: url('<?php echo htmlspecialchars($item['image']); ?>');">
                         <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
                         <div class="product-details">
                             <span class="product-quantity">
