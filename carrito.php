@@ -47,6 +47,25 @@ error_log("CARRITO DEBUG - Cart count: " . $cartManager->getCartCount());
 error_log("CARRITO DEBUG - Cart total: " . $cartManager->getCartTotal());
 
 // =====================================================
+// OBTENER CÓDIGO POSTAL DEL USUARIO
+// =====================================================
+
+$user_postal_code = null;
+if (isset($_SESSION['user_id'])) {
+    try {
+        $stmt = $pdo->prepare("SELECT postal_code FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result && !empty($result['postal_code'])) {
+            $user_postal_code = $result['postal_code'];
+            error_log("CARRITO DEBUG - User postal code: " . $user_postal_code);
+        }
+    } catch (PDOException $e) {
+        error_log("CARRITO DEBUG - Error getting postal code: " . $e->getMessage());
+    }
+}
+
+// =====================================================
 // PROCESAMIENTO DE ACCIONES
 // =====================================================
 
@@ -327,10 +346,11 @@ require_once 'includes/header.php';
                                        class="form-control bg-dark text-white border-secondary" 
                                        placeholder="Ej: 1425" 
                                        id="codigoPostal"
+                                       value="<?php echo htmlspecialchars($user_postal_code ?? ''); ?>"
                                        onkeyup="updateCalculateButton()"
                                        maxlength="4">
                             </div>
-                            <button class="btn btn-secondary w-100 mb-3" id="calculateBtn" onclick="calcularEnvio()" disabled>
+                            <button class="btn btn-secondary w-100 mb-3" id="calculateBtn" onclick="calcularEnvio()" <?php echo empty($user_postal_code) ? 'disabled' : ''; ?>>
                                 CALCULAR
                             </button>
                         </div>
@@ -629,25 +649,23 @@ function autoCalculateShipping() {
         noCodigoPostal.style.display = 'none';
         codigoPostalStatus.style.display = 'block';
         
-        // Auto-seleccionar método de envío basado en el código postal
+        // Guardar código postal en el form data (sin auto-seleccionar método)
         const cp = parseInt(codigoPostal);
         
+        // Solo determinar el código de sucursal sin seleccionar automáticamente
+        let sucursalCode = '';
         if (cp >= 1000 && cp <= 1499) {
-            // CABA - Seleccionar Moto CABA
-            document.getElementById('motoCABA').checked = true;
-            updateShipping(3500);
-            updateFormData('3500', codigoPostal);
+            // CABA
+            sucursalCode = '3500';
         } else if (cp >= 1400 && cp <= 2000) {
-            // Gran Buenos Aires - Seleccionar Envío Nube Clásico
-            document.getElementById('correoNube').checked = true;
-            updateShipping(5648);
-            updateFormData('5648', codigoPostal);
+            // Gran Buenos Aires
+            sucursalCode = '5648';
         } else {
-            // Interior del país - Seleccionar Envío Expreso
-            document.getElementById('correoExpreso').checked = true;
-            updateShipping(6214);
-            updateFormData('6214', codigoPostal);
+            // Interior del país
+            sucursalCode = '6214';
         }
+        
+        updateFormData(sucursalCode, codigoPostal);
         
         // Hacer scroll suave hacia las opciones de envío
         setTimeout(() => {
@@ -742,25 +760,23 @@ function calcularEnvio() {
             radio.checked = false;
         });
         
-        // Auto-seleccionar método de envío basado en el código postal
+        // Guardar código postal sin auto-seleccionar método
         const cp = parseInt(codigoPostal);
         
+        // Solo determinar el código de sucursal sin seleccionar automáticamente
+        let sucursalCode = '';
         if (cp >= 1000 && cp <= 1499) {
-            // CABA - Seleccionar Moto CABA
-            document.getElementById('motoCABA').checked = true;
-            updateShipping(3500);
-            updateFormData('3500', codigoPostal);
+            // CABA
+            sucursalCode = '3500';
         } else if (cp >= 1400 && cp <= 2000) {
-            // Gran Buenos Aires - Seleccionar Envío Nube Clásico
-            document.getElementById('correoNube').checked = true;
-            updateShipping(5648);
-            updateFormData('5648', codigoPostal);
+            // Gran Buenos Aires
+            sucursalCode = '5648';
         } else {
-            // Interior del país - Seleccionar Envío Expreso
-            document.getElementById('correoExpreso').checked = true;
-            updateShipping(6214);
-            updateFormData('6214', codigoPostal);
+            // Interior del país
+            sucursalCode = '6214';
         }
+        
+        updateFormData(sucursalCode, codigoPostal);
         
         // Hacer scroll suave hacia las opciones de envío
         setTimeout(() => {

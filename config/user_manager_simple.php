@@ -88,6 +88,14 @@ class UserManagerSimple {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($user && password_verify($password, $user['password'])) {
+                // Actualizar last_login
+                $updateLoginStmt = $this->pdo->prepare("
+                    UPDATE users 
+                    SET last_login = NOW() 
+                    WHERE id = ?
+                ");
+                $updateLoginStmt->execute([$user['id']]);
+                
                 // Remover password del array antes de retornar
                 unset($user['password']);
                 

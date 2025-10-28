@@ -663,6 +663,19 @@ include 'includes/header.php';
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editPostalCode" class="form-label text-white">Código Postal</label>
+                                <input type="text" class="form-control" id="editPostalCode" name="postal_code" 
+                                       value="<?php echo htmlspecialchars($user['postal_code'] ?? ''); ?>"
+                                       placeholder="Ej: 1425"
+                                       maxlength="10"
+                                       style="background: #404040; border: 1px solid #555; color: white;">
+                                <small class="text-white-50">Se usará para calcular automáticamente el envío en el carrito</small>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label text-white">Fecha de Nacimiento</label>
                         <div class="row">

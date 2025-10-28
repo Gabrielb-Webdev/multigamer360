@@ -32,10 +32,12 @@ try {
     $last_name = trim($_POST['last_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $postal_code = trim($_POST['postal_code'] ?? '');
     $birth_date = $_POST['birth_date'] ?? null;
     
-    // Debug específico para fecha de nacimiento
+    // Debug específico para fecha de nacimiento y código postal
     error_log("UPDATE-PROFILE: birth_date received: " . var_export($birth_date, true));
+    error_log("UPDATE-PROFILE: postal_code received: " . var_export($postal_code, true));
     
     if (empty($first_name) || empty($last_name) || empty($email)) {
         echo json_encode(['success' => false, 'message' => 'Nombre, apellido y email son obligatorios']);
@@ -60,11 +62,12 @@ try {
     // Actualizar los datos del usuario
     $updateStmt = $pdo->prepare("
         UPDATE users 
-        SET first_name = ?, last_name = ?, email = ?, phone = ?, birth_date = ?, updated_at = CURRENT_TIMESTAMP 
+        SET first_name = ?, last_name = ?, email = ?, phone = ?, postal_code = ?, birth_date = ?, updated_at = CURRENT_TIMESTAMP 
         WHERE id = ?
     ");
     
     $birth_date = empty($birth_date) ? null : $birth_date;
+    $postal_code = empty($postal_code) ? null : $postal_code;
     
     // Debug: mostrar todos los valores que se van a actualizar
     error_log("UPDATE-PROFILE: Valores para UPDATE:");
@@ -72,6 +75,7 @@ try {
     error_log("UPDATE-PROFILE: last_name: " . $last_name);
     error_log("UPDATE-PROFILE: email: " . $email);
     error_log("UPDATE-PROFILE: phone: " . $phone);
+    error_log("UPDATE-PROFILE: postal_code final: " . var_export($postal_code, true));
     error_log("UPDATE-PROFILE: birth_date final: " . var_export($birth_date, true));
     error_log("UPDATE-PROFILE: user_id: " . $userId);
     
@@ -80,6 +84,7 @@ try {
         $last_name,
         $email,
         $phone,
+        $postal_code,
         $birth_date,
         $userId
     ]);
