@@ -15,15 +15,23 @@ require_once 'includes/header.php';
 ?>
 
 <style>
+:root {
+    --bg-dark: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --text-light: #ffffff;
+    --text-muted: #b0b0b0;
+    --accent-red: #dc3545;
+}
+
 .confirmation-page {
-    background-color: var(--bg-dark);
+    background-color: #1a1a1a;
     min-height: 100vh;
-    color: var(--text-light);
+    color: #ffffff;
     padding: 2rem 0;
 }
 
 .confirmation-container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -39,7 +47,7 @@ require_once 'includes/header.php';
 }
 
 .success-title {
-    color: var(--accent-red);
+    color: #dc3545;
     font-size: 2.5rem;
     margin-bottom: 1rem;
     font-weight: 700;
@@ -47,38 +55,42 @@ require_once 'includes/header.php';
 
 .success-subtitle {
     font-size: 1.2rem;
-    color: var(--text-muted);
+    color: #b0b0b0;
     margin-bottom: 0.5rem;
 }
 
 .order-id {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--accent-red);
+    color: #dc3545;
 }
 
 .confirmation-card {
-    background: var(--card-bg);
+    background: #2d2d2d;
     border-radius: 15px;
     padding: 2rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 2rem;
+    height: 100%;
 }
 
 .section-title {
-    color: var(--accent-red);
+    color: #dc3545;
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
-    border-bottom: 2px solid var(--accent-red);
+    border-bottom: 2px solid #dc3545;
     padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -89,11 +101,12 @@ require_once 'includes/header.php';
 
 .info-label {
     font-weight: 600;
-    color: var(--text-light);
+    color: #ffffff;
+    min-width: 120px;
 }
 
 .info-value {
-    color: var(--text-muted);
+    color: #b0b0b0;
     text-align: right;
     flex: 1;
     margin-left: 1rem;
@@ -102,6 +115,7 @@ require_once 'includes/header.php';
 .product-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 1rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -117,21 +131,24 @@ require_once 'includes/header.php';
 .product-name {
     font-weight: 600;
     margin-bottom: 0.25rem;
+    color: #ffffff;
 }
 
 .product-details {
-    color: var(--text-muted);
+    color: #b0b0b0;
     font-size: 0.9rem;
 }
 
 .product-total {
     font-weight: 700;
-    color: var(--accent-red);
+    color: #dc3545;
+    font-size: 1.1rem;
+    margin-left: 1rem;
 }
 
 .total-section {
     background: rgba(220, 53, 69, 0.1);
-    border: 1px solid var(--accent-red);
+    border: 1px solid #dc3545;
     border-radius: 10px;
     padding: 1.5rem;
     margin-top: 1.5rem;
@@ -141,13 +158,14 @@ require_once 'includes/header.php';
     display: flex;
     justify-content: space-between;
     margin-bottom: 0.5rem;
+    color: #ffffff;
 }
 
 .total-row.final {
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--accent-red);
-    border-top: 2px solid var(--accent-red);
+    color: #dc3545;
+    border-top: 2px solid #dc3545;
     padding-top: 1rem;
     margin-top: 1rem;
     margin-bottom: 0;
@@ -156,10 +174,14 @@ require_once 'includes/header.php';
 .action-buttons {
     text-align: center;
     margin-top: 3rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--accent-red), #b02a37);
+    background: linear-gradient(135deg, #dc3545, #b02a37);
     border: none;
     color: white;
     padding: 1rem 2rem;
@@ -167,13 +189,14 @@ require_once 'includes/header.php';
     font-size: 1.1rem;
     font-weight: 600;
     text-decoration: none;
-    display: inline-block;
-    margin: 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #b02a37, var(--accent-red));
+    background: linear-gradient(135deg, #b02a37, #dc3545);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
     color: white;
@@ -182,20 +205,21 @@ require_once 'includes/header.php';
 
 .btn-secondary {
     background: transparent;
-    border: 2px solid var(--accent-red);
-    color: var(--accent-red);
+    border: 2px solid #dc3545;
+    color: #dc3545;
     padding: 1rem 2rem;
     border-radius: 10px;
     font-size: 1.1rem;
     font-weight: 600;
     text-decoration: none;
-    display: inline-block;
-    margin: 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-    background: var(--accent-red);
+    background: #dc3545;
     color: white;
     transform: translateY(-2px);
     text-decoration: none;

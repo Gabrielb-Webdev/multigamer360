@@ -239,14 +239,21 @@ try {
     
     $inserted_order_id = $pdo->lastInsertId();
     
-    // Insertar items de la orden
-    $stmt = $pdo->prepare("
+    // Insertar items de la orden y descontar del stock
+    $stmt_insert = $pdo->prepare("
         INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal)
         VALUES (?, ?, ?, ?, ?, ?)
     ");
     
+    $stmt_update_stock = $pdo->prepare("
+        UPDATE products 
+        SET stock = stock - ? 
+        WHERE id = ? AND stock >= ?
+    ");
+    
     foreach ($cart_items as $item) {
-        $stmt->execute([
+        // Insertar item de la orden
+        $stmt_insert->execute([
             $inserted_order_id,
             $item['id'],
             $item['name'],
@@ -254,6 +261,18 @@ try {
             $item['price'],
             $item['total']
         ]);
+        
+        // Descontar del stock
+        $stmt_update_stock->execute([
+            $item['quantity'],
+            $item['id'],
+            $item['quantity']
+        ]);
+        
+        // Verificar si se actualizó el stock (si no había suficiente stock, cancelar transacción)
+        if ($stmt_update_stock->rowCount() === 0) {
+            throw new Exception("Stock insuficiente para el producto: " . $item['name']);
+        }
     }
     
     // Guardar uso de cupón si existe
