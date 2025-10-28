@@ -30,6 +30,37 @@ if (session_status() === PHP_SESSION_NONE) {
 // Incluir dependencias necesarias
 require_once 'config/database.php';
 require_once 'includes/cart_manager.php';
+require_once 'includes/auth.php';
+
+// =====================================================
+// OBTENER INFORMACIÓN DEL USUARIO
+// =====================================================
+$user = null;
+$user_data = [
+    'firstName' => '',
+    'lastName' => '',
+    'email' => '',
+    'phone' => '',
+    'postal_code' => ''
+];
+
+if (isLoggedIn()) {
+    $user = getCurrentUser();
+    
+    if ($user) {
+        // Separar nombre completo en nombre y apellido si es necesario
+        $full_name = $user['full_name'] ?? '';
+        $name_parts = explode(' ', trim($full_name), 2);
+        
+        $user_data = [
+            'firstName' => $name_parts[0] ?? '',
+            'lastName' => $name_parts[1] ?? '',
+            'email' => $user['email'] ?? '',
+            'phone' => $user['phone'] ?? '',
+            'postal_code' => $user['postal_code'] ?? ''
+        ];
+    }
+}
 
 // =====================================================
 // VALIDACIONES PREVIAS
@@ -953,13 +984,13 @@ require_once 'includes/header.php';
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="form-label" for="firstName">Nombre *</label>
-                                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" value="<?php echo htmlspecialchars($user_data['firstName']); ?>" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="form-label" for="lastName">Apellido *</label>
-                                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" value="<?php echo htmlspecialchars($user_data['lastName']); ?>" required>
                                     </div>
                                 </div>
                             </div>
@@ -968,13 +999,13 @@ require_once 'includes/header.php';
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="form-label" for="email">Email *</label>
-                                        <input type="email" class="form-control" id="email" name="email" required>
+                                        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user_data['email']); ?>" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="form-label" for="phone">Teléfono *</label>
-                                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                                        <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($user_data['phone']); ?>" required>
                                     </div>
                                 </div>
                             </div>
@@ -1001,7 +1032,7 @@ require_once 'includes/header.php';
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label class="form-label" for="zipCode">Código Postal *</label>
-                                            <input type="text" class="form-control" id="zipCode" name="zipCode">
+                                            <input type="text" class="form-control" id="zipCode" name="zipCode" value="<?php echo htmlspecialchars($user_data['postal_code']); ?>">
                                         </div>
                                     </div>
                                 </div>
