@@ -880,6 +880,22 @@ function updateShipping(shippingCost) {
     totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
     totalWithTaxElement.style.display = 'block';
 }
+
+// Auto-calcular si hay código postal precargado
+window.addEventListener('DOMContentLoaded', function() {
+    const codigoPostalInput = document.getElementById('codigoPostal');
+    const userPostalCode = '<?php echo $user_postal_code ?? ''; ?>';
+    
+    // Si hay código postal del usuario, calcular automáticamente
+    if (userPostalCode && userPostalCode.length >= 4) {
+        console.log('Código postal detectado:', userPostalCode);
+        
+        // Simular click en el botón calcular después de un momento
+        setTimeout(function() {
+            calcularEnvio();
+        }, 500);
+    }
+});
 </script>
 
 <?php include 'includes/footer.php'; ?>
