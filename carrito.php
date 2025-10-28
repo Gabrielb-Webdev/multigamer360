@@ -479,13 +479,9 @@ require_once 'includes/header.php';
 
             <!-- Botones de acción -->
             <div class="d-grid gap-3 mt-4">
-                <form id="checkoutForm" method="POST" action="set_shipping.php" onsubmit="return validateShipping()">
-                    <input type="hidden" name="shippingMethod" id="selectedShippingMethod">
-                    <input type="hidden" name="postalCode" id="selectedPostalCode">
-                    <button type="submit" class="btn btn-danger btn-lg py-3 w-100">
-                        <i class="fas fa-credit-card me-2"></i>INICIAR COMPRA
-                    </button>
-                </form>
+                <button type="button" class="btn btn-danger btn-lg py-3 w-100" onclick="iniciarCompra()">
+                    <i class="fas fa-credit-card me-2"></i>INICIAR COMPRA
+                </button>
                 <a href="productos.php" class="btn btn-outline-danger py-2">
                     <i class="fas fa-arrow-left me-2"></i>VER MÁS PRODUCTOS
                 </a>
@@ -846,8 +842,8 @@ function updateFormData(shippingMethod, postalCode) {
 
 // Función para validar antes de ir al checkout
 function validateShipping() {
-    const shippingMethod = document.getElementById('selectedShippingMethod').value;
-    const postalCode = document.getElementById('selectedPostalCode').value;
+    const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
+    const postalCode = document.getElementById('codigoPostal').value;
     
     if (!shippingMethod || !postalCode) {
         alert('Por favor, ingresa tu código postal y selecciona un método de envío antes de continuar.');
@@ -855,6 +851,42 @@ function validateShipping() {
     }
     
     return true;
+}
+
+// Función para iniciar compra (guardar shipping y redirigir)
+function iniciarCompra() {
+    // Primero validar
+    if (!validateShipping()) {
+        return;
+    }
+    
+    // Obtener método seleccionado
+    const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
+    const postalCode = document.getElementById('codigoPostal').value;
+    
+    // Preparar datos
+    const formData = new FormData();
+    formData.append('shippingMethod', shippingMethod.value);
+    formData.append('postalCode', postalCode);
+    
+    // Enviar por AJAX
+    fetch('ajax/set-shipping.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Redirigir a checkout
+            window.location.href = 'checkout.php';
+        } else {
+            alert('Error al guardar método de envío: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
 }
 
 // Función para manejar clicks manuales en opciones de envío
