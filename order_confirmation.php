@@ -86,8 +86,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-/* Order Confirmation Styles - Version 2.0 */
-/* Updated: 2025-10-28 - Improved product display and responsive design */
+/* Order Confirmation Styles - Version 2.1 */
+/* Updated: 2025-10-28 - Fixed product list spacing and layout */
 
 .confirmation-page {
     background-color: var(--bg-dark);
@@ -139,6 +139,7 @@ require_once 'includes/header.php';
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 2rem;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .confirmation-card:hover {
@@ -150,7 +151,8 @@ require_once 'includes/header.php';
     color: var(--accent-red);
     font-size: 1.4rem;
     font-weight: 700;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
+    margin-top: 0;
     border-bottom: 2px solid var(--accent-red);
     padding-bottom: 0.75rem;
     display: flex;
@@ -192,12 +194,17 @@ require_once 'includes/header.php';
     line-height: 1.6;
 }
 
+.products-list {
+    margin-bottom: 0;
+    padding: 0;
+}
+
 .product-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 1.25rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -263,7 +270,7 @@ require_once 'includes/header.php';
     border: 1px solid var(--accent-red);
     border-radius: 10px;
     padding: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
 }
 
 .total-row {
@@ -469,7 +476,7 @@ require_once 'includes/header.php';
     }
 }
 
-/* End of Order Confirmation Styles v2.0 */
+/* End of Order Confirmation Styles v2.1 */
 </style>
 
 <main class="confirmation-page">
