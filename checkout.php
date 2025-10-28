@@ -609,9 +609,9 @@ require_once 'includes/header.php';
                             <h4><i class="fas fa-truck"></i> Método de Envío Seleccionado</h4>
                             
                             <div class="shipping-option selected">
-                                <input type="hidden" name="shippingMethod" value="<?php echo $selected_shipping['id']; ?>">
+                                <input type="hidden" name="shippingMethod" value="<?php echo $shipping_method; ?>">
                                 <div>
-                                    <div class="shipping-title"><?php echo htmlspecialchars($selected_shipping['name']); ?></div>
+                                    <div class="shipping-title"><?php echo htmlspecialchars($shipping_name); ?></div>
                                     <div class="shipping-price">
                                         <?php if ($shipping_cost == 0): ?>
                                             Gratis
@@ -619,8 +619,8 @@ require_once 'includes/header.php';
                                             $<?php echo number_format($shipping_cost, 0, ',', '.'); ?>
                                         <?php endif; ?>
                                     </div>
-                                    <?php if (!empty($selected_shipping['postal_code'])): ?>
-                                        <small class="text-muted">CP: <?php echo htmlspecialchars($selected_shipping['postal_code']); ?></small>
+                                    <?php if (!empty($postal_code)): ?>
+                                        <small class="text-muted">CP: <?php echo htmlspecialchars($postal_code); ?></small>
                                     <?php endif; ?>
                                 </div>
                                 <div class="change-shipping">
@@ -641,14 +641,14 @@ require_once 'includes/header.php';
                                     <input type="radio" name="paymentMethod" id="local" value="local">
                                     <div>
                                         <div class="shipping-title" id="payment-local-title">
-                                            <?php if ($selected_shipping['id'] == '2207'): ?>
+                                            <?php if ($shipping_method == '2207'): ?>
                                                 Pagar en Punto de Retiro
                                             <?php else: ?>
                                                 Pagar en el Local
                                             <?php endif; ?>
                                         </div>
                                         <small id="payment-local-description">
-                                            <?php if ($selected_shipping['id'] == '2207'): ?>
+                                            <?php if ($shipping_method == '2207'): ?>
                                                 Efectivo o tarjeta en el punto de retiro
                                             <?php else: ?>
                                                 Efectivo o tarjeta en el momento del retiro
@@ -1014,7 +1014,7 @@ require_once 'includes/header.php';
 let selectedPayment = null;
 
 // Determinar métodos de pago disponibles basados en el método de envío
-const shippingMethod = '<?php echo $selected_shipping['id']; ?>';
+const shippingMethod = '<?php echo $shipping_method; ?>';
 const isPickup = (shippingMethod === '0' || shippingMethod === '2207'); // multigamer360 o puntoRetiro
 
 function initializePaymentOptions() {
@@ -1054,17 +1054,14 @@ function initializePaymentOptions() {
         paymentLocal.style.display = 'none';
         paymentOnline.style.display = 'block';
         paymentCod.style.display = 'block';
-        if (deliveryAddress) deliveryAddress.style.display = 'block';
+        
+        // NO mostrar ni hacer required los campos de dirección aquí
+        // Los campos de dirección se mostrarán cuando se seleccione el método de pago
+        if (deliveryAddress) {
+            deliveryAddress.style.display = 'none';
+        }
         
         console.log('Delivery mode: showing online and COD payment');
-        
-        // Agregar required a campos de dirección
-        if (document.getElementById('address')) {
-            document.getElementById('address').setAttribute('required', 'required');
-            document.getElementById('city').setAttribute('required', 'required');
-            document.getElementById('province').setAttribute('required', 'required');
-            document.getElementById('zipCode').setAttribute('required', 'required');
-        }
     }
 }
 
@@ -1107,6 +1104,20 @@ function selectPayment(paymentId) {
     
     console.log('Selected payment set to:', selectedPayment);
     
+    // Mostrar campos de dirección y hacerlos required solo si es envío a domicilio
+    const deliveryAddress = document.getElementById('delivery-address');
+    if (!isPickup && (paymentId === 'online' || paymentId === 'cod')) {
+        if (deliveryAddress) {
+            deliveryAddress.style.display = 'block';
+            // Hacer campos required
+            document.getElementById('address').setAttribute('required', 'required');
+            document.getElementById('city').setAttribute('required', 'required');
+            document.getElementById('province').setAttribute('required', 'required');
+            document.getElementById('zipCode').setAttribute('required', 'required');
+            console.log('Address fields shown and set as required');
+        }
+    }
+    
     // Mostrar opciones específicas según el método
     hideAllPaymentDetails();
     
@@ -1127,6 +1138,16 @@ function changePaymentMethod() {
     // Limpiar selecciones
     selectedPayment = null;
     document.getElementById('confirmedPaymentMethod').value = '';
+    
+    // Ocultar campos de dirección y remover required
+    const deliveryAddress = document.getElementById('delivery-address');
+    if (deliveryAddress && !isPickup) {
+        deliveryAddress.style.display = 'none';
+        document.getElementById('address').removeAttribute('required');
+        document.getElementById('city').removeAttribute('required');
+        document.getElementById('province').removeAttribute('required');
+        document.getElementById('zipCode').removeAttribute('required');
+    }
     
     // Ocultar todas las opciones de pago detalladas
     hideAllPaymentDetails();
