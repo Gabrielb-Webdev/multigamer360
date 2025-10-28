@@ -104,8 +104,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 3.4 */
-    /* Updated: 2025-10-28 - Fixed equal height cards and content overflow */
+    /* Order Confirmation Styles - Version 3.5 */
+    /* Updated: 2025-10-28 - Increased card width, fixed email overflow, added spacing */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -115,7 +115,7 @@ require_once 'includes/header.php';
     }
 
     .confirmation-container {
-        max-width: 800px;
+        max-width: 1000px;
         margin: 0 auto;
     }
 
@@ -172,6 +172,11 @@ require_once 'includes/header.php';
     .row > [class*='col-'] {
         display: flex;
     }
+    
+    /* Separación extra para la card de productos */
+    .products-card {
+        margin-top: 1rem;
+    }
 
     .section-title {
         color: var(--accent-red);
@@ -196,6 +201,7 @@ require_once 'includes/header.php';
         align-items: flex-start;
         padding: 1rem 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        gap: 1rem;
     }
 
     .info-row:last-child {
@@ -210,17 +216,19 @@ require_once 'includes/header.php';
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-shrink: 0;
     }
 
     .info-value {
         color: var(--text-muted);
         text-align: right;
         flex: 1;
-        margin-left: 1rem;
         line-height: 1.6;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        word-break: break-all;
         max-width: 100%;
+        min-width: 0;
     }
 
     .products-list {
@@ -640,7 +648,7 @@ require_once 'includes/header.php';
         </div>
 
         <!-- Productos Ordenados -->
-        <div class="confirmation-card">
+        <div class="confirmation-card products-card">
             <h3 class="section-title"><i class="fas fa-shopping-bag"></i> Productos Ordenados</h3>
 
             <div class="products-list">

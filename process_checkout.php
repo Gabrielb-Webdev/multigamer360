@@ -108,9 +108,8 @@ if (!empty($_SESSION['cart'])) {
     $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
     
     $stmt = $pdo->prepare("
-        SELECT p.id, p.name, p.price_pesos as price, pi.image_url
+        SELECT p.id, p.name, p.price_pesos as price, p.image_url
         FROM products p
-        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
         WHERE p.id IN ($placeholders)
     ");
     
@@ -122,23 +121,12 @@ if (!empty($_SESSION['cart'])) {
         $item_total = $product['price'] * $quantity;
         $subtotal += $item_total;
         
-        // Construir ruta completa de la imagen
-        $image_path = 'uploads/products/default.jpg';
-        if (!empty($product['image_url'])) {
-            if (strpos($product['image_url'], 'uploads/products/') === 0) {
-                $image_path = $product['image_url'];
-            } else {
-                $image_path = 'uploads/products/' . $product['image_url'];
-            }
-        }
-        
         $cart_items[] = [
             'id' => $product['id'],
             'name' => $product['name'],
             'price' => $product['price'],
             'quantity' => $quantity,
-            'total' => $item_total,
-            'image' => $image_path
+            'total' => $item_total
         ];
     }
 }
