@@ -92,8 +92,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 3.0 */
-    /* Updated: 2025-10-28 - Added product background images with overlay */
+    /* Order Confirmation Styles - Version 3.1 */
+    /* Updated: 2025-10-28 - Fixed image fetching with debug logs */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -526,7 +526,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v3.0 */
+    /* End of Order Confirmation Styles v3.1 */
 </style>
 
 <main class="confirmation-page">
@@ -616,7 +616,17 @@ require_once 'includes/header.php';
 
             <div class="products-list">
                 <?php foreach ($order['items'] as $item): ?>
-                    <div class="product-info" style="background-image: url('<?php echo htmlspecialchars($item['image']); ?>');">
+                    <?php 
+                    // Verificar que la imagen exista y usar default si no
+                    $image_url = isset($item['image']) && !empty($item['image']) 
+                        ? $item['image'] 
+                        : 'uploads/products/default.jpg';
+                    
+                    // Debug temporal - Eliminar después de verificar
+                    error_log("DEBUG ORDER ITEM: " . print_r($item, true));
+                    error_log("DEBUG IMAGE URL: " . $image_url);
+                    ?>
+                    <div class="product-info" style="background-image: url('<?php echo htmlspecialchars($image_url); ?>');">
                         <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
                         <div class="product-details">
                             <span class="product-quantity">
