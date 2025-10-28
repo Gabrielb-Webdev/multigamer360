@@ -56,13 +56,25 @@ if (isset($_SESSION['completed_order'])) {
                     'name' => $order_data['payment_method']
                 ],
                 'items' => array_map(function ($item) {
+                    // Construir ruta completa de la imagen
+                    $image_path = 'uploads/products/default.jpg'; // Default
+                    if (!empty($item['image_url'])) {
+                        // Si ya tiene la ruta completa, usarla
+                        if (strpos($item['image_url'], 'uploads/products/') === 0) {
+                            $image_path = $item['image_url'];
+                        } else {
+                            // Si solo es el nombre del archivo, agregar la ruta
+                            $image_path = 'uploads/products/' . $item['image_url'];
+                        }
+                    }
+                    
                     return [
                         'id' => $item['product_id'],
                         'name' => $item['product_name'],
                         'quantity' => $item['quantity'],
                         'price' => $item['price'],
                         'total' => $item['subtotal'],
-                        'image' => $item['image_url'] ?? 'uploads/products/default.jpg'
+                        'image' => $image_path
                     ];
                 }, $items),
                 'totals' => [
@@ -92,7 +104,7 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 3.1 */
+    /* Order Confirmation Styles - Version 3.2 */
     /* Updated: 2025-10-28 - Fixed image fetching with debug logs */
 
     .confirmation-page {
@@ -616,21 +628,7 @@ require_once 'includes/header.php';
 
             <div class="products-list">
                 <?php foreach ($order['items'] as $item): ?>
-                    <?php 
-                    // Construir la ruta completa de la imagen
-                    if (isset($item['image']) && !empty($item['image'])) {
-                        // Si la imagen ya tiene la ruta completa, usarla tal cual
-                        if (strpos($item['image'], 'uploads/products/') === 0) {
-                            $image_url = $item['image'];
-                        } else {
-                            // Si solo es el nombre del archivo, construir la ruta
-                            $image_url = 'uploads/products/' . $item['image'];
-                        }
-                    } else {
-                        $image_url = 'uploads/products/default.jpg';
-                    }
-                    ?>
-                    <div class="product-info" style="background-image: url('<?php echo htmlspecialchars($image_url); ?>');">
+                    <div class="product-info" style="background-image: url('<?php echo htmlspecialchars($item['image']); ?>');">
                         <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
                         <div class="product-details">
                             <span class="product-quantity">
