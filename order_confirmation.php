@@ -23,8 +23,13 @@ if (isset($_SESSION['completed_order'])) {
         $order_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($order_data) {
-            // Obtener items de la orden
-            $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+            // Obtener items de la orden con la imagen del producto
+            $stmt = $pdo->prepare("
+                SELECT oi.*, p.image_url 
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = ?
+            ");
             $stmt->execute([$order_data['id']]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -56,7 +61,8 @@ if (isset($_SESSION['completed_order'])) {
                         'name' => $item['product_name'],
                         'quantity' => $item['quantity'],
                         'price' => $item['price'],
-                        'total' => $item['subtotal']
+                        'total' => $item['subtotal'],
+                        'image' => $item['image_url'] ?? 'uploads/products/default.jpg'
                     ];
                 }, $items),
                 'totals' => [
@@ -86,8 +92,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 2.2 */
-    /* Updated: 2025-10-28 - Fixed product item staying inside container on hover */
+    /* Order Confirmation Styles - Version 2.3 */
+    /* Updated: 2025-10-28 - Added product image as background */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -194,78 +200,108 @@ require_once 'includes/header.php';
         line-height: 1.6;
     }
 
-    .products-list {
+.products-list {
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.product-item {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    min-height: 150px;
+    overflow: hidden;
+}
+
+.product-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+    z-index: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-item:hover::before {
+    opacity: 0.4;
+}
+
+.product-item:hover {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(220, 53, 69, 0.4);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}    .product-item:last-child {
         margin-bottom: 0;
-        padding: 0;
     }
 
-    .product-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.25rem;
-        margin-bottom: 0.75rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
-    }
+.product-info {
+    flex: 1;
+    padding-right: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
 
-    .product-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(220, 53, 69, 0.3);
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
-    }
+.product-name {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    line-height: 1.4;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
 
-    .product-item:last-child {
-        margin-bottom: 0;
-    }
+.product-details {
+    color: #fff;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
 
-    .product-info {
-        flex: 1;
-        padding-right: 1.5rem;
-    }
+.product-quantity {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(220, 53, 69, 0.9);
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+}
 
-    .product-name {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-        color: var(--text-light);
-        line-height: 1.4;
-    }
+.product-unit-price {
+    color: #fff;
+    font-weight: 600;
+}
 
-    .product-details {
-        color: var(--text-muted);
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .product-quantity {
-        display: inline-flex;
-        align-items: center;
-        background: rgba(220, 53, 69, 0.15);
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        color: var(--accent-red);
-    }
-
-    .product-unit-price {
-        color: var(--text-muted);
-    }
-
-    .product-total {
-        font-weight: 700;
-        font-size: 1.2rem;
-        color: var(--accent-red);
-        white-space: nowrap;
-        text-align: right;
-        min-width: 120px;
-    }
-
-    .total-section {
+.product-total {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #fff;
+    white-space: nowrap;
+    text-align: right;
+    min-width: 120px;
+    position: relative;
+    z-index: 1;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    background: rgba(220, 53, 69, 0.9);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}    .total-section {
         background: rgba(220, 53, 69, 0.08);
         border: 1px solid var(--accent-red);
         border-radius: 10px;
@@ -476,7 +512,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v2.2 */
+    /* End of Order Confirmation Styles v2.3 */
 </style>
 
 <main class="confirmation-page">
@@ -566,15 +602,20 @@ require_once 'includes/header.php';
 
             <div class="products-list">
                 <?php foreach ($order['items'] as $item): ?>
-                    <div class="product-info">
-                        <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
-                        <div class="product-details">
-                            <span class="product-quantity">
-                                <i class="fas fa-times"></i> <?php echo $item['quantity']; ?>
-                            </span>
-                            <span class="product-unit-price">
-                                Precio unitario: $<?php echo number_format($item['price'], 0, ',', '.'); ?>
-                            </span>
+                    <div class="product-item" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('<?php echo htmlspecialchars($item['image']); ?>');">
+                        <div class="product-info">
+                            <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
+                            <div class="product-details">
+                                <span class="product-quantity">
+                                    <i class="fas fa-times"></i> <?php echo $item['quantity']; ?>
+                                </span>
+                                <span class="product-unit-price">
+                                    Precio unitario: $<?php echo number_format($item['price'], 0, ',', '.'); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product-total">
+                            $<?php echo number_format($item['total'], 0, ',', '.'); ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
