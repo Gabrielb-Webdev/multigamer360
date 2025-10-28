@@ -444,8 +444,8 @@ require_once 'includes/header.php';
                         </div>
                     </div>
 
-                    <!-- Total -->
-                    <div class="border-top border-secondary pt-3">
+                    <!-- Total (oculto hasta que se calcule el envío) -->
+                    <div class="border-top border-secondary pt-3" id="totalSection" style="display: none;">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-danger h5 mb-0">Total:</span>
                             <div class="text-end">
@@ -791,14 +791,16 @@ function cambiarCodigoPostal() {
     const shippingOptions = document.getElementById('shippingOptions');
     const noCodigoPostal = document.getElementById('noCodigoPostal');
     const codigoPostalInput = document.getElementById('codigoPostal');
+    const totalSection = document.getElementById('totalSection');
     
     // Mostrar formulario y ocultar confirmación
     formCP.style.display = 'block';
     confirmedCP.style.display = 'none';
     
-    // Ocultar opciones de envío
+    // Ocultar opciones de envío y total
     shippingOptions.style.display = 'none';
     noCodigoPostal.style.display = 'block';
+    totalSection.style.display = 'none';
     
     // Limpiar selecciones
     document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
@@ -850,6 +852,9 @@ function updateShippingSelection(cost, methodId) {
 function updateShipping(shippingCost) {
     const subtotal = <?php echo $total - $shippingCost; ?>;
     const newTotal = subtotal + parseInt(shippingCost);
+    
+    // Mostrar la sección del total
+    document.getElementById('totalSection').style.display = 'block';
     
     document.getElementById('totalAmount').textContent = '$' + newTotal.toLocaleString('es-AR');
     
