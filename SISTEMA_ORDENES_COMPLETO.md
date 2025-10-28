@@ -94,25 +94,37 @@
 
 ### **PASO 1: Ejecutar SQL en Producción** ⚠️ CRÍTICO
 
-Debes ejecutar este archivo SQL en tu base de datos de Hostinger:
+**Opción A: Si las tablas NO EXISTEN (Primera vez)**
 
+Ejecuta este archivo SQL en tu base de datos de Hostinger:
 ```
-sync_orders_structure.sql
+sync_orders_structure_SIMPLE.sql
+```
+
+**Opción B: Si las tablas YA EXISTEN pero faltan columnas**
+
+Ejecuta este archivo SQL (uno por uno, ignora errores de "columna ya existe"):
+```
+add_missing_columns_orders.sql
 ```
 
 **Cómo hacerlo:**
 1. Ve a phpMyAdmin en Hostinger
-2. Selecciona tu base de datos
+2. Selecciona tu base de datos (`u851317150_mg360_db`)
 3. Ve a la pestaña "SQL"
-4. Copia y pega el contenido completo de `sync_orders_structure.sql`
+4. Copia y pega el contenido completo del archivo que necesites
 5. Click en "Ejecutar"
+
+⚠️ **IMPORTANTE**: Si ves errores como:
+- "Duplicate column name" → Normal, la columna ya existe, continúa
+- "Duplicate key name" → Normal, el índice ya existe, continúa
+- "#1044 Acceso denegado a information_schema" → Usa el archivo SIMPLE
 
 Este script:
 - ✅ Crea las tablas `orders` y `order_items` si no existen
-- ✅ Agrega columnas faltantes si ya existen las tablas
-- ✅ Crea las foreign keys necesarias
 - ✅ Crea tablas opcionales para historial y notas
-- ✅ Es seguro ejecutarlo múltiples veces (no duplica datos)
+- ✅ Es seguro ejecutarlo (usa IF NOT EXISTS)
+- ✅ NO requiere permisos especiales de INFORMATION_SCHEMA
 
 ### **PASO 2: Verificar Funcionamiento del Usuario**
 
@@ -281,7 +293,8 @@ WHERE id = 1;
 ## ✨ Resumen de Archivos
 
 **Archivos SQL:**
-- `sync_orders_structure.sql` ⚠️ EJECUTAR EN PRODUCCIÓN
+- `sync_orders_structure_SIMPLE.sql` ⚠️ EJECUTAR PRIMERO (crea tablas)
+- `add_missing_columns_orders.sql` ⚠️ Solo si tablas ya existen pero faltan columnas
 
 **Archivos PHP Actualizados:**
 - `checkout.php` - Validación mejorada + auto-carga de datos
