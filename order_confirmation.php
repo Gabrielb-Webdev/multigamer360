@@ -64,32 +64,50 @@ require_once 'includes/header.php';
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.confirmation-card:hover {
+    border-color: rgba(220, 53, 69, 0.3);
+    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.15);
 }
 
 .section-title {
     color: var(--accent-red);
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
     border-bottom: 2px solid var(--accent-red);
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    font-size: 1.2rem;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .info-row:last-child {
     border-bottom: none;
+    padding-bottom: 0;
 }
 
 .info-label {
     font-weight: 600;
     color: var(--text-light);
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .info-value {
@@ -97,59 +115,119 @@ require_once 'includes/header.php';
     text-align: right;
     flex: 1;
     margin-left: 1rem;
+    line-height: 1.6;
 }
 
 .product-item {
     display: flex;
     align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: space-between;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.product-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(220, 53, 69, 0.3);
+    transform: translateX(5px);
 }
 
 .product-item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .product-info {
     flex: 1;
+    padding-right: 1.5rem;
 }
 
 .product-name {
     font-weight: 600;
-    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+    line-height: 1.4;
 }
 
 .product-details {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.product-quantity {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(220, 53, 69, 0.15);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    color: var(--accent-red);
+}
+
+.product-unit-price {
+    color: var(--text-muted);
 }
 
 .product-total {
     font-weight: 700;
+    font-size: 1.2rem;
     color: var(--accent-red);
+    white-space: nowrap;
+    text-align: right;
+    min-width: 120px;
 }
 
 .total-section {
-    background: rgba(220, 53, 69, 0.1);
+    background: rgba(220, 53, 69, 0.08);
     border: 1px solid var(--accent-red);
     border-radius: 10px;
     padding: 1.5rem;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
 }
 
 .total-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+}
+
+.total-row.discount-row {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.total-row.discount-row span:last-child {
+    color: #28a745;
 }
 
 .total-row.final {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--accent-red);
     border-top: 2px solid var(--accent-red);
     padding-top: 1rem;
     margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+.free-shipping {
+    color: #28a745;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    background: rgba(40, 167, 69, 0.15);
+    border-radius: 20px;
+}
+
+.products-list {
     margin-bottom: 0;
 }
 
@@ -230,10 +308,69 @@ require_once 'includes/header.php';
     
     .confirmation-card {
         padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
     
     .success-title {
-        font-size: 2rem;
+        font-size: 1.8rem;
+    }
+    
+    .success-icon {
+        font-size: 3rem;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+    }
+    
+    .product-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .product-info {
+        padding-right: 0;
+        width: 100%;
+    }
+    
+    .product-total {
+        width: 100%;
+        text-align: left;
+        font-size: 1.3rem;
+        padding-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 0.75rem;
+    }
+    
+    .product-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .info-label {
+        min-width: auto;
+    }
+    
+    .info-value {
+        text-align: left;
+        margin-left: 0;
+    }
+    
+    .total-row {
+        font-size: 1rem;
+    }
+    
+    .total-row.final {
+        font-size: 1.3rem;
     }
     
     .action-buttons {
@@ -245,6 +382,16 @@ require_once 'includes/header.php';
         display: block;
         margin: 1rem auto;
         text-align: center;
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .payment-instructions {
+        padding: 1.25rem;
+    }
+    
+    .payment-instructions h5 {
+        font-size: 1.1rem;
     }
 }
 </style>
@@ -333,30 +480,47 @@ require_once 'includes/header.php';
         <div class="confirmation-card">
             <h3 class="section-title"><i class="fas fa-shopping-bag"></i> Productos Ordenados</h3>
             
-            <?php foreach ($order['items'] as $item): ?>
-            <div class="product-item">
-                <div class="product-info">
-                    <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
-                    <div class="product-details">
-                        Cantidad: <?php echo $item['quantity']; ?> × $<?php echo number_format($item['price'], 0, ',', '.'); ?>
+            <div class="products-list">
+                <?php foreach ($order['items'] as $item): ?>
+                <div class="product-item">
+                    <div class="product-info">
+                        <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
+                        <div class="product-details">
+                            <span class="product-quantity">
+                                <i class="fas fa-times"></i> <?php echo $item['quantity']; ?>
+                            </span>
+                            <span class="product-unit-price">
+                                Precio unitario: $<?php echo number_format($item['price'], 0, ',', '.'); ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="product-total">
+                        $<?php echo number_format($item['total'], 0, ',', '.'); ?>
                     </div>
                 </div>
-                <div class="product-total">
-                    $<?php echo number_format($item['total'], 0, ',', '.'); ?>
-                </div>
+                <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
 
             <div class="total-section">
                 <div class="total-row">
                     <span>Subtotal:</span>
                     <span>$<?php echo number_format($order['totals']['subtotal'], 0, ',', '.'); ?></span>
                 </div>
+                
+                <?php if (isset($order['coupon']) && $order['coupon']): ?>
+                <div class="total-row discount-row">
+                    <span>
+                        <i class="fas fa-tag"></i> Descuento (<?php echo htmlspecialchars($order['coupon']['code']); ?>):
+                    </span>
+                    <span>-$<?php echo number_format($order['totals']['coupon_discount'], 0, ',', '.'); ?></span>
+                </div>
+                <?php endif; ?>
+                
                 <div class="total-row">
-                    <span>Envío:</span>
+                    <span>Envío (<?php echo htmlspecialchars($order['shipping']['name']); ?>):</span>
                     <span>
                         <?php if ($order['totals']['shipping'] == 0): ?>
-                            Gratis
+                            <span class="free-shipping">Gratis</span>
                         <?php else: ?>
                             $<?php echo number_format($order['totals']['shipping'], 0, ',', '.'); ?>
                         <?php endif; ?>
