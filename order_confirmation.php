@@ -86,8 +86,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-/* Order Confirmation Styles - Version 2.1 */
-/* Updated: 2025-10-28 - Fixed product list spacing and layout */
+/* Order Confirmation Styles - Version 2.2 */
+/* Updated: 2025-10-28 - Fixed product item staying inside container on hover */
 
 .confirmation-page {
     background-color: var(--bg-dark);
@@ -214,7 +214,7 @@ require_once 'includes/header.php';
 .product-item:hover {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(220, 53, 69, 0.3);
-    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
 }
 
 .product-item:last-child {
@@ -476,7 +476,7 @@ require_once 'includes/header.php';
     }
 }
 
-/* End of Order Confirmation Styles v2.1 */
+/* End of Order Confirmation Styles v2.2 */
 </style>
 
 <main class="confirmation-page">
