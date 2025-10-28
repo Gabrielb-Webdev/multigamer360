@@ -85,11 +85,19 @@ if (!empty($_SESSION['cart'])) {
         $subtotal = $product['price'] * $quantity;
         $cart_total += $subtotal;
         
+        // Procesar la ruta de la imagen
+        $image_url = $product['primary_image'] ?? $product['image_url'];
+        
+        // Si la imagen no tiene una ruta completa, agregar la ruta de uploads
+        if ($image_url && !preg_match('/^(http|https|\/)/i', $image_url)) {
+            $image_url = 'uploads/products/' . $image_url;
+        }
+        
         $cart_items[] = [
             'id' => $product['id'],
             'name' => $product['name'],
             'price' => $product['price'],
-            'image' => $product['primary_image'] ?? $product['image_url'],
+            'image' => $image_url,
             'quantity' => $quantity,
             'subtotal' => $subtotal
         ];
