@@ -4,13 +4,84 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar si hay una orden completada
-if (!isset($_SESSION['completed_order'])) {
+// Incluir conexión a base de datos
+require_once 'config/database.php';
+
+$order = null;
+
+// Verificar si hay una orden completada en sesión
+if (isset($_SESSION['completed_order'])) {
+    $order = $_SESSION['completed_order'];
+} elseif (isset($_GET['order_id'])) {
+    // Si hay order_id en URL, cargar desde base de datos
+    $order_id = $_GET['order_id'];
+    
+    try {
+        // Obtener orden
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_number = ?");
+        $stmt->execute([$order_id]);
+        $order_data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($order_data) {
+            // Obtener items de la orden
+            $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+            $stmt->execute([$order_data['id']]);
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Reconstruir estructura de orden
+            $order = [
+                'order_id' => $order_data['order_number'],
+                'date' => $order_data['created_at'],
+                'customer' => [
+                    'first_name' => $order_data['customer_first_name'],
+                    'last_name' => $order_data['customer_last_name'],
+                    'email' => $order_data['customer_email'],
+                    'phone' => $order_data['customer_phone'],
+                    'address' => $order_data['shipping_address'],
+                    'city' => $order_data['shipping_city'],
+                    'province' => $order_data['shipping_province'],
+                    'zip_code' => $order_data['shipping_postal_code']
+                ],
+                'shipping' => [
+                    'name' => $order_data['shipping_method'],
+                    'cost' => $order_data['shipping_cost']
+                ],
+                'payment' => [
+                    'method' => strtolower(str_replace(' ', '', $order_data['payment_method'])),
+                    'name' => $order_data['payment_method']
+                ],
+                'items' => array_map(function($item) {
+                    return [
+                        'id' => $item['product_id'],
+                        'name' => $item['product_name'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'total' => $item['subtotal']
+                    ];
+                }, $items),
+                'totals' => [
+                    'subtotal' => $order_data['subtotal'],
+                    'coupon_discount' => $order_data['discount_amount'],
+                    'shipping' => $order_data['shipping_cost'],
+                    'total' => $order_data['total_amount']
+                ],
+                'coupon' => $order_data['discount_amount'] > 0 ? [
+                    'code' => 'DESCUENTO',
+                    'discount_amount' => $order_data['discount_amount']
+                ] : null
+            ];
+        }
+    } catch (PDOException $e) {
+        error_log("Error al cargar orden: " . $e->getMessage());
+    }
+}
+
+// Si no hay orden disponible, redirigir
+if (!$order) {
     header('Location: index.php');
     exit();
 }
 
-$order = $_SESSION['completed_order'];
 require_once 'includes/header.php';
 ?>
 
@@ -584,7 +655,10 @@ require_once 'includes/header.php';
 </main>
 
 <?php 
-// Limpiar la orden de la sesión después de mostrarla
-unset($_SESSION['completed_order']);
+// Limpiar la orden de la sesión solo si se accedió desde el proceso de compra (no desde URL)
+// Esto permite que se pueda recargar la página sin perder el acceso
+if (isset($_SESSION['completed_order']) && !isset($_GET['order_id'])) {
+    unset($_SESSION['completed_order']);
+}
 require_once 'includes/footer.php'; 
 ?>
