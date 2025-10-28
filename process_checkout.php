@@ -122,13 +122,23 @@ if (!empty($_SESSION['cart'])) {
         $item_total = $product['price'] * $quantity;
         $subtotal += $item_total;
         
+        // Construir ruta completa de la imagen
+        $image_path = 'uploads/products/default.jpg';
+        if (!empty($product['image_url'])) {
+            if (strpos($product['image_url'], 'uploads/products/') === 0) {
+                $image_path = $product['image_url'];
+            } else {
+                $image_path = 'uploads/products/' . $product['image_url'];
+            }
+        }
+        
         $cart_items[] = [
             'id' => $product['id'],
             'name' => $product['name'],
             'price' => $product['price'],
             'quantity' => $quantity,
             'total' => $item_total,
-            'image' => $product['image_url'] ?? 'uploads/products/default.jpg'
+            'image' => $image_path
         ];
     }
 }

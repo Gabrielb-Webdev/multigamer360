@@ -32,9 +32,6 @@ if (isset($_SESSION['completed_order'])) {
             ");
             $stmt->execute([$order_data['id']]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // DEBUG: Ver qué trae la consulta
-            error_log("DEBUG - Items from DB: " . print_r($items, true));
 
             // Reconstruir estructura de orden
             $order = [
@@ -70,9 +67,6 @@ if (isset($_SESSION['completed_order'])) {
                             $image_path = 'uploads/products/' . $item['image_url'];
                         }
                     }
-                    
-                    // DEBUG: Ver cada item procesado
-                    error_log("DEBUG - Item: {$item['product_name']}, image_url from DB: " . ($item['image_url'] ?? 'NULL') . ", final path: {$image_path}");
                     
                     return [
                         'id' => $item['product_id'],
@@ -110,8 +104,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 3.2 */
-    /* Updated: 2025-10-28 - Fixed image fetching with debug logs */
+    /* Order Confirmation Styles - Version 3.3 */
+    /* Updated: 2025-10-28 - Fixed image loading from product_images table */
 
     .confirmation-page {
         background-color: var(--bg-dark);
