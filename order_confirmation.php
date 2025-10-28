@@ -617,14 +617,18 @@ require_once 'includes/header.php';
             <div class="products-list">
                 <?php foreach ($order['items'] as $item): ?>
                     <?php 
-                    // Verificar que la imagen exista y usar default si no
-                    $image_url = isset($item['image']) && !empty($item['image']) 
-                        ? $item['image'] 
-                        : 'uploads/products/default.jpg';
-                    
-                    // Debug temporal - Eliminar después de verificar
-                    error_log("DEBUG ORDER ITEM: " . print_r($item, true));
-                    error_log("DEBUG IMAGE URL: " . $image_url);
+                    // Construir la ruta completa de la imagen
+                    if (isset($item['image']) && !empty($item['image'])) {
+                        // Si la imagen ya tiene la ruta completa, usarla tal cual
+                        if (strpos($item['image'], 'uploads/products/') === 0) {
+                            $image_url = $item['image'];
+                        } else {
+                            // Si solo es el nombre del archivo, construir la ruta
+                            $image_url = 'uploads/products/' . $item['image'];
+                        }
+                    } else {
+                        $image_url = 'uploads/products/default.jpg';
+                    }
                     ?>
                     <div class="product-info" style="background-image: url('<?php echo htmlspecialchars($image_url); ?>');">
                         <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
