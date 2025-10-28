@@ -377,8 +377,35 @@ try {
     // Revertir transacción en caso de error
     $pdo->rollBack();
     
-    error_log("Error al procesar orden: " . $e->getMessage());
-    $_SESSION['checkout_error'] = "Hubo un error al procesar tu orden. Por favor, intenta nuevamente.";
+    // Log detallado del error
+    $error_message = "Error al procesar orden: " . $e->getMessage();
+    $error_trace = $e->getTraceAsString();
+    $error_file = $e->getFile();
+    $error_line = $e->getLine();
+    
+    error_log("=== CHECKOUT ERROR ===");
+    error_log("Message: " . $error_message);
+    error_log("File: " . $error_file);
+    error_log("Line: " . $error_line);
+    error_log("Trace: " . $error_trace);
+    
+    // Guardar en archivo también
+    $log_file = __DIR__ . '/logs/checkout_errors.log';
+    $log_dir = dirname($log_file);
+    if (!is_dir($log_dir)) {
+        mkdir($log_dir, 0777, true);
+    }
+    
+    $log_content = date('Y-m-d H:i:s') . " - ERROR\n";
+    $log_content .= "Message: " . $error_message . "\n";
+    $log_content .= "File: " . $error_file . " (Line: " . $error_line . ")\n";
+    $log_content .= "POST Data: " . print_r($_POST, true) . "\n";
+    $log_content .= "Trace: " . $error_trace . "\n";
+    $log_content .= "==========================================\n\n";
+    
+    file_put_contents($log_file, $log_content, FILE_APPEND);
+    
+    $_SESSION['checkout_error'] = "Hubo un error al procesar tu orden: " . $e->getMessage();
     header('Location: checkout.php');
     exit();
 }
