@@ -26,9 +26,8 @@ $where_conditions = ['1=1'];
 $params = [];
 
 if ($search) {
-    $where_conditions[] = "(o.id LIKE ? OR o.order_number LIKE ? OR o.customer_email LIKE ? OR o.customer_name LIKE ?)";
+    $where_conditions[] = "(o.order_number LIKE ? OR o.customer_email LIKE ? OR CONCAT(o.customer_first_name, ' ', o.customer_last_name) LIKE ?)";
     $search_term = "%$search%";
-    $params[] = $search_term;
     $params[] = $search_term;
     $params[] = $search_term;
     $params[] = $search_term;

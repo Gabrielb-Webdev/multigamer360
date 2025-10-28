@@ -27,7 +27,7 @@ try {
             o.order_number,
             o.status,
             o.payment_status,
-            o.total,
+            o.total_amount as total,
             o.created_at,
             o.shipped_at,
             o.delivered_at,

@@ -1143,13 +1143,40 @@ function selectPayment(paymentId) {
     const deliveryAddress = document.getElementById('delivery-address');
     if (!isPickup && (paymentId === 'online' || paymentId === 'cod')) {
         if (deliveryAddress) {
+            // PRIMERO mostrar el contenedor
+            deliveryAddress.classList.remove('hidden');
             deliveryAddress.style.display = 'block';
-            // Hacer campos required
-            document.getElementById('address').setAttribute('required', 'required');
-            document.getElementById('city').setAttribute('required', 'required');
-            document.getElementById('province').setAttribute('required', 'required');
-            document.getElementById('zipCode').setAttribute('required', 'required');
-            console.log('Address fields shown and set as required');
+            
+            // LUEGO hacer los campos required (después de un micro delay para que el DOM se actualice)
+            setTimeout(() => {
+                const addressField = document.getElementById('address');
+                const cityField = document.getElementById('city');
+                const provinceField = document.getElementById('province');
+                const zipCodeField = document.getElementById('zipCode');
+                
+                if (addressField) addressField.setAttribute('required', 'required');
+                if (cityField) cityField.setAttribute('required', 'required');
+                if (provinceField) provinceField.setAttribute('required', 'required');
+                if (zipCodeField) zipCodeField.setAttribute('required', 'required');
+                
+                console.log('Address fields shown and set as required');
+            }, 10);
+        }
+    } else {
+        // Si NO es envío a domicilio, remover el required
+        if (deliveryAddress) {
+            deliveryAddress.classList.add('hidden');
+            deliveryAddress.style.display = 'none';
+            
+            const addressField = document.getElementById('address');
+            const cityField = document.getElementById('city');
+            const provinceField = document.getElementById('province');
+            const zipCodeField = document.getElementById('zipCode');
+            
+            if (addressField) addressField.removeAttribute('required');
+            if (cityField) cityField.removeAttribute('required');
+            if (provinceField) provinceField.removeAttribute('required');
+            if (zipCodeField) zipCodeField.removeAttribute('required');
         }
     }
     
