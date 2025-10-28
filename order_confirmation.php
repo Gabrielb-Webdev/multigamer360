@@ -86,8 +86,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 2.2 */
-    /* Updated: 2025-10-28 - Fixed product item staying inside container on hover */
+    /* Order Confirmation Styles - Version 2.3 */
+    /* Updated: 2025-10-28 - Increased spacing between product items */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -199,19 +199,17 @@ require_once 'includes/header.php';
         padding: 0;
     }
 
-    .product-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.25rem;
-        margin-bottom: 0.75rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
-    }
-
-    .product-item:hover {
+.product-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}    .product-item:hover {
         background: rgba(255, 255, 255, 0.05);
         border-color: rgba(220, 53, 69, 0.3);
         box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
@@ -476,7 +474,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v2.2 */
+    /* End of Order Confirmation Styles v2.3 */
 </style>
 
 <main class="confirmation-page">
