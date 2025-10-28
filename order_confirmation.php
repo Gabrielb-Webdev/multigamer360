@@ -86,8 +86,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 2.2 */
-    /* Updated: 2025-10-28 - Fixed product item staying inside container on hover */
+    /* Order Confirmation Styles - Version 2.3 */
+    /* Updated: 2025-10-28 - Added spacing between product info rows */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -224,6 +224,7 @@ require_once 'includes/header.php';
     .product-info {
         flex: 1;
         padding-right: 1.5rem;
+        margin-bottom: 15px;
     }
 
     .product-name {
@@ -476,7 +477,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v2.2 */
+    /* End of Order Confirmation Styles v2.3 */
 </style>
 
 <main class="confirmation-page">
