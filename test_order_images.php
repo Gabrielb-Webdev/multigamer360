@@ -2,7 +2,7 @@
 require_once 'config/database.php';
 
 // ID de una orden existente - cambia este número por uno de tus órdenes
-$order_number = '67201B90E1349'; // Cambia esto por el ID de tu última orden
+$order_number = 'MG360-20251029-5930'; // Cambia esto por el ID de tu última orden
 
 echo "<h2>Test de Imágenes de Orden</h2>";
 echo "<p>Orden: $order_number</p>";
