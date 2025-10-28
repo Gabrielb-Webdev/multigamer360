@@ -108,8 +108,9 @@ if (!empty($_SESSION['cart'])) {
     $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
     
     $stmt = $pdo->prepare("
-        SELECT p.id, p.name, p.price_pesos as price, p.image_url
+        SELECT p.id, p.name, p.price_pesos as price, pi.image_url
         FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
         WHERE p.id IN ($placeholders)
     ");
     
