@@ -23,8 +23,13 @@ if (isset($_SESSION['completed_order'])) {
         $order_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($order_data) {
-            // Obtener items de la orden
-            $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+            // Obtener items de la orden con imágenes de productos
+            $stmt = $pdo->prepare("
+                SELECT oi.*, p.image_url 
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = ?
+            ");
             $stmt->execute([$order_data['id']]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -50,13 +55,14 @@ if (isset($_SESSION['completed_order'])) {
                     'method' => strtolower(str_replace(' ', '', $order_data['payment_method'])),
                     'name' => $order_data['payment_method']
                 ],
-                'items' => array_map(function ($item) {
+                'items' => array_map(function($item) {
                     return [
                         'id' => $item['product_id'],
                         'name' => $item['product_name'],
                         'quantity' => $item['quantity'],
                         'price' => $item['price'],
-                        'total' => $item['subtotal']
+                        'total' => $item['subtotal'],
+                        'image' => $item['image_url'] ?? 'uploads/products/default.jpg'
                     ];
                 }, $items),
                 'totals' => [
@@ -86,8 +92,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 2.2 */
-    /* Updated: 2025-10-28 - Fixed product item staying inside container on hover */
+    /* Order Confirmation Styles - Version 2.3 */
+    /* Updated: 2025-10-28 - Added product background images with overlay */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -199,25 +205,56 @@ require_once 'includes/header.php';
         padding: 0;
     }
 
-    .product-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.25rem;
-        margin-bottom: 0.75rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
-    }
+.product-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 120px;
+    overflow: hidden;
+}
 
-    .product-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(220, 53, 69, 0.3);
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
-    }
+.product-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to right,
+        rgba(26, 26, 26, 0.95) 0%,
+        rgba(26, 26, 26, 0.85) 50%,
+        rgba(26, 26, 26, 0.75) 100%
+    );
+    z-index: 1;
+}
 
-    .product-item:last-child {
+.product-item .product-info,
+.product-item .product-total {
+    position: relative;
+    z-index: 2;
+}
+
+.product-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(220, 53, 69, 0.3);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+}
+
+.product-item:hover .product-overlay {
+    background: linear-gradient(
+        to right,
+        rgba(26, 26, 26, 0.90) 0%,
+        rgba(26, 26, 26, 0.80) 50%,
+        rgba(26, 26, 26, 0.70) 100%
+    );
+}    .product-item:last-child {
         margin-bottom: 0;
     }
 
@@ -476,7 +513,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v2.2 */
+    /* End of Order Confirmation Styles v2.3 */
 </style>
 
 <main class="confirmation-page">
@@ -566,6 +603,8 @@ require_once 'includes/header.php';
 
             <div class="products-list">
                 <?php foreach ($order['items'] as $item): ?>
+                <div class="product-item" style="background-image: url('<?php echo htmlspecialchars($item['image']); ?>'); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative;">
+                    <div class="product-overlay"></div>
                     <div class="product-info">
                         <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
                         <div class="product-details">
@@ -577,6 +616,10 @@ require_once 'includes/header.php';
                             </span>
                         </div>
                     </div>
+                    <div class="product-total">
+                        $<?php echo number_format($item['total'], 0, ',', '.'); ?>
+                    </div>
+                </div>
                 <?php endforeach; ?>
             </div>
 
