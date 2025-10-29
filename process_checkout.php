@@ -260,8 +260,14 @@ try {
         $stmt_check_stock->execute([$item['id']]);
         $product_check = $stmt_check_stock->fetch(PDO::FETCH_ASSOC);
         
-        if (!$product_check || $product_check['stock'] < $item['quantity']) {
-            throw new Exception("Stock insuficiente para: " . $item['name']);
+        error_log("DEBUG - Producto: {$item['name']}, ID: {$item['id']}, Stock actual: " . ($product_check['stock'] ?? 'NULL') . ", Cantidad a comprar: {$item['quantity']}");
+        
+        if (!$product_check) {
+            throw new Exception("Producto no encontrado: " . $item['name']);
+        }
+        
+        if ($product_check['stock'] < $item['quantity']) {
+            throw new Exception("Stock insuficiente para: " . $item['name'] . " (Disponible: {$product_check['stock']}, Solicitado: {$item['quantity']})");
         }
         
         // Insertar item de orden
@@ -281,9 +287,12 @@ try {
             $item['quantity']
         ]);
         
+        $rows_affected = $stmt_update_stock->rowCount();
+        error_log("DEBUG - Stock actualizado para {$item['name']}: $rows_affected filas afectadas");
+        
         // Verificar que se actualizó el stock
-        if ($stmt_update_stock->rowCount() === 0) {
-            throw new Exception("Error al actualizar stock de: " . $item['name']);
+        if ($rows_affected === 0) {
+            throw new Exception("Error al actualizar stock de: " . $item['name'] . " - No se pudo descontar del inventario");
         }
     }
     
