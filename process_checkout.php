@@ -241,8 +241,8 @@ try {
     
     // Insertar items de la orden Y DESCONTAR STOCK
     $stmt_insert_item = $pdo->prepare("
-        INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal, image_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
     
     $stmt_update_stock = $pdo->prepare("
@@ -270,14 +270,15 @@ try {
             throw new Exception("Stock insuficiente para: " . $item['name'] . " (Disponible: {$product_check['stock_quantity']}, Solicitado: {$item['quantity']})");
         }
         
-        // Insertar item de orden
+        // Insertar item de orden (con imagen)
         $stmt_insert_item->execute([
             $inserted_order_id,
             $item['id'],
             $item['name'],
             $item['quantity'],
             $item['price'],
-            $item['total']
+            $item['total'],
+            $item['image'] ?? null  // Guardar la imagen
         ]);
         
         // Descontar stock

@@ -23,11 +23,10 @@ if (isset($_SESSION['completed_order'])) {
         $order_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($order_data) {
-            // Obtener items de la orden con imagen principal desde product_images
+            // Obtener items de la orden (la imagen ya está guardada en order_items)
             $stmt = $pdo->prepare("
-                SELECT oi.*, pi.image_url 
+                SELECT oi.* 
                 FROM order_items oi 
-                LEFT JOIN product_images pi ON oi.product_id = pi.product_id AND pi.is_primary = 1
                 WHERE oi.order_id = ?
             ");
             $stmt->execute([$order_data['id']]);
