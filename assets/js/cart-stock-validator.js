@@ -1,3 +1,4 @@
+// Sistema de Validación de Stock del Carrito v2.6
 // Bandera para evitar validaciones duplicadas
 let isValidating = false;
 let validationShown = false;
@@ -6,25 +7,18 @@ let validationShown = false;
 function validateCartStock() {
     // Evitar validaciones duplicadas
     if (isValidating || validationShown) {
-        return;
-    }
-    
-    // Verificar si acabamos de completar una orden (viene de order_confirmation)
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromCheckout = urlParams.get('from_checkout');
-    
-    if (fromCheckout === '1') {
-        // Usuario completó compra - limpiar silenciosamente sin alertas
-        console.log('Carrito limpiado automáticamente después de compra');
+        console.log('Validación ya en proceso o ya mostrada');
         return;
     }
     
     isValidating = true;
+    console.log('Iniciando validación de stock...');
     
     fetch('ajax/validate_cart_stock.php')
         .then(response => response.json())
         .then(data => {
             isValidating = false;
+            console.log('Respuesta de validación:', data);
             
             if (data.success && data.has_issues) {
                 // Productos con problemas de stock
@@ -39,11 +33,18 @@ function validateCartStock() {
                     }
                 });
                 
+                console.log('Productos agotados:', outOfStock);
+                console.log('Productos con stock limitado:', stockLimited);
+                
                 // Mostrar modal solo si hay productos afectados
                 if (outOfStock.length > 0 || stockLimited.length > 0) {
                     validationShown = true;
                     showStockIssuesModal(outOfStock, stockLimited);
+                } else {
+                    console.log('No hay productos afectados');
                 }
+            } else {
+                console.log('Sin problemas de stock');
             }
         })
         .catch(error => {
@@ -54,6 +55,8 @@ function validateCartStock() {
 
 // Mostrar modal con productos afectados
 function showStockIssuesModal(outOfStock, stockLimited) {
+    console.log('Mostrando modal de cambios en carrito');
+    
     // Crear modal si no existe
     let modal = document.getElementById('stockIssuesModal');
     if (!modal) {
@@ -74,7 +77,7 @@ function showStockIssuesModal(outOfStock, stockLimited) {
                         <i class="fas fa-exclamation-triangle text-warning"></i> 
                         Cambios en tu Carrito
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="confirmStockChanges()"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted">Algunos productos en tu carrito han cambiado debido a actualizaciones de stock:</p>
@@ -144,18 +147,21 @@ function showStockIssuesModal(outOfStock, stockLimited) {
 
 // Confirmar y recargar página
 function confirmStockChanges() {
+    console.log('Usuario confirmó cambios, recargando página...');
+    
     // Quitar el foco del botón primero (soluciona el error aria-hidden)
     if (document.activeElement) {
         document.activeElement.blur();
     }
     
-    // Forzar recarga inmediata sin esperar animaciones del modal
+    // Forzar recarga inmediata
     window.location.reload();
 }
 
 // Validar al cargar la página del carrito
 if (window.location.pathname.includes('carrito.php')) {
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM cargado, validando stock del carrito...');
         validateCartStock();
     });
 }
@@ -163,9 +169,8 @@ if (window.location.pathname.includes('carrito.php')) {
 // Validar periódicamente cada 30 segundos si está en el carrito
 if (window.location.pathname.includes('carrito.php')) {
     setInterval(function() {
-        // Solo validar si no acabamos de hacer checkout
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('from_checkout') !== '1') {
+        if (!validationShown) {
+            console.log('Validación periódica (30s)...');
             validateCartStock();
         }
     }, 30000);
