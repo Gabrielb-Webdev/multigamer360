@@ -376,8 +376,17 @@ try {
     // Guardar en sesión para mostrar confirmación
     $_SESSION['completed_order'] = $order_data;
     
-    // Limpiar carrito y datos de envío
+    // Limpiar carrito de la sesión
     $_SESSION['cart'] = [];
+    
+    // IMPORTANTE: Eliminar el carrito de la BASE DE DATOS también
+    if ($user_id) {
+        $stmt_delete_cart = $pdo->prepare("DELETE FROM cart_sessions WHERE user_id = ?");
+        $stmt_delete_cart->execute([$user_id]);
+        error_log("Carrito eliminado de BD para usuario: $user_id");
+    }
+    
+    // Limpiar datos de envío y cupones
     unset($_SESSION['applied_coupon']);
     unset($_SESSION['shipping_method']);
     unset($_SESSION['shipping_cost']);
