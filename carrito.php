@@ -846,8 +846,16 @@ function cambiarCodigoPostal() {
 
 // Función para actualizar los campos hidden del formulario
 function updateFormData(shippingMethod, postalCode) {
-    document.getElementById('selectedShippingMethod').value = shippingMethod;
-    document.getElementById('selectedPostalCode').value = postalCode;
+    const shippingMethodInput = document.getElementById('selectedShippingMethod');
+    const postalCodeInput = document.getElementById('selectedPostalCode');
+    
+    if (shippingMethodInput) {
+        shippingMethodInput.value = shippingMethod;
+    }
+    
+    if (postalCodeInput) {
+        postalCodeInput.value = postalCode;
+    }
 }
 
 // Función para validar antes de ir al checkout
