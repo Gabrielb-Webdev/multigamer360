@@ -144,6 +144,11 @@ function showStockIssuesModal(outOfStock, stockLimited) {
 
 // Confirmar y recargar página
 function confirmStockChanges() {
+    // Quitar el foco del botón primero (soluciona el error aria-hidden)
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+    
     // Cerrar el modal Bootstrap correctamente
     const modal = document.getElementById('stockIssuesModal');
     if (modal) {
@@ -166,11 +171,9 @@ function confirmStockChanges() {
             document.body.style.removeProperty('padding-right');
             
             // Recargar después de limpiar
-            setTimeout(() => {
-                const url = new URL(window.location);
-                url.searchParams.delete('from_checkout');
-                window.location.href = url.toString();
-            }, 100);
+            const url = new URL(window.location);
+            url.searchParams.delete('from_checkout');
+            window.location.href = url.toString();
         }, { once: true });
     } else {
         // Si no hay modal, simplemente recargar
