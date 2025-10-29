@@ -271,6 +271,9 @@ try {
         }
         
         // Insertar item de orden (con imagen)
+        $image_to_save = $item['image'] ?? null;
+        error_log("DEBUG CHECKOUT - Guardando item: {$item['name']}, image: " . ($image_to_save ?? 'NULL'));
+        
         $stmt_insert_item->execute([
             $inserted_order_id,
             $item['id'],
@@ -278,7 +281,7 @@ try {
             $item['quantity'],
             $item['price'],
             $item['total'],
-            $item['image'] ?? null  // Guardar la imagen
+            $image_to_save  // Guardar la imagen
         ]);
         
         // Descontar stock

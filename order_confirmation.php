@@ -55,6 +55,9 @@ if (isset($_SESSION['completed_order'])) {
                     'name' => $order_data['payment_method']
                 ],
                 'items' => array_map(function ($item) {
+                    // DEBUG: Ver qué trae cada item
+                    error_log("DEBUG ORDER ITEM - product_name: {$item['product_name']}, image_url from DB: " . ($item['image_url'] ?? 'NULL'));
+                    
                     // Construir ruta completa de la imagen
                     $image_path = 'uploads/products/default.jpg'; // Default
                     if (!empty($item['image_url'])) {
@@ -66,6 +69,8 @@ if (isset($_SESSION['completed_order'])) {
                             $image_path = 'uploads/products/' . $item['image_url'];
                         }
                     }
+                    
+                    error_log("DEBUG ORDER ITEM - Final image path: $image_path");
                     
                     return [
                         'id' => $item['product_id'],
