@@ -144,19 +144,40 @@ function showStockIssuesModal(outOfStock, stockLimited) {
 
 // Confirmar y recargar página
 function confirmStockChanges() {
-    // Cerrar el modal
+    // Cerrar el modal Bootstrap correctamente
     const modal = document.getElementById('stockIssuesModal');
     if (modal) {
         const bsModal = bootstrap.Modal.getInstance(modal);
         if (bsModal) {
             bsModal.hide();
         }
+        
+        // Remover el modal del DOM después de cerrarlo
+        modal.addEventListener('hidden.bs.modal', function () {
+            modal.remove();
+            // Remover backdrop si existe
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            // Remover clase del body
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+            
+            // Recargar después de limpiar
+            setTimeout(() => {
+                const url = new URL(window.location);
+                url.searchParams.delete('from_checkout');
+                window.location.href = url.toString();
+            }, 100);
+        }, { once: true });
+    } else {
+        // Si no hay modal, simplemente recargar
+        const url = new URL(window.location);
+        url.searchParams.delete('from_checkout');
+        window.location.href = url.toString();
     }
-    
-    // Limpiar parámetros de URL y recargar
-    const url = new URL(window.location);
-    url.searchParams.delete('from_checkout');
-    window.location.href = url.toString();
 }
 
 // Validar al cargar la página del carrito
