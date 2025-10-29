@@ -5,8 +5,11 @@ require_once '../config/database.php';
 header('Content-Type: application/json');
 
 try {
+    // Obtener user_id si está logueado
+    $user_id = $_SESSION['user_id'] ?? null;
+    
     if (empty($_SESSION['cart'])) {
-        echo json_encode(['success' => true, 'items' => []]);
+        echo json_encode(['success' => true, 'items' => [], 'has_issues' => false]);
         exit();
     }
     
@@ -24,6 +27,7 @@ try {
     
     $validation_results = [];
     $has_issues = false;
+    $products_to_delete_from_db = []; // IDs a eliminar de la BD
     
     foreach ($products as $product) {
         $product_id = $product['id'];
@@ -44,8 +48,13 @@ try {
             $item_status['message'] = 'Producto agotado - debe ser eliminado del carrito';
             $has_issues = true;
             
-            // Eliminar automáticamente del carrito
+            // Eliminar de la sesión
             unset($_SESSION['cart'][$product_id]);
+            
+            // Marcar para eliminar de la BD
+            $products_to_delete_from_db[] = $product_id;
+            
+            error_log("Producto $product_id ({$product['name']}) eliminado del carrito - sin stock");
             
         } elseif ($requested_quantity > $available_stock) {
             // Stock insuficiente - ajustar cantidad
@@ -54,11 +63,36 @@ try {
             $item_status['adjusted_quantity'] = $available_stock;
             $has_issues = true;
             
-            // Ajustar automáticamente la cantidad
+            // Ajustar cantidad en la sesión
             $_SESSION['cart'][$product_id] = $available_stock;
+            
+            // Actualizar cantidad en la BD
+            if ($user_id) {
+                $stmt_update = $pdo->prepare("
+                    UPDATE cart_sessions 
+                    SET quantity = ? 
+                    WHERE user_id = ? AND product_id = ?
+                ");
+                $stmt_update->execute([$available_stock, $user_id, $product_id]);
+            }
+            
+            error_log("Producto $product_id ({$product['name']}) ajustado a $available_stock unidades");
         }
         
         $validation_results[] = $item_status;
+    }
+    
+    // Eliminar productos agotados de la BASE DE DATOS
+    if ($user_id && !empty($products_to_delete_from_db)) {
+        $placeholders_delete = str_repeat('?,', count($products_to_delete_from_db) - 1) . '?';
+        $stmt_delete = $pdo->prepare("
+            DELETE FROM cart_sessions 
+            WHERE user_id = ? AND product_id IN ($placeholders_delete)
+        ");
+        $params = array_merge([$user_id], $products_to_delete_from_db);
+        $stmt_delete->execute($params);
+        
+        error_log("Eliminados " . count($products_to_delete_from_db) . " productos de la BD para usuario $user_id");
     }
     
     // Limpiar carrito si está vacío
