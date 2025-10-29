@@ -96,6 +96,37 @@ try {
         debug_log("  - ID: {$productCheck['id']}");
         debug_log("  - Nombre: {$productCheck['name']}");
         debug_log("  - Stock: {$productCheck['stock_quantity']}");
+        
+        // Verificar stock disponible
+        if ($productCheck['stock_quantity'] <= 0) {
+            debug_log("✗ PRODUCTO SIN STOCK");
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Producto agotado - no disponible'
+            ]);
+            exit;
+        }
+        
+        // Obtener cantidad actual en el carrito
+        $current_qty_in_cart = $_SESSION['cart'][$product_id] ?? 0;
+        $total_requested = $current_qty_in_cart + $quantity;
+        
+        // Limitar cantidad al stock disponible
+        if ($total_requested > $productCheck['stock_quantity']) {
+            $quantity = $productCheck['stock_quantity'] - $current_qty_in_cart;
+            
+            if ($quantity <= 0) {
+                debug_log("✗ YA TIENE EL MÁXIMO STOCK EN EL CARRITO");
+                echo json_encode([
+                    'success' => false, 
+                    'message' => "Ya tienes el stock máximo disponible ({$productCheck['stock_quantity']} unidades) en tu carrito"
+                ]);
+                exit;
+            }
+            
+            debug_log("⚠ Cantidad ajustada a $quantity (stock disponible: {$productCheck['stock_quantity']}, en carrito: $current_qty_in_cart)");
+        }
+        
     } else {
         debug_log("✗ PRODUCTO NO ENCONTRADO EN BD con ID: $product_id");
         
@@ -106,10 +137,17 @@ try {
         foreach ($available as $p) {
             debug_log("  - ID: {$p['id']} | {$p['name']}");
         }
+        
+        echo json_encode([
+            'success' => false,
+            'message' => 'Producto no encontrado'
+        ]);
+        exit;
     }
 
-    // Limitar cantidad entre 1 y 10
-    $quantity = max(1, min($quantity, 10));
+    // Limitar cantidad entre 1 y stock disponible (máximo 10 o el stock disponible, lo que sea menor)
+    $max_quantity = min(10, $productCheck['stock_quantity']);
+    $quantity = max(1, min($quantity, $max_quantity));
 
     // Agregar al carrito usando el manejador
     debug_log("Llamando a cartManager->addToCart($product_id, $quantity)");

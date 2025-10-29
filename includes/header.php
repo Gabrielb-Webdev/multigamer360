@@ -182,6 +182,9 @@ $cartDisplayText = $cartTotal > 0 ? '$' . number_format($cartTotal, 2) : '$0';
         });
     </script>
     
+    <!-- Validador de stock del carrito -->
+    <script src="assets/js/cart-stock-validator.js?v=1.0"></script>
+    
 </head>
 <body>
     <!-- Header Banner -->

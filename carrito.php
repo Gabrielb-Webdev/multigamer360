@@ -102,7 +102,7 @@ function getCartProducts($pdo, $cart) {
         if ($table_check) {
             // Consulta CON product_images (sin usar is_active que no existe)
             $stmt = $pdo->prepare("
-                SELECT p.id, p.name, p.price_pesos as price, p.image_url,
+                SELECT p.id, p.name, p.price_pesos as price, p.image_url, p.stock_quantity,
                        COALESCE(
                            (SELECT pi.image_url 
                             FROM product_images pi 
@@ -131,7 +131,7 @@ function getCartProducts($pdo, $cart) {
         } else {
             // Consulta SIN product_images (fallback)
             $stmt = $pdo->prepare("
-                SELECT id, name, price_pesos as price, image_url,
+                SELECT id, name, price_pesos as price, image_url, stock_quantity,
                        image_url as primary_image,
                        CASE 
                            WHEN category_id = 1 THEN 'PlayStation'
@@ -284,13 +284,23 @@ require_once 'includes/header.php';
                                     <label class="form-label small text-light">Cantidad</label>
                                     <div class="input-group">
                                         <button class="btn btn-outline-light" type="button" 
-                                                onclick="updateQuantity(<?php echo $product['id']; ?>, -1)">-</button>
+                                                onclick="updateQuantity(<?php echo $product['id']; ?>, -1)" 
+                                                <?php echo ($quantity <= 1) ? 'disabled' : ''; ?>>-</button>
                                         <input type="number" class="form-control bg-dark text-white border-secondary text-center" 
-                                               value="<?php echo $quantity; ?>" min="1" 
+                                               value="<?php echo $quantity; ?>" 
+                                               min="1" 
+                                               max="<?php echo min($product['stock_quantity'], 10); ?>"
+                                               data-stock="<?php echo $product['stock_quantity']; ?>"
                                                onchange="updateQuantity(<?php echo $product['id']; ?>, this.value, true)">
                                         <button class="btn btn-outline-light" type="button" 
-                                                onclick="updateQuantity(<?php echo $product['id']; ?>, 1)">+</button>
+                                                onclick="updateQuantity(<?php echo $product['id']; ?>, 1)"
+                                                <?php echo ($quantity >= min($product['stock_quantity'], 10)) ? 'disabled' : ''; ?>>+</button>
                                     </div>
+                                    <?php if ($product['stock_quantity'] <= 5 && $product['stock_quantity'] > 0): ?>
+                                        <small class="text-warning">⚠️ Solo quedan <?php echo $product['stock_quantity']; ?> unidades</small>
+                                    <?php elseif ($product['stock_quantity'] <= 0): ?>
+                                        <small class="text-danger">❌ Producto agotado</small>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="col-md-2 text-end">
                                     <button class="btn btn-outline-danger btn-sm" 
