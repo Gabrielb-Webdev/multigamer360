@@ -247,12 +247,12 @@ try {
     
     $stmt_update_stock = $pdo->prepare("
         UPDATE products 
-        SET stock = stock - ? 
-        WHERE id = ? AND stock >= ?
+        SET stock_quantity = stock_quantity - ? 
+        WHERE id = ? AND stock_quantity >= ?
     ");
     
     $stmt_check_stock = $pdo->prepare("
-        SELECT id, name, stock FROM products WHERE id = ?
+        SELECT id, name, stock_quantity FROM products WHERE id = ?
     ");
     
     foreach ($cart_items as $item) {
@@ -260,14 +260,14 @@ try {
         $stmt_check_stock->execute([$item['id']]);
         $product_check = $stmt_check_stock->fetch(PDO::FETCH_ASSOC);
         
-        error_log("DEBUG - Producto: {$item['name']}, ID: {$item['id']}, Stock actual: " . ($product_check['stock'] ?? 'NULL') . ", Cantidad a comprar: {$item['quantity']}");
+        error_log("DEBUG - Producto: {$item['name']}, ID: {$item['id']}, Stock actual: " . ($product_check['stock_quantity'] ?? 'NULL') . ", Cantidad a comprar: {$item['quantity']}");
         
         if (!$product_check) {
             throw new Exception("Producto no encontrado: " . $item['name']);
         }
         
-        if ($product_check['stock'] < $item['quantity']) {
-            throw new Exception("Stock insuficiente para: " . $item['name'] . " (Disponible: {$product_check['stock']}, Solicitado: {$item['quantity']})");
+        if ($product_check['stock_quantity'] < $item['quantity']) {
+            throw new Exception("Stock insuficiente para: " . $item['name'] . " (Disponible: {$product_check['stock_quantity']}, Solicitado: {$item['quantity']})");
         }
         
         // Insertar item de orden
