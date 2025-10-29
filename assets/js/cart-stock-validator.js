@@ -1,5 +1,14 @@
+// Bandera para evitar validaciones duplicadas
+let isValidating = false;
+let validationShown = false;
+
 // Validar stock del carrito al cargar la página
 function validateCartStock() {
+    // Evitar validaciones duplicadas
+    if (isValidating || validationShown) {
+        return;
+    }
+    
     // Verificar si acabamos de completar una orden (viene de order_confirmation)
     const urlParams = new URLSearchParams(window.location.search);
     const fromCheckout = urlParams.get('from_checkout');
@@ -10,9 +19,13 @@ function validateCartStock() {
         return;
     }
     
+    isValidating = true;
+    
     fetch('ajax/validate_cart_stock.php')
         .then(response => response.json())
         .then(data => {
+            isValidating = false;
+            
             if (data.success && data.has_issues) {
                 // Productos con problemas de stock
                 let outOfStock = [];
@@ -28,11 +41,13 @@ function validateCartStock() {
                 
                 // Mostrar modal solo si hay productos afectados
                 if (outOfStock.length > 0 || stockLimited.length > 0) {
+                    validationShown = true;
                     showStockIssuesModal(outOfStock, stockLimited);
                 }
             }
         })
         .catch(error => {
+            isValidating = false;
             console.error('Error validando stock del carrito:', error);
         });
 }
@@ -129,7 +144,19 @@ function showStockIssuesModal(outOfStock, stockLimited) {
 
 // Confirmar y recargar página
 function confirmStockChanges() {
-    location.reload();
+    // Cerrar el modal
+    const modal = document.getElementById('stockIssuesModal');
+    if (modal) {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    }
+    
+    // Limpiar parámetros de URL y recargar
+    const url = new URL(window.location);
+    url.searchParams.delete('from_checkout');
+    window.location.href = url.toString();
 }
 
 // Validar al cargar la página del carrito
