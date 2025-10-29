@@ -149,38 +149,8 @@ function confirmStockChanges() {
         document.activeElement.blur();
     }
     
-    // Cerrar el modal Bootstrap correctamente
-    const modal = document.getElementById('stockIssuesModal');
-    if (modal) {
-        const bsModal = bootstrap.Modal.getInstance(modal);
-        if (bsModal) {
-            bsModal.hide();
-        }
-        
-        // Remover el modal del DOM después de cerrarlo
-        modal.addEventListener('hidden.bs.modal', function () {
-            modal.remove();
-            // Remover backdrop si existe
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.remove();
-            }
-            // Remover clase del body
-            document.body.classList.remove('modal-open');
-            document.body.style.removeProperty('overflow');
-            document.body.style.removeProperty('padding-right');
-            
-            // Recargar después de limpiar
-            const url = new URL(window.location);
-            url.searchParams.delete('from_checkout');
-            window.location.href = url.toString();
-        }, { once: true });
-    } else {
-        // Si no hay modal, simplemente recargar
-        const url = new URL(window.location);
-        url.searchParams.delete('from_checkout');
-        window.location.href = url.toString();
-    }
+    // Forzar recarga inmediata sin esperar animaciones del modal
+    window.location.reload();
 }
 
 // Validar al cargar la página del carrito
