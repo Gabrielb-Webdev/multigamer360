@@ -16,9 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $shippingMethod = $_POST['shippingMethod'] ?? '';
 $postalCode = $_POST['postalCode'] ?? '';
 
-// Validar que se recibieron los datos
-if (empty($shippingMethod) || empty($postalCode)) {
-    echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
+// Validar que se recibió el método de envío
+if (empty($shippingMethod) && $shippingMethod !== '0') {
+    echo json_encode(['success' => false, 'message' => 'Datos incompletos - No se recibió método de envío']);
+    exit;
+}
+
+// Solo validar código postal si NO es retiro en local
+if ($shippingMethod !== '0' && empty($postalCode)) {
+    echo json_encode(['success' => false, 'message' => 'Datos incompletos - Se requiere código postal para este método de envío']);
     exit;
 }
 

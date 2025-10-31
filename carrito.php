@@ -468,7 +468,10 @@ input[type="number"] {
                                 </div>
                             </label>
                         </div>
+                    </div>
 
+                    <!-- Opciones de retiro (SIEMPRE VISIBLES) -->
+                    <div id="pickupOptions" class="mb-4">
                         <h6 class="text-white mb-3 mt-4">RETIRAR POR</h6>
                         
                         <div class="form-check mb-3 p-3 border border-secondary rounded">
@@ -930,8 +933,8 @@ function iniciarCompra() {
     if (shippingMethod.value !== '0') {
         formData.append('postalCode', postalCode);
     } else {
-        // Para retiro en local, enviar código postal vacío o default
-        formData.append('postalCode', '0000');
+        // Para retiro en local, no enviamos código postal (o enviamos string vacío)
+        formData.append('postalCode', '');
     }
     
     // Enviar por AJAX
