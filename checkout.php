@@ -518,25 +518,90 @@ require_once 'includes/header.php';
 }
 
 .btn-checkout {
-    background: linear-gradient(135deg, var(--accent-red), #b02a37);
+    background: linear-gradient(135deg, #666, #888);
     border: none;
-    color: white;
+    color: #999;
     padding: 1rem 3rem;
     border-radius: 10px;
     font-size: 1.1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    cursor: not-allowed;
+    transition: all 0.4s ease;
     width: 100%;
     margin-top: 2rem;
+    position: relative;
+    overflow: hidden;
 }
 
-.btn-checkout:hover {
+.btn-checkout.active {
+    background: linear-gradient(135deg, var(--accent-red), #b02a37);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.btn-checkout.active:hover {
     background: linear-gradient(135deg, #b02a37, var(--accent-red));
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+    animation: none;
+}
+
+.btn-checkout i {
+    transition: all 0.4s ease;
+    display: inline-block;
+}
+
+.btn-checkout.active i {
+    animation: unlockAnimation 0.6s ease-in-out;
+}
+
+@keyframes unlockAnimation {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(-15deg) scale(1.1);
+    }
+    50% {
+        transform: rotate(15deg) scale(1.2);
+    }
+    75% {
+        transform: rotate(-10deg) scale(1.1);
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(220, 53, 69, 0.6);
+    }
+}
+
+.btn-checkout.active::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-checkout.active:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn-back {
@@ -1035,8 +1100,8 @@ require_once 'includes/header.php';
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-checkout">
-                            <i class="fas fa-lock"></i> Finalizar Compra
+                        <button type="submit" class="btn-checkout" id="btnFinalizarCompra" disabled>
+                            <i class="fas fa-lock" id="lockIcon"></i> <span id="btnText">Completa los datos</span>
                         </button>
                     </form>
                 </div>
@@ -1425,7 +1490,152 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('Event listeners added');
+    
+    // Inicializar validación del botón de finalizar compra
+    initializeFormValidation();
 });
+
+// =====================================================
+// VALIDACIÓN DINÁMICA DEL BOTÓN FINALIZAR COMPRA
+// =====================================================
+
+function initializeFormValidation() {
+    const btnFinalizarCompra = document.getElementById('btnFinalizarCompra');
+    const lockIcon = document.getElementById('lockIcon');
+    const btnText = document.getElementById('btnText');
+    
+    // Obtener todos los campos a validar
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    
+    // Función para validar todos los campos
+    function validateForm() {
+        let isValid = true;
+        let missingFields = [];
+        
+        // Validar campos básicos (siempre requeridos)
+        if (!firstName.value.trim()) {
+            isValid = false;
+            missingFields.push('Nombre');
+        }
+        if (!lastName.value.trim()) {
+            isValid = false;
+            missingFields.push('Apellido');
+        }
+        if (!email.value.trim() || !isValidEmail(email.value)) {
+            isValid = false;
+            missingFields.push('Email válido');
+        }
+        if (!phone.value.trim()) {
+            isValid = false;
+            missingFields.push('Teléfono');
+        }
+        
+        // Validar método de pago
+        if (!selectedPayment) {
+            isValid = false;
+            missingFields.push('Método de pago');
+        }
+        
+        // Validar campos de dirección solo si es envío a domicilio
+        if (!isPickup) {
+            const address = document.getElementById('address');
+            const city = document.getElementById('city');
+            const province = document.getElementById('province');
+            const zipCode = document.getElementById('zipCode');
+            
+            if (address && address.hasAttribute('required') && !address.value.trim()) {
+                isValid = false;
+                missingFields.push('Dirección');
+            }
+            if (city && city.hasAttribute('required') && !city.value.trim()) {
+                isValid = false;
+                missingFields.push('Ciudad');
+            }
+            if (province && province.hasAttribute('required') && !province.value.trim()) {
+                isValid = false;
+                missingFields.push('Provincia');
+            }
+            if (zipCode && zipCode.hasAttribute('required') && !zipCode.value.trim()) {
+                isValid = false;
+                missingFields.push('Código Postal');
+            }
+        }
+        
+        // Actualizar estado del botón
+        updateButtonState(isValid, missingFields);
+        
+        return isValid;
+    }
+    
+    // Función para validar email
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    // Función para actualizar el estado visual del botón
+    function updateButtonState(isValid, missingFields) {
+        if (isValid) {
+            // Activar botón
+            btnFinalizarCompra.classList.add('active');
+            btnFinalizarCompra.disabled = false;
+            lockIcon.className = 'fas fa-lock-open';
+            btnText.textContent = 'Finalizar Compra';
+            
+            // Trigger animación del candado
+            lockIcon.style.animation = 'none';
+            setTimeout(() => {
+                lockIcon.style.animation = 'unlockAnimation 0.6s ease-in-out';
+            }, 10);
+        } else {
+            // Desactivar botón
+            btnFinalizarCompra.classList.remove('active');
+            btnFinalizarCompra.disabled = true;
+            lockIcon.className = 'fas fa-lock';
+            
+            // Mostrar qué falta
+            if (missingFields.length > 0) {
+                btnText.textContent = 'Completa: ' + missingFields.slice(0, 2).join(', ');
+            } else {
+                btnText.textContent = 'Completa los datos';
+            }
+        }
+    }
+    
+    // Agregar event listeners a todos los campos
+    const allInputs = [firstName, lastName, email, phone];
+    
+    allInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', validateForm);
+            input.addEventListener('blur', validateForm);
+        }
+    });
+    
+    // También validar cuando cambian los campos de dirección
+    const addressFields = ['address', 'city', 'province', 'zipCode'];
+    addressFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', validateForm);
+            field.addEventListener('blur', validateForm);
+        }
+    });
+    
+    // Validar cuando se selecciona un método de pago
+    // Se actualizará automáticamente porque selectedPayment cambia
+    const originalSelectPayment = window.selectPayment;
+    window.selectPayment = function(paymentId) {
+        originalSelectPayment(paymentId);
+        setTimeout(validateForm, 100);
+    };
+    
+    // Validación inicial
+    setTimeout(validateForm, 500);
+}
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
