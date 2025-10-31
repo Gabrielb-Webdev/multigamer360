@@ -202,6 +202,20 @@ require_once 'includes/header.php';
 // echo "<!-- DEBUG: Cart count: " . $cartCount . " -->";
 ?>
 
+<style>
+/* Ocultar flechas (spinners) del input type="number" */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: textfield;
+}
+</style>
+
 <!-- Página del Carrito -->
 <div class="container-fluid" style="padding: 20px 15px;">
     <!-- Título del carrito -->
