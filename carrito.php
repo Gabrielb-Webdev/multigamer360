@@ -892,8 +892,19 @@ function validateShipping() {
     const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
     const postalCode = document.getElementById('codigoPostal').value;
     
-    if (!shippingMethod || !postalCode) {
-        alert('Por favor, ingresa tu código postal y selecciona un método de envío antes de continuar.');
+    if (!shippingMethod) {
+        alert('Por favor, selecciona un método de envío antes de continuar.');
+        return false;
+    }
+    
+    // Si es retiro en local (Multigamer 360), NO requiere código postal
+    if (shippingMethod.value === '0') {
+        return true;
+    }
+    
+    // Para envíos a domicilio, SÍ requiere código postal
+    if (!postalCode) {
+        alert('Por favor, ingresa tu código postal antes de continuar.');
         return false;
     }
     
@@ -914,7 +925,14 @@ function iniciarCompra() {
     // Preparar datos
     const formData = new FormData();
     formData.append('shippingMethod', shippingMethod.value);
-    formData.append('postalCode', postalCode);
+    
+    // Solo enviar código postal si NO es retiro en local
+    if (shippingMethod.value !== '0') {
+        formData.append('postalCode', postalCode);
+    } else {
+        // Para retiro en local, enviar código postal vacío o default
+        formData.append('postalCode', '0000');
+    }
     
     // Enviar por AJAX
     fetch('ajax/set-shipping.php', {
