@@ -214,6 +214,19 @@ input[type="number"] {
     -moz-appearance: textfield; /* Firefox */
     appearance: textfield;
 }
+
+/* Eliminar borde azul al hacer focus y hacer campo no editable visualmente */
+.quantity-input {
+    pointer-events: none !important;
+    user-select: none !important;
+    cursor: default !important;
+}
+
+.quantity-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: var(--bs-border-color) !important;
+}
 </style>
 
 <!-- Página del Carrito -->
@@ -300,11 +313,13 @@ input[type="number"] {
                                         <button class="btn btn-outline-light" type="button" 
                                                 onclick="updateQuantity(<?php echo $product['id']; ?>, -1)" 
                                                 <?php echo ($quantity <= 1) ? 'disabled' : ''; ?>>-</button>
-                                        <input type="number" class="form-control bg-dark text-white border-secondary text-center" 
+                                        <input type="number" class="form-control quantity-input bg-dark text-white border-secondary text-center" 
                                                value="<?php echo $quantity; ?>" 
                                                min="1" 
                                                max="<?php echo min($product['stock_quantity'], 10); ?>"
                                                data-stock="<?php echo $product['stock_quantity']; ?>"
+                                               readonly
+                                               tabindex="-1"
                                                onchange="updateQuantity(<?php echo $product['id']; ?>, this.value, true)">
                                         <button class="btn btn-outline-light" type="button" 
                                                 onclick="updateQuantity(<?php echo $product['id']; ?>, 1)"
