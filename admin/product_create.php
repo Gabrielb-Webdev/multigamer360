@@ -1686,11 +1686,12 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
 
                 resultsDiv.innerHTML = `
                     <div class="col-12">
-                        <div class="alert alert-info mb-3">
+                        <div class="alert alert-info mb-4">
                             <h5 class="alert-heading">
-                                <i class="fas fa-info-circle me-2"></i>El juego está disponible en múltiples plataformas
+                                <i class="fas fa-info-circle me-2"></i>${game.name} - Seleccionar Plataforma
                             </h5>
-                            <p class="mb-0">Selecciona la plataforma para la cual deseas crear el producto:</p>
+                            <p class="mb-0">Este juego está disponible en <strong>${availablePlatforms.length} plataformas diferentes</strong>.</p>
+                            <p class="mb-0 mt-2">Selecciona la plataforma específica para la cual deseas crear el producto. Cada plataforma tendrá su propia consola asignada.</p>
                         </div>
                     </div>
                 `;
@@ -1698,18 +1699,27 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 // Crear una card por cada plataforma
                 availablePlatforms.forEach((platform, index) => {
                     const col = document.createElement('div');
-                    col.className = 'col-12 col-md-6 col-lg-4 mb-3';
+                    col.className = 'col-12 col-sm-6 col-lg-4 mb-3';
+
+                    // Generar ícono según la plataforma
+                    let icon = 'fas fa-gamepad';
+                    const platformLower = platform.toLowerCase();
+                    if (platformLower.includes('pc')) icon = 'fas fa-laptop';
+                    else if (platformLower.includes('ps') || platformLower.includes('playstation')) icon = 'fab fa-playstation';
+                    else if (platformLower.includes('xbox')) icon = 'fab fa-xbox';
+                    else if (platformLower.includes('switch') || platformLower.includes('nintendo')) icon = 'fas fa-gamepad';
+                    else if (platformLower.includes('mobile') || platformLower.includes('ios') || platformLower.includes('android')) icon = 'fas fa-mobile-alt';
 
                     col.innerHTML = `
-                        <div class="card platform-option-card h-100 shadow-sm"
-                             style="cursor: pointer; border: 2px solid #0d6efd; transition: all 0.3s ease;">
-                            <div class="card-body text-center">
+                        <div class="card platform-option-card h-100 shadow-sm border-0" 
+                             style="cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-center text-white">
                                 <div class="mb-3">
-                                    <i class="fas fa-gamepad fa-3x text-primary"></i>
+                                    <i class="${icon} fa-2x" style="opacity: 0.9;"></i>
                                 </div>
-                                <h5 class="card-title mb-2">${game.name}</h5>
-                                <div class="badge bg-primary fs-6 mb-2">${platform}</div>
-                                <p class="text-muted small mb-0 mt-2">Clic para crear producto de ${platform}</p>
+                                <h6 class="card-title mb-2" style="font-size: 1.1rem; font-weight: 600;">${platform}</h6>
+                                <p class="card-text small mb-2" style="opacity: 0.95;">Opción ${index + 1} de ${availablePlatforms.length}</p>
+                                <p class="text-white-50 small mb-0 mt-2" style="font-size: 0.85rem;">Clic para continuar →</p>
                             </div>
                         </div>
                     `;
@@ -1720,15 +1730,15 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                         await loadGameDataForPlatform(game.name, platform, modal, resultsDiv);
                     });
 
-                    // Hover effects
+                    // Hover effects mejorados
                     col.querySelector('.platform-option-card').addEventListener('mouseenter', function() {
-                        this.style.transform = 'translateY(-5px)';
-                        this.style.boxShadow = '0 8px 16px rgba(13, 110, 253, 0.3)';
+                        this.style.transform = 'translateY(-8px)';
+                        this.style.boxShadow = '0 12px 24px rgba(102, 126, 234, 0.4)';
                     });
 
                     col.querySelector('.platform-option-card').addEventListener('mouseleave', function() {
                         this.style.transform = 'translateY(0)';
-                        this.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
+                        this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
                     });
 
                     resultsDiv.appendChild(col);
@@ -1845,20 +1855,32 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 });
             }
 
-            // Rellenar plataforma/consola principal
-            if (gameDetails.main_console) {
-                console.log('🎯 Consola principal:', gameDetails.main_console);
+            // Rellenar plataforma/consola basado en la plataforma seleccionada
+            console.log('🎮 Plataforma seleccionada:', platform);
 
-                const consoleSelect = document.getElementById('console_id');
-                if (consoleSelect) {
-                    const mainConsoleLower = gameDetails.main_console.toLowerCase();
+            const consoleSelect = document.getElementById('console_id');
+            if (consoleSelect && platform) {
+                const platformLower = platform.toLowerCase();
 
-                    // Buscar coincidencia en el select
+                // Buscar coincidencia en el select
+                let found = false;
+                Array.from(consoleSelect.options).forEach(option => {
+                    const optionText = option.text.toLowerCase();
+                    if (optionText.includes(platformLower) || platformLower.includes(optionText)) {
+                        option.selected = true;
+                        found = true;
+                        console.log('✓ Consola seleccionada:', option.text);
+                    }
+                });
+
+                if (!found && gameDetails.platforms && gameDetails.platforms.length > 0) {
+                    // Si no encontró coincidencia exacta, intentar con la primera plataforma disponible
+                    const firstPlatform = gameDetails.platforms[0].toLowerCase();
                     Array.from(consoleSelect.options).forEach(option => {
                         const optionText = option.text.toLowerCase();
-                        if (optionText.includes(mainConsoleLower) || mainConsoleLower.includes(optionText)) {
+                        if (optionText.includes(firstPlatform) || firstPlatform.includes(optionText)) {
                             option.selected = true;
-                            console.log('✓ Consola seleccionada:', option.text);
+                            console.log('✓ Consola (fallback) seleccionada:', option.text);
                         }
                     });
                 }
@@ -1921,7 +1943,8 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
 
             // Mostrar notificación de éxito
             const successMessage = result.message || `✅ Información de "${gameDetails.title}" cargada exitosamente!`;
-            alert(successMessage + `\n\n🎮 Plataforma: ${platform}\n\n✅ Datos rellenados en ESPAÑOL:\n- Descripción\n- Géneros\n- Plataforma\n- Marca/Publisher\n- Categoría\n- Meta datos SEO\n- Imágenes del producto`);
+            const platformInfo = platform ? `\n🎮 Plataforma seleccionada: ${platform}` : '';
+            alert(successMessage + platformInfo + `\n\n✅ Datos rellenados en ESPAÑOL:\n- Descripción\n- Géneros\n- Plataforma/Consola\n- Marca/Publisher\n- Meta datos SEO\n- Imágenes del producto`);
 
         } catch (error) {
             console.error('Error cargando datos del juego:', error);
