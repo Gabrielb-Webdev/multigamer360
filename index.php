@@ -3,11 +3,11 @@
  * =====================================================
  * MULTIGAMER360 - PÁGINA PRINCIPAL (INDEX)
  * =====================================================
- * 
+ *
  * Descripción: Página de inicio del sitio web MultiGamer360
  * Autor: MultiGamer360 Development Team
  * Fecha: 2025-09-16
- * 
+ *
  * Funcionalidades:
  * - Mostrar productos destacados y novedades
  * - Carrusel de categorías principales
@@ -19,6 +19,10 @@
 // =====================================================
 // CONFIGURACIÓN INICIAL
 // =====================================================
+
+// Habilitar errores temporalmente para debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Iniciar sesión si no está activa
 if (session_status() === PHP_SESSION_NONE) {
@@ -93,7 +97,12 @@ include 'includes/header.php';
                 <?php
                 // Configuración
                 $image_dir = 'assets/images/retro';
-                $files = scandir($_SERVER['DOCUMENT_ROOT'] . '/multigamer360/' . $image_dir);
+                // Usar ruta relativa en lugar de DOCUMENT_ROOT para compatibilidad local y producción
+                if (is_dir($image_dir)) {
+                    $files = scandir($image_dir);
+                } else {
+                    $files = [];
+                }
                 $images = [];
 
                 // Función para verificar si es una imagen válida
