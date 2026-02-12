@@ -104,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'price_pesos' => floatval($_POST['price']),
             'price_dollars' => !empty($_POST['price_dollars']) ? floatval($_POST['price_dollars']) : 0.00,
             'is_on_sale' => isset($_POST['is_on_sale']) ? 1 : 0,
+            'discount_percentage_ars' => !empty($_POST['discount_percentage_ars']) ? floatval($_POST['discount_percentage_ars']) : 0.00,
             'discount_percentage_usd' => !empty($_POST['discount_percentage_usd']) ? floatval($_POST['discount_percentage_usd']) : 0.00,
             'stock_quantity' => intval($_POST['stock_quantity']),
             'category_id' => intval($_POST['category_id']),

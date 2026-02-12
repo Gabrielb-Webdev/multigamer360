@@ -125,6 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'price_dollars' => !empty($_POST['price_dollars']) ? floatval($_POST['price_dollars']) : null,
             'is_on_sale' => isset($_POST['is_on_sale']) ? 1 : 0,
             'discount_percentage' => !empty($_POST['discount_percentage']) ? floatval($_POST['discount_percentage']) : 0.00,
+            'discount_percentage_ars' => !empty($_POST['discount_percentage_ars']) ? floatval($_POST['discount_percentage_ars']) : 0.00,
+            'discount_percentage_usd' => !empty($_POST['discount_percentage_usd']) ? floatval($_POST['discount_percentage_usd']) : 0.00,
             'stock_quantity' => intval($_POST['stock_quantity']),
             'category_id' => intval($_POST['category_id']),
             'brand_id' => !empty($_POST['brand_id']) ? intval($_POST['brand_id']) : null,
@@ -612,22 +614,32 @@ require_once 'inc/header.php';
                             </div>
                             
                             <div class="mb-3" id="discount-section" style="display: <?php echo (!empty($product['is_on_sale'])) ? 'block' : 'none'; ?>;">
-                                <label for="discount_percentage" class="form-label">
-                                    Porcentaje de Descuento
-                                    <span class="badge bg-danger">%</span>
-                                </label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" 
-                                           value="<?php echo $product['discount_percentage'] ?? '0'; ?>" 
-                                           min="0" max="100" step="0.01">
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <div class="form-text">
-                                    <i class="fas fa-tag"></i> Ingrese el porcentaje de descuento (0-100%)
+                                <div class="mb-3">
+                                    <label for="discount_percentage_ars" class="form-label">
+                                        <i class="fas fa-percent me-1"></i>Descuento (ARS) %
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="discount_percentage_ars" name="discount_percentage_ars" 
+                                               value="<?php echo $product['discount_percentage_ars'] ?? '0'; ?>" 
+                                               min="0" max="100" step="0.01">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted" id="discount-preview-ars">Sin descuento</small>
                                 </div>
                                 
-                                <!-- Vista Previa del Descuento -->
-                                <div id="discount-preview" class="mt-3"></div>
+                                <div class="mb-3">
+                                    <label for="discount_percentage_usd" class="form-label">
+                                        <i class="fas fa-percent me-1"></i>Descuento (USD) %
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="discount_percentage_usd" name="discount_percentage_usd" 
+                                               value="<?php echo $product['discount_percentage_usd'] ?? '0'; ?>" 
+                                               min="0" max="100" step="0.01">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted" id="discount-preview-usd">Sin descuento</small>
+                                </div>
+                            </div>
                             </div>
                             
                             <hr>
