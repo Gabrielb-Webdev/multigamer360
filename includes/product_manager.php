@@ -126,12 +126,12 @@ class ProductManager {
         
         // Filtros de precio
         if (!empty($filters['min_price'])) {
-            $sql .= " AND p.price >= ?";
+            $sql .= " AND p.price_pesos >= ?";
             $params[] = $filters['min_price'];
         }
-        
+
         if (!empty($filters['max_price'])) {
-            $sql .= " AND p.price <= ?";
+            $sql .= " AND p.price_pesos <= ?";
             $params[] = $filters['max_price'];
         }
         
@@ -356,12 +356,12 @@ class ProductManager {
         
         // Filtros de precio
         if (!empty($filters['min_price'])) {
-            $sql .= " AND p.price >= ?";
+            $sql .= " AND p.price_pesos >= ?";
             $params[] = $filters['min_price'];
         }
-        
+
         if (!empty($filters['max_price'])) {
-            $sql .= " AND p.price <= ?";
+            $sql .= " AND p.price_pesos <= ?";
             $params[] = $filters['max_price'];
         }
         
@@ -395,12 +395,12 @@ class ProductManager {
     
     public function getProductsByTag($tag, $limit = null) {
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
-                       p.console, p.publication_date, p.price_usd, p.price, p.release_date,
+                       p.console, p.publication_date, p.price_usd, p.price_pesos, p.release_date,
                        p.main_image, p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
-                FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN brands b ON p.brand_id = b.id 
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE p.is_active = 1 AND JSON_CONTAINS(p.tags, JSON_ARRAY(?))
                 ORDER BY (p.stock_quantity > 0) DESC, p.created_at DESC";
         
@@ -553,11 +553,11 @@ class ProductManager {
     public function getProductsWithDynamicFilters($filters = []) {
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
                        p.main_image as primary_image,
-                       p.console, p.publication_date, p.price_usd, p.price, p.release_date,
+                       p.console, p.publication_date, p.price_usd, p.price_pesos, p.release_date,
                        p.long_description, p.rating, p.developer,
                        p.publisher, p.genre, p.condition_product, p.tags
-                FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE p.is_active = 1";
         
@@ -580,17 +580,17 @@ class ProductManager {
             $params[] = '%' . $filters['search'] . '%';
             $params[] = '%' . $filters['search'] . '%';
         }
-        
+
         if (!empty($filters['min_price'])) {
-            $where_conditions[] = "p.price >= ?";
+            $where_conditions[] = "p.price_pesos >= ?";
             $params[] = $filters['min_price'];
         }
-        
+
         if (!empty($filters['max_price'])) {
-            $where_conditions[] = "p.price <= ?";
+            $where_conditions[] = "p.price_pesos <= ?";
             $params[] = $filters['max_price'];
         }
-        
+
         // Filtros dinámicos por etiquetas
         if (!empty($filters['tags']) && is_array($filters['tags'])) {
             $tag_conditions = [];
@@ -654,17 +654,17 @@ class ProductManager {
             $params[] = '%' . $filters['search'] . '%';
             $params[] = '%' . $filters['search'] . '%';
         }
-        
+
         if (!empty($filters['min_price'])) {
-            $where_conditions[] = "p.price >= ?";
+            $where_conditions[] = "p.price_pesos >= ?";
             $params[] = $filters['min_price'];
         }
-        
+
         if (!empty($filters['max_price'])) {
-            $where_conditions[] = "p.price <= ?";
+            $where_conditions[] = "p.price_pesos <= ?";
             $params[] = $filters['max_price'];
         }
-        
+
         // Filtros dinámicos por etiquetas
         if (!empty($filters['tags']) && is_array($filters['tags'])) {
             $tag_conditions = [];
