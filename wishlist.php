@@ -23,7 +23,7 @@ try {
         // Consulta CON product_images
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, 
-                   COALESCE(p.price_pesos, p.price_dollars, p.price) as price, 
+                   COALESCE(p.price_pesos, p.price_dollars) as price, 
                    p.main_image, p.stock_quantity,
                    COALESCE(
                        (SELECT pi.image_url 
@@ -44,7 +44,7 @@ try {
         // Consulta SIN product_images (fallback)
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, 
-                   COALESCE(p.price_pesos, p.price_dollars, p.price) as price, 
+                   COALESCE(p.price_pesos, p.price_dollars) as price, 
                    p.main_image, p.stock_quantity,
                    COALESCE(p.main_image, '') as primary_image,
                    uf.created_at as added_date
