@@ -1,0 +1,187 @@
+// Funciones de productos.js - Versión simplificada
+
+// Variables globales para filtros
+window.pendingFilters = {
+    categories: [],
+    brands: [],
+    tags: [],
+    minPrice: '',
+    maxPrice: ''
+};
+window.filtersChanged = false;
+
+// Función que se ejecuta cuando la página está completamente cargada
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🛍️ Página de productos cargada (versión simplificada)');
+    
+    // Verificar elementos de productos
+    const productsGrid = document.getElementById('products-grid');
+    if (!productsGrid) {
+        console.error('❌ No se encontró el grid de productos');
+        return;
+    }
+    
+    console.log('📦 Grid de productos encontrado con', productsGrid.children.length, 'elementos');
+    
+    // Inicializar imágenes de producto
+    initializeProductImages();
+});
+
+// Función para inicializar las imágenes de productos
+function initializeProductImages() {
+    try {
+        const productBackgrounds = document.querySelectorAll('.product-image-background');
+        console.log(`🖼️ Procesando ${productBackgrounds.length} imágenes de productos`);
+        
+        if (productBackgrounds.length === 0) {
+            console.warn('⚠️ No se encontraron imágenes de productos');
+        }
+        
+        // Procesar cada imagen de fondo
+        productBackgrounds.forEach((bg, index) => {
+            if (!bg) return;
+            
+            // Obtener la URL de la imagen y el fallback
+            const style = window.getComputedStyle(bg);
+            const currentBg = style.backgroundImage;
+            const fallbackUrl = bg.getAttribute('data-fallback') || 'assets/images/products/product1.jpg';
+            
+            // Si no hay imagen de fondo, establecer el fallback
+            if (!currentBg || currentBg === 'none') {
+                bg.style.backgroundImage = `url('${fallbackUrl}')`;
+                console.log(`📝 Imagen #${index} - Usando fallback`);
+            } else {
+                console.log(`✓ Imagen #${index} - OK`);
+            }
+        });
+        
+        console.log('✅ Inicialización de imágenes completada');
+    } catch (error) {
+        console.error('❌ Error al inicializar imágenes de producto:', error);
+    }
+}
+
+// Función para aplicar filtros
+function applyFilters() {
+    try {
+        console.log('🔍 Aplicando filtros...');
+        
+        // Construir URL con los filtros seleccionados
+        const url = new URL(window.location.href);
+        
+        // Limpiar parámetros existentes
+        url.searchParams.delete('category');
+        url.searchParams.delete('brand');
+        url.searchParams.delete('tags[]');
+        url.searchParams.delete('min_price');
+        url.searchParams.delete('max_price');
+        url.searchParams.delete('page');
+        
+        // Agregar filtros a la URL
+        if (window.pendingFilters.categories.length > 0) {
+            url.searchParams.set('category', window.pendingFilters.categories[0]);
+        }
+        
+        if (window.pendingFilters.brands.length > 0) {
+            url.searchParams.set('brand', window.pendingFilters.brands[0]);
+        }
+        
+        window.pendingFilters.tags.forEach(tag => {
+            url.searchParams.append('tags[]', tag);
+        });
+        
+        if (window.pendingFilters.minPrice) {
+            url.searchParams.set('min_price', window.pendingFilters.minPrice);
+        }
+        
+        if (window.pendingFilters.maxPrice) {
+            url.searchParams.set('max_price', window.pendingFilters.maxPrice);
+        }
+        
+        // Redirigir a la nueva URL con filtros
+        console.log('🔄 Redirigiendo a URL con filtros:', url.toString());
+        window.location.href = url.toString();
+    } catch (error) {
+        console.error('❌ Error al aplicar filtros:', error);
+    }
+}
+
+// Función para actualizar filtro
+function updateFilter(type, value, checked) {
+    try {
+        if (!window.pendingFilters) {
+            console.error('❌ pendingFilters no está inicializado');
+            return;
+        }
+        
+        console.log('📝 Actualizando filtro:', type, value, checked);
+        
+        if (type === 'category') {
+            if (checked) {
+                if (!window.pendingFilters.categories.includes(value)) {
+                    window.pendingFilters.categories = [value]; // Solo permitir una categoría a la vez
+                }
+            } else {
+                window.pendingFilters.categories = window.pendingFilters.categories.filter(cat => cat !== value);
+            }
+        } else if (type === 'brand') {
+            if (checked) {
+                if (!window.pendingFilters.brands.includes(value)) {
+                    window.pendingFilters.brands = [value]; // Solo permitir una marca a la vez
+                }
+            } else {
+                window.pendingFilters.brands = window.pendingFilters.brands.filter(brand => brand !== value);
+            }
+        }
+        
+        window.filtersChanged = true;
+        updateFilterButtons();
+    } catch (error) {
+        console.error('❌ Error al actualizar filtro:', error);
+    }
+}
+
+// Función para actualizar botones de filtros
+function updateFilterButtons() {
+    try {
+        const applyBtn = document.getElementById('apply-filters-btn');
+        const clearBtn = document.getElementById('clear-filters-btn');
+        const filterCount = document.getElementById('filter-count');
+        
+        if (!applyBtn || !clearBtn) {
+            console.warn('⚠️ No se encontraron botones de filtro');
+            return;
+        }
+        
+        // Calcular número total de filtros activos
+        const totalFilters = 
+            window.pendingFilters.categories.length + 
+            window.pendingFilters.brands.length + 
+            window.pendingFilters.tags.length + 
+            (window.pendingFilters.minPrice ? 1 : 0) + 
+            (window.pendingFilters.maxPrice ? 1 : 0);
+        
+        // Mostrar u ocultar botones según filtros activos
+        if (window.filtersChanged && totalFilters > 0) {
+            applyBtn.style.display = 'block';
+            clearBtn.style.display = 'block';
+            
+            if (filterCount) {
+                filterCount.textContent = totalFilters;
+                filterCount.style.display = 'inline';
+            }
+        } else {
+            applyBtn.style.display = 'none';
+            
+            if (totalFilters === 0) {
+                clearBtn.style.display = 'none';
+            }
+            
+            if (filterCount) {
+                filterCount.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error al actualizar botones de filtro:', error);
+    }
+}
