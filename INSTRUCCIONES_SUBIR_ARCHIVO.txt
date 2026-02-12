@@ -1,0 +1,41 @@
+# INSTRUCCIONES PARA SUBIR ARCHIVO FALTANTE
+
+## Archivo que falta:
+- config/database.php
+
+## Ubicación local:
+e:\Users\gabri\Documentos\Brodev Lab\Clientes\multigamer360\config\database.php
+
+## Ubicación en servidor:
+/home/u851317150/domains/teal-fish-507993.hostingersite.com/public_html/config/database.php
+
+## Pasos con FileZilla (FTP):
+
+1. Conectarse a Hostinger con FTP
+   - Host: ftp.teal-fish-507993.hostingersite.com
+   - Usuario: (tu usuario de Hostinger)
+   - Contraseña: (tu contraseña de Hostinger)
+   - Puerto: 21
+
+2. Navegar en el servidor a: public_html/config/
+
+3. Arrastrar el archivo database.php desde tu PC a esa carpeta
+
+## Pasos con Administrador de Archivos de Hostinger:
+
+1. Ir a tu panel de Hostinger
+2. Clic en "Administrador de Archivos" o "File Manager"
+3. Ir a public_html/config/
+4. Clic en "Upload" o "Subir"
+5. Seleccionar database.php
+6. Esperar a que termine la carga
+
+## También necesitas crear el directorio:
+uploads/products
+
+En el Administrador de Archivos:
+1. Ir a public_html/uploads/
+2. Crear carpeta nueva llamada "products"
+3. Dar permisos 755 o 777 a la carpeta
+
+Luego visita: https://teal-fish-507993.hostingersite.com/index.php
