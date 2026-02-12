@@ -1,0 +1,489 @@
+<?php
+/**
+ * Obtener plataformas disponibles para un juego
+ * Usado para mostrar opciones separadas por plataforma en el modal
+ */
+
+header('Content-Type: application/json');
+
+if (!isset($_GET['game_name']) || empty($_GET['game_name'])) {
+    echo json_encode(['success' => false, 'error' => 'Nombre del juego no proporcionado']);
+    exit;
+}
+
+$gameName = trim($_GET['game_name']);
+$apiKey = '575f338491134d84bd86df30627a95fe';
+
+/**
+ * Base de datos de juegos conocidos con información precisa de plataformas
+ * Expandida a 200+ juegos populares
+ */
+function getKnownGamePlatforms($gameName) {
+    $normalizedName = strtolower(trim($gameName));
+
+    $knownGames = [
+        // ===== KINGDOM HEARTS SERIES =====
+        'kingdom hearts hd 2.8 final chapter prologue' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'kingdom hearts hd 1.5 + 2.5 remix' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'kingdom hearts hd 2.5 remix' => ['PlayStation 3'],
+        'kingdom hearts hd 1.5 remix' => ['PlayStation 3'],
+        'kingdom hearts ii final mix' => ['PlayStation 2'],
+        'kingdom hearts 2 final mix' => ['PlayStation 2'],
+        'kingdom hearts final mix' => ['PlayStation 2'],
+        'kingdom hearts birth by sleep final mix' => ['PSP'],
+        'kingdom hearts birth by sleep' => ['PSP'],
+        'kingdom hearts 358/2 days' => ['Nintendo DS'],
+        'kingdom hearts re:coded' => ['Nintendo DS'],
+        'kingdom hearts 3d dream drop distance' => ['Nintendo 3DS'],
+        'kingdom hearts 3d' => ['Nintendo 3DS'],
+        'kingdom hearts iii' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'kingdom hearts 3' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'kingdom hearts ii' => ['PlayStation 2'],
+        'kingdom hearts 2' => ['PlayStation 2'],
+        'kingdom hearts' => ['PlayStation 2'],
+
+        // ===== FINAL FANTASY SERIES =====
+        'final fantasy vii remake intergrade' => ['PlayStation 5', 'PC'],
+        'final fantasy vii remake' => ['PlayStation 4', 'PC'],
+        'final fantasy vii rebirth' => ['PlayStation 5'],
+        'final fantasy vii' => ['PlayStation'],
+        'final fantasy vii crisis core reunion' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'final fantasy viii remastered' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'final fantasy viii' => ['PlayStation'],
+        'final fantasy ix' => ['PlayStation'],
+        'final fantasy x/x-2 hd remaster' => ['PlayStation 4', 'PlayStation 3', 'Nintendo Switch', 'PC'],
+        'final fantasy x-2' => ['PlayStation 2'],
+        'final fantasy x' => ['PlayStation 2'],
+        'final fantasy xii the zodiac age' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'final fantasy xii' => ['PlayStation 2'],
+        'final fantasy xiii' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'final fantasy xiii-2' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'final fantasy xiii lightning returns' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'final fantasy xiv' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'PC'],
+        'final fantasy xv' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'final fantasy xvi' => ['PlayStation 5', 'PC'],
+        'final fantasy vi' => ['Super Nintendo'],
+        'final fantasy iv' => ['Super Nintendo'],
+
+        // ===== GOD OF WAR SERIES =====
+        'god of war ragnarok' => ['PlayStation 5', 'PlayStation 4'],
+        'god of war (2018)' => ['PlayStation 4', 'PC'],
+        'god of war iii remastered' => ['PlayStation 4'],
+        'god of war iii' => ['PlayStation 3'],
+        'god of war ii' => ['PlayStation 2'],
+        'god of war' => ['PlayStation 2'],
+        'god of war ascension' => ['PlayStation 3'],
+        'god of war chains of olympus' => ['PSP'],
+        'god of war ghost of sparta' => ['PSP'],
+
+        // ===== THE LAST OF US =====
+        'the last of us part ii' => ['PlayStation 4', 'PlayStation 5'],
+        'the last of us part i' => ['PlayStation 5', 'PC'],
+        'the last of us remastered' => ['PlayStation 4'],
+        'the last of us' => ['PlayStation 3'],
+
+        // ===== UNCHARTED SERIES =====
+        'uncharted 4 a thiefs end' => ['PlayStation 4'],
+        'uncharted the lost legacy' => ['PlayStation 4', 'PC'],
+        'uncharted the nathan drake collection' => ['PlayStation 4'],
+        'uncharted 3 drakes deception' => ['PlayStation 3'],
+        'uncharted 2 among thieves' => ['PlayStation 3'],
+        'uncharted drakes fortune' => ['PlayStation 3'],
+
+        // ===== GRAND THEFT AUTO =====
+        'grand theft auto vi' => ['PlayStation 5', 'Xbox Series X/S'],
+        'grand theft auto v' => ['PlayStation 5', 'PlayStation 4', 'PlayStation 3', 'Xbox Series X/S', 'Xbox One', 'Xbox 360', 'PC'],
+        'grand theft auto iv' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'grand theft auto san andreas' => ['PlayStation 2', 'Xbox', 'PC'],
+        'grand theft auto vice city' => ['PlayStation 2', 'Xbox', 'PC'],
+        'grand theft auto iii' => ['PlayStation 2', 'Xbox', 'PC'],
+
+        // ===== THE LEGEND OF ZELDA =====
+        'the legend of zelda tears of the kingdom' => ['Nintendo Switch'],
+        'the legend of zelda breath of the wild' => ['Nintendo Switch', 'Wii U'],
+        'the legend of zelda skyward sword hd' => ['Nintendo Switch'],
+        'the legend of zelda twilight princess hd' => ['Wii U'],
+        'the legend of zelda ocarina of time 3d' => ['Nintendo 3DS'],
+        'the legend of zelda majoras mask 3d' => ['Nintendo 3DS'],
+        'the legend of zelda a link between worlds' => ['Nintendo 3DS'],
+        'the legend of zelda links awakening' => ['Nintendo Switch'],
+
+        // ===== RESIDENT EVIL =====
+        'resident evil 4 remake' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'PC'],
+        'resident evil village' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'resident evil 3 remake' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'resident evil 2 remake' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'resident evil 7 biohazard' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'resident evil 4' => ['PlayStation 2', 'GameCube'],
+        'resident evil 3 nemesis' => ['PlayStation', 'Dreamcast', 'GameCube'],
+        'resident evil 2' => ['PlayStation'],
+        'resident evil' => ['PlayStation'],
+
+        // ===== HALO SERIES =====
+        'halo infinite' => ['Xbox Series X/S', 'Xbox One', 'PC'],
+        'halo 5 guardians' => ['Xbox One'],
+        'halo the master chief collection' => ['Xbox Series X/S', 'Xbox One', 'PC'],
+        'halo 4' => ['Xbox 360'],
+        'halo reach' => ['Xbox 360'],
+        'halo 3' => ['Xbox 360'],
+        'halo 2' => ['Xbox'],
+        'halo combat evolved' => ['Xbox'],
+
+        // ===== CALL OF DUTY =====
+        'call of duty modern warfare iii' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'call of duty modern warfare ii' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'call of duty warzone' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'call of duty black ops cold war' =>['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'call of duty modern warfare' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'call of duty black ops' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'call of duty world at war' => ['PlayStation 3', 'Xbox 360', 'PC'],
+
+        // ===== SPIDER-MAN =====
+        'marvels spider-man 2' => ['PlayStation 5'],
+        'marvels spider-man miles morales' => ['PlayStation 5', 'PlayStation 4'],
+        'marvels spider-man remastered' => ['PlayStation 5', 'PC'],
+        'marvels spider-man' => ['PlayStation 4'],
+
+        // ===== PERSONA SERIES =====
+        'persona 5 royal' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'persona 5 strikers' => ['PlayStation 4', 'Nintendo Switch', 'PC'],
+        'persona 5' => ['PlayStation 4', 'PlayStation 3'],
+        'persona 4 golden' => ['PlayStation Vita', 'PC'],
+        'persona 3 reload' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'persona 3' => ['PlayStation 2'],
+        'persona 4' => ['PlayStation 2'],
+
+        // ===== SOULS/ELDEN RING =====
+        'elden ring' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'dark souls iii' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'dark souls ii' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'dark souls' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'bloodborne' => ['PlayStation 4'],
+        'demons souls remake' => ['PlayStation 5'],
+        'demons souls' => ['PlayStation 3'],
+        'sekiro shadows die twice' => ['PlayStation 4', 'Xbox One', 'PC'],
+
+        // ===== RED DEAD REDEMPTION =====
+        'red dead redemption 2' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'red dead redemption' => ['PlayStation 3', 'Xbox 360'],
+
+        // ===== ASSASSINS CREED =====
+        'assassins creed mirage' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'assassins creed valhalla' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'assassins creed odyssey' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'assassins creed origins' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'assassins creed syndicate' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'assassins creed unity' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'assassins creed black flag' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'PC'],
+
+        // ===== FIFA/EA SPORTS FC =====
+        'ea sports fc 24' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'fifa 23' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'fifa 22' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== POKEMON SERIES =====
+        'pokemon scarlet' => ['Nintendo Switch'],
+        'pokemon violet' => ['Nintendo Switch'],
+        'pokemon legends arceus' => ['Nintendo Switch'],
+        'pokemon sword' => ['Nintendo Switch'],
+        'pokemon shield' => ['Nintendo Switch'],
+        'pokemon brilliant diamond' => ['Nintendo Switch'],
+        'pokemon shining pearl' => ['Nintendo Switch'],
+        'pokemon ultra sun' => ['Nintendo 3DS'],
+        'pokemon ultra moon' => ['Nintendo 3DS'],
+
+        // ===== SUPER MARIO =====
+        'super mario bros wonder' => ['Nintendo Switch'],
+        'super mario odyssey' => ['Nintendo Switch'],
+        'super mario 3d world + bowsers fury' => ['Nintendo Switch'],
+        'super mario maker 2' => ['Nintendo Switch'],
+        'super mario 64' => ['Nintendo 64'],
+        'super mario galaxy' => ['Wii'],
+        'super mario sunshine' => ['GameCube'],
+
+        // ===== METAL GEAR SOLID =====
+        'metal gear solid v the phantom pain' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'PC'],
+        'metal gear solid 4 guns of the patriots' => ['PlayStation 3'],
+        'metal gear solid 3 snake eater' => ['PlayStation 2'],
+        'metal gear solid 2 sons of liberty' => ['PlayStation 2'],
+        'metal gear solid' => ['PlayStation'],
+
+        // ===== CRASH BANDICOOT =====
+        'crash bandicoot 4 its about time' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'crash bandicoot n sane trilogy' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'crash team racing nitro-fueled' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch'],
+
+        // ===== TEKKEN =====
+        'tekken 8' => ['PlayStation 5', 'Xbox Series X/S', 'PC'],
+        'tekken 7' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'tekken 6' => ['PlayStation 3', 'Xbox 360', 'PSP'],
+        'tekken 5' => ['PlayStation 2'],
+        'tekken 3' => ['PlayStation'],
+
+        // ===== STREET FIGHTER =====
+        'street fighter 6' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'PC'],
+        'street fighter v' => ['PlayStation 4', 'PC'],
+        'street fighter iv' => ['PlayStation 3', 'Xbox 360', 'PC'],
+
+        // ===== MORTAL KOMBAT =====
+        'mortal kombat 1' => ['PlayStation 5', 'Xbox Series X/S', 'Nintendo Switch', 'PC'],
+        'mortal kombat 11' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'mortal kombat x' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'mortal kombat 9' => ['PlayStation 3', 'Xbox 360'],
+
+        // ===== DRAGON BALL =====
+        'dragon ball z kakarot' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'dragon ball fighterz' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'dragon ball xenoverse 2' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== NARUTO =====
+        'naruto shippuden ultimate ninja storm 4' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'naruto to boruto shinobi striker' => ['PlayStation 4', 'Xbox One', 'PC'],
+
+        // ===== WITCHER =====
+        'the witcher 3 wild hunt' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'the witcher 2' => ['Xbox 360', 'PC'],
+        'the witcher' => ['PC'],
+
+        // ===== TOMB RAIDER =====
+        'shadow of the tomb raider' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'rise of the tomb raider' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'tomb raider' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'PC'],
+
+        // ===== BATMAN ARKHAM =====
+        'batman arkham knight' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'batman arkham city' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'batman arkham asylum' => ['PlayStation 3', 'Xbox 360'],
+
+        // ===== RATCHET & CLANK =====
+        'ratchet & clank rift apart' => ['PlayStation 5'],
+        'ratchet & clank' => ['PlayStation 4'],
+        'ratchet & clank up your arsenal' => ['PlayStation 2'],
+
+        // ===== JAK & DAXTER =====
+        'jak 3' => ['PlayStation 2'],
+        'jak ii' => ['PlayStation 2'],
+        'jak and daxter the precursor legacy' => ['PlayStation 2'],
+
+        // ===== BATTLEFIELD =====
+        'battlefield 2042' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'battlefield v' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'battlefield 1' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'battlefield 4' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'PC'],
+
+        // ===== OVERWATCH =====
+        'overwatch 2' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'overwatch' => ['PlayStation 4', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== DESTINY =====
+        'destiny 2' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'destiny' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360'],
+
+        // ===== HORIZON =====
+        'horizon forbidden west' => ['PlayStation 5', 'PlayStation 4'],
+        'horizon zero dawn' => ['PlayStation 4', 'PC'],
+
+        // ===== GHOST OF TSUSHIMA =====
+        'ghost of tsushima directors cut' => ['PlayStation 5', 'PlayStation 4'],
+        'ghost of tsushima' => ['PlayStation 4'],
+
+        // ===== DAYS GONE =====
+        'days gone' => ['PlayStation 4', 'PC'],
+
+        // ===== FALLOUT =====
+        'fallout 4' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'fallout 3' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'fallout new vegas' => ['PlayStation 3', 'Xbox 360', 'PC'],
+
+        // ===== SKYRIM =====
+        'the elder scrolls v skyrim' => ['PlayStation 5', 'PlayStation 4', 'PlayStation 3', 'Xbox Series X/S', 'Xbox One', 'Xbox 360', 'Nintendo Switch', 'PC'],
+
+        // ===== BIOSHOCK =====
+        'bioshock infinite' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'bioshock 2' => ['PlayStation 3', 'Xbox 360', 'PC'],
+        'bioshock' => ['PlayStation 3', 'Xbox 360', 'PC'],
+
+        // ===== BORDERLANDS =====
+        'borderlands 3' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'borderlands 2' => ['PlayStation 3', 'Xbox 360', 'PC'],
+
+        // ===== APEX LEGENDS =====
+        'apex legends' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== VALORANT =====
+        'valorant' => ['PC'],
+
+        // ===== LEAGUE OF LEGENDS =====
+        'league of legends' => ['PC'],
+
+        // ===== DOTA 2 =====
+        'dota 2' => ['PC'],
+
+        // ===== COUNTER-STRIKE =====
+        'counter-strike 2' => ['PC'],
+        'counter-strike global offensive' => ['PC'],
+
+        // ===== MINECRAFT =====
+        'minecraft' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC', 'Mobile'],
+
+        // ===== FORTNITE =====
+        'fortnite' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC', 'Mobile'],
+
+        // ===== ROCKET LEAGUE =====
+        'rocket league' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== AMONG US =====
+        'among us' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC', 'Mobile'],
+
+        // ===== FALL GUYS =====
+        'fall guys' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== NBA 2K =====
+        'nba 2k24' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+        'nba 2k23' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'PC'],
+
+        // ===== MADDEN NFL =====
+        'madden nfl 24' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+
+        // ===== WWE 2K =====
+        'wwe 2k24' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'wwe 2k23' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+
+        // ===== STARFIELD =====
+        'starfield' => ['Xbox Series X/S', 'PC'],
+
+        // ===== CYBERPUNK 2077 =====
+        'cyberpunk 2077' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+
+        // ===== DYING LIGHT =====
+        'dying light 2 stay human' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'dying light' => ['PlayStation 4', 'Xbox One', 'PC'],
+
+        // ===== FAR CRY =====
+        'far cry 6' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'far cry 5' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'far cry 4' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'PC'],
+        'far cry 3' => ['PlayStation 3', 'Xbox 360', 'PC'],
+
+        // ===== WATCH DOGS =====
+        'watch dogs legion' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'watch dogs 2' => ['PlayStation 4', 'Xbox One', 'PC'],
+        'watch dogs' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'PC'],
+
+        // ===== DIABLO =====
+        'diablo iv' => ['PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'PC'],
+        'diablo iii' => ['PlayStation 4', 'PlayStation 3', 'Xbox One', 'Xbox 360', 'Nintendo Switch', 'PC'],
+
+        // ===== MONSTER HUNTER =====
+        'monster hunter rise' => ['Nintendo Switch', 'PC'],
+        'monster hunter world' => ['PlayStation 4', 'Xbox One', 'PC'],
+
+        // ===== METROID =====
+        'metroid dread' => ['Nintendo Switch'],
+        'metroid prime remastered' => ['Nintendo Switch'],
+
+        // ===== DONKEY KONG =====
+        'donkey kong country tropical freeze' => ['Nintendo Switch', 'Wii U'],
+        'donkey kong country returns' => ['Wii'],
+
+        // ===== KIRBY =====
+        'kirby and the forgotten land' => ['Nintendo Switch'],
+        'kirby star allies' => ['Nintendo Switch'],
+
+        // ===== SPLATOON =====
+        'splatoon 3' => ['Nintendo Switch'],
+        'splatoon 2' => ['Nintendo Switch'],
+
+        // ==== ANIMAL CROSSING =====
+        'animal crossing new horizons' => ['Nintendo Switch'],
+    ];
+
+    foreach ($knownGames as $knownGame => $platforms) {
+        if (strpos($normalizedName, $knownGame) !== false) {
+            error_log("get_game_platforms.php: Found known game: '$knownGame' -> " . implode(', ', $platforms));
+            return $platforms;
+        }
+    }
+
+    return null;
+}
+
+try {
+    // Verificar si tenemos información conocida
+    $knownPlatforms = getKnownGamePlatforms($gameName);
+
+    if ($knownPlatforms !== null) {
+        // Usar información de la base de datos
+        echo json_encode([
+            'success' => true,
+            'platforms' => $knownPlatforms,
+            'source' => 'KNOWN_DATABASE',
+            'game_name' => $gameName
+        ]);
+        exit;
+    }
+
+    // Si no está en la base de datos, buscar en RAWG
+    $searchUrl = 'https://api.rawg.io/api/games?search=' . urlencode($gameName) . '&key=' . urlencode($apiKey);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $searchUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'MultiGamer360/1.0');
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200 || !$response) {
+        throw new Exception('Error al conectar con RAWG API');
+    }
+
+    $data = json_decode($response, true);
+
+    if (empty($data['results'])) {
+        throw new Exception('No se encontró el juego');
+    }
+
+    // Tomar el primer resultado
+    $game = $data['results'][0];
+    $gameId = $game['id'];
+
+    // Obtener detalles completos
+    $detailsUrl = "https://api.rawg.io/api/games/{$gameId}?key=" . urlencode($apiKey);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $detailsUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'MultiGamer360/1.0');
+
+    $detailsResponse = curl_exec($ch);
+    curl_close($ch);
+
+    $gameDetails = json_decode($detailsResponse, true);
+
+    // Extraer plataformas
+    $platforms = array_map(function($p) {
+        return $p['platform']['name'];
+    }, $gameDetails['platforms'] ?? []);
+
+    echo json_encode([
+        'success' => true,
+        'platforms' => $platforms,
+        'source' => 'RAWG',
+        'game_name' => $gameName
+    ]);
+
+} catch (Exception $e) {
+    error_log('get_game_platforms.php Error: ' . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}

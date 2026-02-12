@@ -1,0 +1,257 @@
+<?php
+/**
+ * Sistema de búsqueda de juegos usando RAWG API ÚNICAMENTE
+ * Version: 5.0 - SOLO RAWG API (sin fallbacks ni bases de datos locales)
+ * API: RAWG Video Games Database
+ * API Key: 575f338491134d84bd86df30627a95fe
+ */
+
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+
+$query = isset($_GET['query']) ? trim($_GET['query']) : '';
+$action = isset($_GET['action']) ? $_GET['action'] : 'search';
+$gameId = isset($_GET['game_id']) ? $_GET['game_id'] : '';
+
+function logDebug($msg) {
+    error_log('[search_game_multi.php] ' . $msg);
+}
+
+if (empty($query) && empty($gameId)) {
+    echo json_encode(['success' => false, 'error' => 'Query requerido']);
+    exit;
+}
+
+/**
+ * Configuración de la API de RAWG
+ */
+define('RAWG_API_KEY', '575f338491134d84bd86df30627a95fe');
+define('RAWG_API_URL', 'https://api.rawg.io/api');
+
+/**
+ * Hacer petición HTTP con cURL si está disponible, si no con file_get_contents
+ */
+function httpGet($url, $timeout = 10) {
+    logDebug('Request to: ' . $url);
+    
+    // Intentar con cURL primero (más confiable)
+    if (function_exists('curl_init')) {
+        logDebug('Using cURL');
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'MultiGamer360/1.0');
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+        
+        logDebug('cURL HTTP Code: ' . $httpCode);
+        
+        if ($error) {
+            logDebug('cURL Error: ' . $error);
+            throw new Exception('cURL Error: ' . $error);
+        }
+        
+        if ($httpCode !== 200) {
+            logDebug('HTTP Error: ' . $httpCode . ' Response: ' . substr($response, 0, 200));
+            throw new Exception('HTTP ' . $httpCode);
+        }
+        
+        return $response;
+    }
+    
+    // Fallback a file_get_contents
+    logDebug('Using file_get_contents');
+    $opts = [
+        'http' => [
+            'method' => 'GET',
+            'header' => 'User-Agent: MultiGamer360/1.0',
+            'timeout' => $timeout
+        ]
+    ];
+    
+    $context = stream_context_create($opts);
+    $response = @file_get_contents($url, false, $context);
+    
+    if ($response === false) {
+        logDebug('file_get_contents failed');
+        throw new Exception('No se pudo conectar a la API');
+    }
+    
+    logDebug('file_get_contents success');
+    return $response;
+}
+
+/**
+ * Buscar en RAWG API
+ */
+function searchRAWG($query) {
+    $apiKey = RAWG_API_KEY;
+    $url = RAWG_API_URL . '/games?key=' . urlencode($apiKey) .
+           '&search=' . urlencode($query) .
+           '&search_precise=1' .
+           '&page_size=50&ordering=-rating';
+
+    logDebug('Searching RAWG: ' . $query);
+
+    try {
+        $response = httpGet($url, 15);
+        $data = json_decode($response, true);
+
+        if (!$data) {
+            logDebug('RAWG JSON decode failed');
+            throw new Exception('JSON decode failed');
+        }
+
+        $results = $data['results'] ?? [];
+
+        logDebug('RAWG raw results: ' . count($results));
+
+        // Filtrar resultados para que coincidan con TODAS las palabras clave del titulo
+        $filtered = filterResultsByTitle($results, $query);
+        $count = count($filtered);
+        logDebug('RAWG found ' . $count . ' results (filtrado por titulo)');
+
+        return $filtered;
+    } catch (Exception $e) {
+        logDebug('RAWG Error: ' . $e->getMessage());
+        throw new Exception('RAWG: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Filtrar resultados para incluir solo titulos que contengan todas las palabras clave
+ */
+function filterResultsByTitle($results, $query) {
+    $normalizedQuery = normalizeTitle($query);
+    $tokens = array_values(array_filter(explode(' ', $normalizedQuery), function($t) {
+        return strlen($t) > 2;
+    }));
+
+    // Si hay pocas palabras clave o ninguna, devolver todos los resultados
+    if (count($tokens) === 0) {
+        return $results;
+    }
+
+    // Si solo hay 1 palabra, buscar que la contenga
+    if (count($tokens) === 1) {
+        $filtered = array_filter($results, function($game) use ($tokens) {
+            $name = isset($game['name']) ? $game['name'] : '';
+            $normalizedName = normalizeTitle($name);
+            return strpos($normalizedName, $tokens[0]) !== false;
+        });
+        return array_values($filtered);
+    }
+
+    $filtered = array_filter($results, function($game) use ($tokens) {
+        $name = isset($game['name']) ? $game['name'] : '';
+        $normalizedName = normalizeTitle($name);
+
+        // Contar cuántas palabras clave coinciden
+        $matchCount = 0;
+        foreach ($tokens as $token) {
+            if (strpos($normalizedName, $token) !== false) {
+                $matchCount++;
+            }
+        }
+
+        // Para 2 palabras: requiere ambas (100%)
+        // Para 3+ palabras: requiere al menos 75%
+        if (count($tokens) === 2) {
+            return $matchCount >= 2; // Ambas palabras
+        } else {
+            $threshold = ceil(count($tokens) * 0.75);
+            return $matchCount >= $threshold;
+        }
+    });
+
+    return array_values($filtered);
+}
+
+/**
+ * Normalizar titulo: minusculas, sin puntuacion, espacios simples
+ */
+function normalizeTitle($text) {
+    $text = strtolower((string)$text);
+    $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
+    $text = preg_replace('/\s+/', ' ', $text);
+    return trim($text);
+}
+
+/**
+ * Obtener detalles de RAWG
+ */
+function getDetailsRAWG($gameId) {
+    $apiKey = RAWG_API_KEY;
+    $url = RAWG_API_URL . '/games/' . urlencode($gameId) . 
+           '?key=' . urlencode($apiKey);
+    
+    logDebug('Getting RAWG game details: ' . $gameId);
+    
+    try {
+        $response = httpGet($url, 15);
+        $data = json_decode($response, true);
+        
+        if (!$data) {
+            logDebug('RAWG details JSON decode failed');
+            throw new Exception('JSON decode failed');
+        }
+        
+        logDebug('RAWG details received for: ' . ($data['name'] ?? 'Unknown'));
+        return $data;
+    } catch (Exception $e) {
+        logDebug('RAWG Details Error: ' . $e->getMessage());
+        throw new Exception('RAWG Details: ' . $e->getMessage());
+    }
+}
+
+try {
+    if ($action === 'search') {
+        // Buscar solo en RAWG API (sin fallbacks)
+        logDebug('🔍 Buscando en RAWG API');
+        $results = searchRAWG($query);
+        logDebug('✅ RAWG exitoso con ' . count($results) . ' resultados');
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'results' => $results,
+                'count' => count($results)
+            ],
+            'source' => 'RAWG',
+            'api' => 'RAWG Video Games Database'
+        ]);
+        
+    } elseif ($action === 'details') {
+        logDebug('Getting details for game ID: ' . $gameId);
+        $data = getDetailsRAWG($gameId);
+        logDebug('✅ Details retrieved successfully');
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $data,
+            'source' => 'RAWG'
+        ]);
+    }
+    
+} catch (Exception $e) {
+    logDebug('❌ Error: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Error al conectar con RAWG API: ' . $e->getMessage(),
+        'debug' => [
+            'query' => $query,
+            'action' => $action,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]
+    ]);
+}
