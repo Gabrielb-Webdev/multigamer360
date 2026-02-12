@@ -20,9 +20,9 @@
 // CONFIGURACIÓN INICIAL
 // =====================================================
 
-// Habilitar errores temporalmente para debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Desactivar mostrar errores en producción
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // Iniciar sesión si no está activa
 if (session_status() === PHP_SESSION_NONE) {

@@ -77,8 +77,8 @@ try {
     
     // Valor del inventario
     $stmt = $pdo->query("
-        SELECT COALESCE(SUM(stock_quantity * price), 0) as inventory_value
-        FROM products 
+        SELECT COALESCE(SUM(stock_quantity * price_pesos), 0) as inventory_value
+        FROM products
         WHERE is_active = 1
     ");
     $inventory_value = $stmt->fetchColumn();
