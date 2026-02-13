@@ -8,7 +8,7 @@
 
 ## 📋 CAMBIOS IMPLEMENTADOS
 
-### 1. ✅ Placeholders en campos numéricos
+### 1. ✅ Placeholders en todos los campos numéricos
 **Antes:** Los campos mostraban valores predeterminados (value="0")  
 **Después:** Los campos tienen placeholders para mejor UX
 
@@ -16,6 +16,8 @@
 - ✅ Precio (ARS) - Placeholder: "0"
 - ✅ Precio en Dólares (USD) - Placeholder: "0"
 - ✅ Cantidad en Stock - Placeholder: "0"
+- ✅ Descuento (ARS) % - Placeholder: "0"
+- ✅ Descuento (USD) % - Placeholder: "0"
 
 **Beneficio:** Formulario más limpio, usuario ve claramente qué debe ingresar
 
@@ -99,12 +101,14 @@ if (descriptionEl && gameDetails.description) {
 ## 🔧 ARCHIVOS MODIFICADOS
 
 ### **admin/product_create.php**
-**Versión:** 2.18 → **2.19**
+**Versión:** 2.18 → **2.20**
 
 **Cambios en HTML:**
 - Precio ARS: agregado `placeholder="0"`
 - Precio USD: agregado `placeholder="0"` + `required` + asterisco en label
 - Stock: cambiado `value="0"` por `placeholder="0"`
+- Descuento ARS: cambiado `value="0"` por `placeholder="0"`
+- Descuento USD: cambiado `value="0"` por `placeholder="0"`
 
 **Cambios en PHP:**
 - Agregado 'price_dollars' a $required_fields
@@ -118,10 +122,11 @@ if (descriptionEl && gameDetails.description) {
 ## 📝 INSTRUCCIONES DE DEPLOY
 
 1. **Subir a Hostinger:**
-   - `admin/product_create.php` (v2.19)
+   - `admin/product_create.php` (v2.20)
 
 2. **Verificar cambios:**
    - [ ] Los campos de precio y stock tienen placeholder "0"
+   - [ ] Los campos de descuento (ARS y USD) tienen placeholder "0"
    - [ ] El campo precio USD tiene asterisco (*)
    - [ ] Al intentar crear producto sin precio USD, muestra error
    - [ ] Al auto-rellenar, las imágenes aparecen en preview
@@ -144,6 +149,8 @@ if (descriptionEl && gameDetails.description) {
 | **Precio ARS** | value="0" visible | placeholder="0" (vacío hasta escribir) |
 | **Precio USD** | Opcional, sin \* | **Requerido**, con \* |
 | **Stock** | value="0" visible | placeholder="0" (vacío hasta escribir) |
+| **Descuento ARS** | value="0" visible | placeholder="0" (vacío hasta escribir) |
+| **Descuento USD** | value="0" visible | placeholder="0" (vacío hasta escribir) |
 | **Imágenes descargadas** | ❌ No se veían | ✅ Se muestran con badge "Descargada" |
 | **Logs descripción** | Solo log básico | ✅ Logs detallados con troubleshooting |
 

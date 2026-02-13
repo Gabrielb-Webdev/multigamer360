@@ -3,14 +3,11 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.19 - Mejoras en UX y auto-relleno
+ * Version: 2.20 - Placeholders en campos de descuento
  * Fecha: 13 Feb 2026
  * Cambios: 
- *  - Agregado: Placeholders en campos de precio (ARS, USD) y stock
- *  - Agregado: Asterisco requerido (*) en campo precio USD
- *  - Agregado: Validación backend para price_dollars como campo requerido
- *  - Mejorado: Visualización de imágenes descargadas en preview
- *  - Mejorado: Logs detallados para depurar descripción
+ *  - Agregado: Placeholders en campos discount_percentage_ars y discount_percentage_usd
+ *  - UX: Todos los campos numéricos ahora usan placeholders en lugar de values
  */
 
 $product_id = null;
@@ -546,7 +543,7 @@ function generateSlug($text) {
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="discount_percentage_ars" 
-                                               name="discount_percentage_ars" min="0" max="100" step="0.01" value="0">
+                                               name="discount_percentage_ars" min="0" max="100" step="0.01" placeholder="0">
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <small class="text-muted" id="discount-preview-ars">Sin descuento</small>
@@ -558,7 +555,7 @@ function generateSlug($text) {
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="discount_percentage_usd" 
-                                               name="discount_percentage_usd" min="0" max="100" step="0.01" value="0">
+                                               name="discount_percentage_usd" min="0" max="100" step="0.01" placeholder="0">
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <small class="text-muted" id="discount-preview-usd">Sin descuento</small>
