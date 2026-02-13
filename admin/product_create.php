@@ -2,6 +2,14 @@
 /**
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
+ * 
+ * Version: 2.17 - Interfaz de plataforma mejorada + Descuentos por moneda
+ * Fecha: 12 Feb 2026
+ * Cambios: 
+ *  - Corrección: [object Object] en consolas (usa platform seleccionado directamente)
+ *  - Mejora: Interfaz visual para seleccionar plataforma específica con iconos
+ *  - Agregado: Soporte para discount_percentage_ars y discount_percentage_usd
+ *  - Removido: Referencia a campo 'price' inexistente
  */
 
 $product_id = null;

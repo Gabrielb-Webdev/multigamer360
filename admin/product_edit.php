@@ -3,6 +3,13 @@
  * EDITAR PRODUCTO EXISTENTE
  * Este archivo es SOLO para editar productos existentes (requiere ID)
  * Para crear nuevos productos, usar product_create.php
+ * 
+ * Version: 4.1.0 - Descuentos por moneda (ARS/USD)
+ * Fecha: 12 Feb 2026
+ * Cambios:
+ *  - Agregado: Campos separados discount_percentage_ars y discount_percentage_usd
+ *  - Mejora: Interfaz mejorada para descuentos específicos por moneda
+ *  - Actualizado: Formulario de edición para mostrar descuentos por moneda
  */
 
 // Incluir autenticación PRIMERO (sin HTML, pero con sesión y DB)

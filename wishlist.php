@@ -1,4 +1,13 @@
 <?php
+/**
+ * WISHLIST / FAVORITOS DEL USUARIO
+ * Version: 2.1.0 - Fix SELECT query con campos correctos
+ * Fecha: 12 Feb 2026
+ * Cambios:
+ *  - Corregido: Removido campo 'price' inexistente de COALESCE
+ *  - Mejora: Ahora solo selecciona price_pesos y price_dollars
+ */
+
 require_once 'config/session_config.php';
 initSecureSession();
 
