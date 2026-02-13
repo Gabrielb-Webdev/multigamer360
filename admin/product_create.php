@@ -3,12 +3,14 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.18 - Fix [object Object] en plataformas
+ * Version: 2.19 - Mejoras en UX y auto-relleno
  * Fecha: 13 Feb 2026
  * Cambios: 
- *  - Corregido: Convertir objetos de plataforma a strings antes de mostrar
- *  - Mejora: Manejo robusto de plataformas (objetos o strings)
- *  - Fix: Ya no muestra [object Object] en tarjetas de juegos
+ *  - Agregado: Placeholders en campos de precio (ARS, USD) y stock
+ *  - Agregado: Asterisco requerido (*) en campo precio USD
+ *  - Agregado: Validación backend para price_dollars como campo requerido
+ *  - Mejorado: Visualización de imágenes descargadas en preview
+ *  - Mejorado: Logs detallados para depurar descripción
  */
 
 $product_id = null;
@@ -71,7 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $required_fields = [
             'name' => 'Nombre del producto',
             'description' => 'Descripción',
-            'price' => 'Precio',
+            'price' => 'Precio (ARS)',
+            'price_dollars' => 'Precio en Dólares (USD)',
             'stock_quantity' => 'Cantidad en stock',
             'category_id' => 'Categoría',
             'brand_id' => 'Marca',
@@ -509,17 +512,17 @@ function generateSlug($text) {
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="number" class="form-control" id="price" name="price" 
-                                           min="0" step="0.01" required>
+                                           min="0" step="0.01" placeholder="0" required>
                                     <span class="input-group-text">ARS</span>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="price_dollars" class="form-label">Precio en Dólares (USD)</label>
+                                <label for="price_dollars" class="form-label">Precio en Dólares (USD) *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="number" class="form-control" id="price_dollars" name="price_dollars" 
-                                           min="0" step="0.01">
+                                           min="0" step="0.01" placeholder="0" required>
                                     <span class="input-group-text">USD</span>
                                 </div>
                             </div>
@@ -567,7 +570,7 @@ function generateSlug($text) {
                             <div class="mb-3">
                                 <label for="stock_quantity" class="form-label">Cantidad en Stock *</label>
                                 <input type="number" class="form-control form-control-lg" id="stock_quantity" name="stock_quantity" 
-                                       value="0" min="0" required>
+                                       placeholder="0" min="0" required>
                             </div>
                         </div>
                     </div>
@@ -1814,6 +1817,9 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             if (gameDetails.images && gameDetails.images.length > 0) {
                 console.log('📸 Descargando', gameDetails.images.length, 'imágenes del juego...');
 
+                const imagePreview = document.getElementById('image-preview');
+                const downloadedImages = [];
+
                 for (const imageUrl of gameDetails.images) {
                     try {
                         // Crear FormData para subir la imagen
@@ -1832,10 +1838,30 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
 
                         if (imageResult.success && imageResult.file_path) {
                             console.log('✅ Imagen descargada exitosamente:', imageResult.file_path);
+                            downloadedImages.push(imageResult.file_path);
+                            
+                            // Mostrar imagen en el preview
+                            if (imagePreview) {
+                                const imgCol = document.createElement('div');
+                                imgCol.className = 'col-6 col-md-4';
+                                imgCol.innerHTML = `
+                                    <div class="position-relative">
+                                        <img src="${imageResult.file_path}" class="img-fluid rounded shadow-sm" alt="Preview">
+                                        <div class="position-absolute top-0 end-0 m-2">
+                                            <span class="badge bg-success"><i class="fas fa-check"></i> Descargada</span>
+                                        </div>
+                                    </div>
+                                `;
+                                imagePreview.appendChild(imgCol);
+                            }
                         }
                     } catch (imageError) {
                         console.error('Error descargando imagen:', imageError);
                     }
+                }
+
+                if (downloadedImages.length > 0) {
+                    console.log(`✅ Total de imágenes descargadas: ${downloadedImages.length}`);
                 }
             }
 
@@ -1843,12 +1869,20 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             const nameEl = document.getElementById('name');
             if (nameEl && gameDetails.title) {
                 nameEl.value = gameDetails.title;
+                console.log('✓ Nombre rellenado:', gameDetails.title);
             }
 
             // Rellenar descripción (YA ESTÁ EN ESPAÑOL)
             const descriptionEl = document.getElementById('description');
             if (descriptionEl && gameDetails.description) {
                 descriptionEl.value = gameDetails.description;
+                console.log('✓ Descripción rellenada:', gameDetails.description.substring(0, 50) + '...');
+            } else {
+                console.warn('⚠️ No se pudo rellenar descripción:', {
+                    elementExists: !!descriptionEl,
+                    hasDescription: !!gameDetails.description,
+                    description: gameDetails.description
+                });
             }
 
             // Rellenar géneros (YA ESTÁN EN ESPAÑOL)
