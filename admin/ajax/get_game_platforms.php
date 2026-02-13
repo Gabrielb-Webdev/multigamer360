@@ -1,7 +1,11 @@
 <?php
 /**
  * Obtener plataformas disponibles para un juego - RAWG API Only
- * Version: 1.2 - Solo RAWG API (sin base de datos local)
+ * Version: 1.3 - Devuelve strings en lugar de objetos
+ * Fecha: 13 Feb 2026
+ * Cambios:
+ *  - Corregido: Ahora devuelve array de strings (nombres) en lugar de objetos
+ *  - Fix: Resuelve problema de [object Object] en frontend
  * API Key: 575f338491134d84bd86df30627a95fe
  */
 
@@ -62,17 +66,15 @@ try {
     if (!empty($gameDetails['platforms'])) {
         foreach ($gameDetails['platforms'] as $platform) {
             $platformName = $platform['platform']['name'];
-            $platforms[] = [
-                'name' => $platformName,
-                'slug' => strtolower(str_replace(' ', '-', $platformName))
-            ];
+            // Devolver solo nombres como strings (no objetos)
+            $platforms[] = $platformName;
         }
     }
     
     echo json_encode([
         'success' => true,
         'game_name' => $gameDetails['name'],
-        'platforms' => $platforms,
+        'platforms' => $platforms,  // Array de strings
         'source' => 'RAWG'
     ]);
 

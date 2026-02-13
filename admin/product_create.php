@@ -3,13 +3,12 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.17 - Interfaz de plataforma mejorada + Descuentos por moneda
- * Fecha: 12 Feb 2026
+ * Version: 2.18 - Fix [object Object] en plataformas
+ * Fecha: 13 Feb 2026
  * Cambios: 
- *  - Corrección: [object Object] en consolas (usa platform seleccionado directamente)
- *  - Mejora: Interfaz visual para seleccionar plataforma específica con iconos
- *  - Agregado: Soporte para discount_percentage_ars y discount_percentage_usd
- *  - Removido: Referencia a campo 'price' inexistente
+ *  - Corregido: Convertir objetos de plataforma a strings antes de mostrar
+ *  - Mejora: Manejo robusto de plataformas (objetos o strings)
+ *  - Fix: Ya no muestra [object Object] en tarjetas de juegos
  */
 
 $product_id = null;
@@ -1550,7 +1549,10 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                     let platformSource = 'RAWG';
 
                     if (platformsResult.success && platformsResult.platforms) {
-                        correctPlatforms = platformsResult.platforms;
+                        // Asegurar que sean strings (extraer .name si son objetos)
+                        correctPlatforms = platformsResult.platforms.map(p => 
+                            typeof p === 'string' ? p : (p.name || p)
+                        );
                         platformSource = platformsResult.source;
                         console.log(`✅ Plataformas verificadas para "${gameName}":`, correctPlatforms, `(Fuente: ${platformSource})`);
                     } else {
@@ -1589,9 +1591,13 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             try {
                 const safeName = game && game.name ? game.name : 'Juego sin nombre';
 
-                // USAR LAS PLATAFORMAS CORRECTAS DE LA BASE DE DATOS
-                const platformsDisplay = game.correctPlatforms && game.correctPlatforms.length > 0
-                    ? game.correctPlatforms.slice(0, 3).join(', ') + (game.correctPlatforms.length > 3 ? ', ...' : '')
+                // USAR LAS PLATAFORMAS CORRECTAS - Asegurar que sean strings
+                const platformStrings = game.correctPlatforms && game.correctPlatforms.length > 0
+                    ? game.correctPlatforms.map(p => typeof p === 'string' ? p : (p.name || String(p)))
+                    : [];
+                
+                const platformsDisplay = platformStrings.length > 0
+                    ? platformStrings.slice(0, 3).join(', ') + (platformStrings.length > 3 ? ', ...' : '')
                     : 'N/A';
 
                 const platformCount = game.correctPlatforms ? game.correctPlatforms.length : 0;
