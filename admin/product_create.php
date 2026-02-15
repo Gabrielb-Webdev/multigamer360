@@ -810,6 +810,87 @@ function generateSlug($text) {
     </div>
 </div>
 
+<!-- Modal de Éxito: Información Cargada -->
+<div class="modal fade" id="successInfoModal" tabindex="-1" aria-labelledby="successInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="successInfoModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>¡Información Cargada!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="success-animation mb-3">
+                        <i class="fas fa-gamepad fa-4x text-success"></i>
+                    </div>
+                    <h5 class="text-success fw-bold mb-2" id="successGameTitle">Kingdom Hearts</h5>
+                    <p class="text-muted mb-0" id="successPlatformInfo">
+                        <i class="fas fa-gamepad me-1"></i>PlayStation 2
+                    </p>
+                </div>
+                
+                <div class="alert alert-success border-0 mb-3" role="alert">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-language fa-2x me-3 text-success"></i>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Traducido al Español</h6>
+                            <small class="text-muted">Toda la información ha sido traducida automáticamente</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-check-double text-success me-2"></i>Datos Rellenados:
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Descripción completa</strong> <span class="text-muted">(en español)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Géneros del juego</strong> <span class="text-muted">(traducidos)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Plataforma/Consola</strong> <span class="text-muted">(asignada)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Marca/Publisher</strong> <span class="text-muted">(verificado)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Meta datos SEO</strong> <span class="text-muted">(optimizados)</span>
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Imágenes del producto</strong> <span class="text-muted" id="imageCount">(descargadas)</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Revisa los campos y ajusta los precios antes de guardar
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-thumbs-up me-2"></i>¡Entendido!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- SortableJS para Drag & Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
@@ -876,6 +957,63 @@ function generateSlug($text) {
 .sortable-ghost {
     opacity: 0.4;
     background: #f8f9fa;
+}
+
+/* Estilos para Modal de Éxito */
+#successInfoModal .modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+#successInfoModal .modal-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    padding: 1.5rem;
+}
+
+#successInfoModal .success-animation {
+    animation: successPulse 1.5s ease-in-out;
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+#successInfoModal .alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+#successInfoModal .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+#successInfoModal .list-unstyled li {
+    padding: 0.4rem 0;
+    transition: all 0.3s ease;
+}
+
+#successInfoModal .list-unstyled li:hover {
+    padding-left: 5px;
+    background-color: rgba(40, 167, 69, 0.05);
+    border-radius: 5px;
+}
+
+#successInfoModal .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#successInfoModal .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 
@@ -1983,13 +2121,28 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             // Actualizar contadores SEO
             updateSEOCounters();
 
-            // Cerrar modal
+            // Cerrar modal de búsqueda
             modal.hide();
 
-            // Mostrar notificación de éxito
-            const successMessage = result.message || `✅ Información de "${gameDetails.title}" cargada exitosamente!`;
-            const platformInfo = platform ? `\n🎮 Plataforma seleccionada: ${platform}` : '';
-            alert(successMessage + platformInfo + `\n\n✅ Datos rellenados en ESPAÑOL:\n- Descripción\n- Géneros\n- Plataforma/Consola\n- Marca/Publisher\n- Meta datos SEO\n- Imágenes del producto`);
+            // Mostrar modal de éxito elegante
+            const successModal = new bootstrap.Modal(document.getElementById('successInfoModal'));
+            
+            // Actualizar contenido del modal
+            document.getElementById('successGameTitle').textContent = gameDetails.title || 'Juego';
+            document.getElementById('successPlatformInfo').innerHTML = platform 
+                ? `<i class="fas fa-gamepad me-1"></i>${platform}` 
+                : '<i class="fas fa-gamepad me-1"></i>Información cargada';
+            
+            // Actualizar contador de imágenes
+            const imageCountEl = document.getElementById('imageCount');
+            if (downloadedImages && downloadedImages.length > 0) {
+                imageCountEl.textContent = `(${downloadedImages.length} descargadas)`;
+            } else {
+                imageCountEl.textContent = '(disponibles)';
+            }
+            
+            // Mostrar el modal de éxito
+            successModal.show();
 
         } catch (error) {
             console.error('Error cargando datos del juego:', error);

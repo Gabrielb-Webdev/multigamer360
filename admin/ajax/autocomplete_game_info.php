@@ -98,6 +98,7 @@ try {
         'data' => [
             'title' => $gameDetails['name'] ?? $gameName,
             'description' => generateSpanishDescription($gameDetails),
+            'short_description' => generateShortSpanishDescription($gameDetails),
             'released' => $gameDetails['released'] ?? '',
             'rating' => $gameDetails['rating'] ?? 0,
             'platforms' => $platforms,
@@ -105,10 +106,11 @@ try {
             'developers' => $developers,
             'publishers' => $publishers,
             'brand' => $brand,
+            'category' => mapCategoryToSpanish($genresSpanish),
             'images' => $images
         ],
         'platform_source' => 'RAWG',
-        'message' => '✅ Información cargada desde RAWG API'
+        'message' => '✅ Información cargada desde RAWG API y traducida al español'
     ]);
 
 } catch (Exception $e) {
@@ -126,10 +128,57 @@ function generateSpanishDescription($gameDetails) {
     if (!empty($desc)) {
         $desc = strip_tags($desc);
         $desc = preg_replace('/\s+/', ' ', $desc);
-        return mb_substr($desc, 0, 500);
+        $desc = trim($desc);
+        
+        // Limitar a 500 caracteres para traducción
+        $descToTranslate = mb_substr($desc, 0, 500);
+        
+        // Intentar traducir al español usando MyMemory API (gratuita, sin API key)
+        try {
+            $translated = translateToSpanish($descToTranslate);
+            if (!empty($translated)) {
+                return $translated;
+            }
+        } catch (Exception $e) {
+            error_log("Error traduciendo descripción: " . $e->getMessage());
+        }
+        
+        // Si la traducción falla, devolver el texto original
+        return $descToTranslate;
     }
     
     return "{$name} es un videojuego con experiencia inmersiva y entretenimiento de calidad.";
+}
+
+function translateToSpanish($text) {
+    if (empty($text)) {
+        return $text;
+    }
+    
+    // Usar MyMemory Translation API (gratuita, sin API key)
+    $url = 'https://api.mymemory.translated.net/get?q=' . urlencode($text) . '&langpair=en|es';
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'MultiGamer360/2.0');
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && !empty($response)) {
+        $data = json_decode($response, true);
+        if (isset($data['responseData']['translatedText'])) {
+            return $data['responseData']['translatedText'];
+        }
+    }
+    
+    // Si falla, devolver el texto original
+    return $text;
 }
 
 function mapGenresToSpanish($genres) {
@@ -144,9 +193,66 @@ function mapGenresToSpanish($genres) {
         'Sports' => 'Deportes',
         'Fighting' => 'Lucha',
         'Platformer' => 'Plataformas',
+        'Simulation' => 'Simulación',
+        'Casual' => 'Casual',
+        'Indie' => 'Indie',
+        'Arcade' => 'Arcade',
+        'Massively Multiplayer' => 'Multijugador Masivo',
+        'Family' => 'Familiar',
+        'Board Games' => 'Juegos de Mesa',
+        'Card' => 'Cartas',
+        'Educational' => 'Educativo'
     ];
     
     return array_map(function($g) use ($map) {
         return $map[$g] ?? $g;
     }, $genres);
+}
+
+function mapCategoryToSpanish($genres) {
+    // Mapear el primer género a una categoría general
+    if (empty($genres)) {
+        return 'Juegos';
+    }
+    
+    $categoryMap = [
+        'Acción' => 'Juegos de Acción',
+        'Aventura' => 'Juegos de Aventura',
+        'RPG' => 'Juegos RPG',
+        'Estrategia' => 'Juegos de Estrategia',
+        'Disparos' => 'Juegos de Disparos',
+        'Deportes' => 'Juegos de Deportes',
+        'Carreras' => 'Juegos de Carreras',
+        'Simulación' => 'Juegos de Simulación'
+    ];
+    
+    $firstGenre = $genres[0];
+    return $categoryMap[$firstGenre] ?? 'Juegos';
+}
+
+function generateShortSpanishDescription($gameDetails) {
+    $name = $gameDetails['name'] ?? 'Este juego';
+    $desc = $gameDetails['description_raw'] ?? '';
+    
+    if (!empty($desc)) {
+        $desc = strip_tags($desc);
+        $desc = preg_replace('/\s+/', ' ', $desc);
+        
+        // Obtener las primeras 2 oraciones o 150 caracteres
+        $shortDesc = mb_substr($desc, 0, 150);
+        
+        // Traducir
+        try {
+            $translated = translateToSpanish($shortDesc);
+            if (!empty($translated)) {
+                return $translated;
+            }
+        } catch (Exception $e) {
+            error_log("Error traduciendo descripción corta: " . $e->getMessage());
+        }
+        
+        return $shortDesc;
+    }
+    
+    return "Videojuego {$name} disponible en MultiGamer360";
 }
