@@ -3,15 +3,14 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.31 - FIX CRÍTICO: Preview descuento bidireccional + Submit handler mejorado
+ * Version: 2.32 - FIX CRÍTICO: Submit handler separado + Prioridad valor visible
  * Fecha: 15 Feb 2026  
  * Cambios: 
- *  - ✅ FIX CRÍTICO: Preview de descuento ahora es BIDIRECCIONAL (precio ↔ descuento)
- *  - ✅ FIX CRÍTICO: Consolidada lógica de updateDiscountPreview() en UNA sola función
- *  - ✅ FIX: Submit handler con múltiples fallbacks para obtener valores raw
- *  - ✅ FIX: Actualización automática del preview sin importar el orden de llenado
- *  - ✅ DEBUG: Logs mejorados con más contexto (data-raw, visible value, final value)
- *  - 🎯 OBJETIVO: El descuento se actualiza al cambiar precio O descuento en cualquier orden
+ *  - ✅ FIX CRÍTICO: Submit handler dividido (imágenes separado de precios)
+ *  - ✅ FIX CRÍTICO: Submit principal se ejecuta SIEMPRE (no depende de imagesInput)
+ *  - ✅ FIX: Prioridad al valor VISIBLE limpiado (más confiable que data-raw-value)
+ *  - ✅ DEBUG: Validación especial para price_pesos con logs detallados
+ *  - 🎯 OBJETIVO: Garantizar que price_pesos SIEMPRE llegue al servidor con un valor válido
  */
 
 $product_id = null;
@@ -1239,46 +1238,53 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     const form = document.getElementById('product-form');
     if (form && imagesInput) {
         form.addEventListener('submit', function(e) {
-            console.log('🚀 SUBMIT HANDLER - Preparando formulario...');
+            console.log('� Actualizando archivos de imágenes...');
             
-            // 1. Actualizar archivos de imágenes
+            // Actualizar archivos de imágenes
             const dt = new DataTransfer();
             window.selectedFiles.forEach(file => dt.items.add(file));
             imagesInput.files = dt.files;
             
             console.log('✅ Imágenes:', window.selectedFiles.length, 'archivos');
+        });
+    }
+    
+    // SUBMIT HANDLER PRINCIPAL (se ejecuta SIEMPRE, no depende de imagesInput)
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('🚀 SUBMIT HANDLER PRINCIPAL - Limpiando valores...');
             
-            // 2. Limpiar valores formateados de precios
+            // Limpiar valores formateados de precios
             document.querySelectorAll('.price-input').forEach(input => {
-                const dataRaw = input.getAttribute('data-raw-value') || '';
                 const visibleValue = input.value || '';
+                const dataRaw = input.getAttribute('data-raw-value') || '';
                 
-                // Intentar obtener el valor raw de varias fuentes
-                let finalValue = '';
+                // Siempre usar el valor visible limpiado (más confiable)
+                const cleanedValue = visibleValue.replace(/\./g, '').replace(/[^\d]/g, '');
                 
-                if (dataRaw && dataRaw !== '0' && dataRaw !== '') {
-                    // Usar data-raw-value si existe
-                    finalValue = dataRaw;
-                } else if (visibleValue) {
-                    // Fallback: limpiar el valor visible
-                    finalValue = visibleValue.replace(/\./g, '').replace(/\D/g, '');
-                } else {
-                    // Si está completamente vacío, usar '0'
-                    finalValue = '0';
+                // Usar el cleaned value si tiene contenido, sino usar data-raw
+                let finalValue = cleanedValue || dataRaw || '0';
+                
+                // VALIDACIÓN ESPECIAL: Si es price_pesos y está vacío, es un error
+                if (input.id === 'price_pesos' && (!finalValue || finalValue === '0')) {
+                    console.error(`❌ ERROR: ${input.id} está vacío o es 0!`);
+                    console.error(`   - Valor visible: "${visibleValue}"`);
+                    console.error(`   - data-raw-value: "${dataRaw}"`);
+                    console.error(`   - Valor limpiado: "${cleanedValue}"`);
                 }
                 
-                console.log(`  - ${input.id}: "${visibleValue}" → "${finalValue}" (data-raw="${dataRaw}")`);
+                console.log(`  - ${input.id}: "${visibleValue}" → "${finalValue}"`);
                 input.value = finalValue;
             });
             
-            // 3. Limpiar descuentos (asegurar que sean enteros)
+            // Limpiar descuentos (asegurar que sean enteros)
             document.querySelectorAll('.discount-input').forEach(input => {
                 const rawValue = input.value.replace(/\D/g, '') || '0';
                 console.log(`  - ${input.id}: "${input.value}" → "${rawValue}"`);
                 input.value = rawValue;
             });
             
-            console.log('✅ SUBMIT - Formulario preparado, enviando...');
+            console.log('✅ SUBMIT - Valores limpiados, enviando...');
         });
     }
     
@@ -2614,7 +2620,7 @@ if ($showModal):
             });
         });
         
-        console.log('✅ Price formatting system initialized - v2.31');
+        console.log('✅ Price formatting system initialized - v2.32');
     }
     
     // Ejecutar inmediatamente si el DOM está listo, o esperar al evento
