@@ -3,13 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.28 - FIX: Ruta relativa corregida para fetch de imágenes + Debug logs
- * Fecha: 14 Feb 2026  
+ * Version: 2.29 - FIX CRÍTICO: Campo USD opcional + Mejor manejo submit de precios
+ * Fecha: 15 Feb 2026  
  * Cambios: 
- *  - ✅ FIX CRÍTICO: Ruta de imagen ajustada con '../' (admin/ → uploads/)
- *  - ✅ DEBUG: Logs detallados para verificar window.selectedFiles y renderImagePreview
- *  - ✅ ARQUITECTURA: fetch('../uploads/productos/...') en lugar de 'uploads/productos/...'
- *  - 🎯 OBJETIVO: Hacer que las imágenes del auto-rellenador aparezcan en el preview
+ *  - ✅ FIX CRÍTICO: Campo price_dollars ahora es opcional (sin required)
+ *  - ✅ FIX: Submit handler mejorado con fallback a data-raw-value
+ *  - ✅ DEBUG: Logs de consola para verificar limpieza de valores formateados
+ *  - 🎯 OBJETIVO: Resolver error "El campo 'Precio (ARS)' es obligatorio"
  */
 
 $product_id = null;
@@ -529,7 +529,7 @@ function generateSlug($text) {
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="text" class="form-control price-input" id="price_dollars" name="price_dollars" 
-                                           placeholder="0" required data-raw-value="">
+                                           placeholder="0" data-raw-value="">
                                     <span class="input-group-text">USD</span>
                                 </div>
                                 <div class="form-text">Opcional: Dejar vacío si no aplica</div>
@@ -2582,17 +2582,23 @@ if ($showModal):
         const form = document.getElementById('product-form');
         if (form) {
             form.addEventListener('submit', function(e) {
+                console.log('🚀 Submit del formulario - Limpiando valores formateados');
+                
                 // Convertir campos de precio a valores sin formato
                 document.querySelectorAll('.price-input').forEach(input => {
-                    const rawValue = getRawValue(input.value);
-                    input.value = rawValue || '0';
+                    const rawValue = getRawValue(input.value) || input.getAttribute('data-raw-value') || '';
+                    console.log(`  - ${input.id}: "${input.value}" → "${rawValue}"`);
+                    input.value = rawValue;
                 });
                 
                 // Asegurar que descuentos sean enteros
                 document.querySelectorAll('.discount-input').forEach(input => {
                     const rawValue = input.value.replace(/\D/g, '');
+                    console.log(`  - ${input.id}: "${input.value}" → "${rawValue}"`);
                     input.value = rawValue || '0';
                 });
+                
+                console.log('✅ Valores limpiados - Enviando formulario');
             });
         }
         
