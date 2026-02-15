@@ -4,13 +4,13 @@
  * Este archivo es SOLO para editar productos existentes (requiere ID)
  * Para crear nuevos productos, usar product_create.php
  * 
- * Version: 4.2.2 - FIX ESTRUCTURA JAVASCRIPT
+ * Version: 4.3.0 - MEJORA: Layout unificado con product_create.php
  * Fecha: 14 Feb 2026
  * Cambios:
- *  - CRÍTICO: Corregido código JavaScript duplicado y mal estructurado
- *  - CRÍTICO: Todo el código ahora está correctamente dentro de initPriceFormatting()
- *  - CRÍTICO: Eliminadas líneas duplicadas que causaban errores de sintaxis
- *  - FIX: Indentación corregida (funciones dentro del scope correcto)
+ *  - ✅ MEJORA: Agregado campo "Tipo de Producto" (game/console/accessory)
+ *  - ✅ MEJORA: Layout de 3 columnas (4-4-4) igual a product_create.php
+ *  - ✅ UX: Formulario ahora tiene apariencia consistente con la página de creación
+ *  - ✅ ESTRUCTURA: Mismo orden de campos que product_create.php
  */
 
 // Incluir autenticación PRIMERO (sin HTML, pero con sesión y DB)
@@ -425,19 +425,26 @@ require_once 'inc/header.php';
                             </div>
                             
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4 mb-3">
+                                    <label for="product_type" class="form-label">Tipo de Producto *</label>
+                                    <select class="form-select" id="product_type" name="product_type" required>
+                                        <option value="game" <?php echo ($product['product_type'] ?? 'game') === 'game' ? 'selected' : ''; ?>>Juego</option>
+                                        <option value="console" <?php echo ($product['product_type'] ?? '') === 'console' ? 'selected' : ''; ?>>Consola</option>
+                                        <option value="accessory" <?php echo ($product['product_type'] ?? '') === 'accessory' ? 'selected' : ''; ?>>Accesorio</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
                                     <label for="sku" class="form-label">SKU</label>
                                     <input type="text" class="form-control" id="sku" name="sku" 
                                            value="<?php echo htmlspecialchars($product['sku'] ?? ''); ?>" 
-                                           maxlength="100">
-                                    <div class="form-text">Se generará automáticamente si se deja vacío</div>
+                                           maxlength="100" placeholder="Se generará automáticamente">
+                                    <div class="form-text">Dejar vacío para auto-generar</div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4 mb-3">
                                     <label for="status" class="form-label">Estado *</label>
                                     <select class="form-select" id="status" name="status" required>
                                         <option value="active" <?php echo ($product['status'] ?? 'active') === 'active' ? 'selected' : ''; ?>>Activo</option>
                                         <option value="inactive" <?php echo ($product['status'] ?? '') === 'inactive' ? 'selected' : ''; ?>>Inactivo</option>
-                                        <option value="out_of_stock" <?php echo ($product['status'] ?? '') === 'out_of_stock' ? 'selected' : ''; ?>>Agotado</option>
                                     </select>
                                 </div>
                             </div>
