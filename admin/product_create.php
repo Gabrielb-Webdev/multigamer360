@@ -73,8 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $required_fields = [
             'name' => 'Nombre del producto',
             'description' => 'Descripción',
-            'price' => 'Precio (ARS)',
-            'price_dollars' => 'Precio en Dólares (USD)',
+            'price_pesos' => 'Precio (ARS)',
             'stock_quantity' => 'Cantidad en stock',
             'category_id' => 'Categoría',
             'brand_id' => 'Marca',
