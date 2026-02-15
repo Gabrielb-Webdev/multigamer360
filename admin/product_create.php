@@ -3,14 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.23 - FIX CRÍTICO: JavaScript no se ejecutaba en producción
- * Fecha: 06 Feb 2026  
+ * Version: 2.24 - FIX CRÍTICO: JavaScript estaba dentro de condicional  
+ * Fecha: 14 Feb 2026  
  * Cambios: 
- *  - CRÍTICO: Cambiado DOMContentLoaded a IIFE con verificación de readyState
- *  - CRÍTICO: Ejecuta inmediatamente si DOM ya está listo (soluciona problema en Hostinger)
- *  - CRÍTICO: Unificado ID de campo price → price_pesos (consistencia DB)
- *  - UX: Agregados tooltips informativos en precios
- *  - UX: Campo USD ahora opcional (no required)
+ *  - 🔴 CRÍTICO: MOVIDO código de formateo FUERA del condicional if ($showModal)
+ *  - 🔴 CRÍTICO: JavaScript ahora se ejecuta SIEMPRE (antes solo con modal visible)
+ *  - FIX: Separado script de formateo del script de modal
+ *  - FIX: Ahora el formateo funciona en TODAS las cargas de página
  */
 
 $product_id = null;
@@ -2463,10 +2462,14 @@ if ($showModal):
         initModal();
     }
 })();
+</script>
+<?php endif; ?>
 
-// ==========================================
-// FORMATO DE PRECIOS CON SEPARADOR DE MILES
-// ==========================================
+<!-- ==========================================
+     FORMATO DE PRECIOS CON SEPARADOR DE MILES
+     Este script se ejecuta SIEMPRE (no depende de modal)
+     ========================================== -->
+<script>
 (function() {
     'use strict';
     
@@ -2610,6 +2613,5 @@ if ($showModal):
     }
 })();
 </script>
-<?php endif; ?>
 
 <?php require_once 'inc/footer.php'; ?>
