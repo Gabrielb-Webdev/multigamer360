@@ -608,7 +608,7 @@ require_once 'includes/header.php';
                                         ?>
                                         
                                         <?php if ($isOnSale && $discountARS > 0): ?>
-                                            <!-- Producto con descuento -->
+                                            <!-- Producto con descuento - MEJORADO UX v2.35 -->
                                             <div class="product-price-container">
                                                 <div class="discount-badge"><?php echo intval($discountARS); ?>% OFF</div>
                                                 <div class="product-price-original" data-price-ars="<?php echo $priceARS; ?>" data-price-usd="<?php echo $priceUSD; ?>">
@@ -617,6 +617,15 @@ require_once 'includes/header.php';
                                                 <div class="product-price-discount" data-price-ars="<?php echo intval($finalPriceARS); ?>" data-price-usd="<?php echo intval($finalPriceUSD); ?>">
                                                     $<?php echo number_format(intval($finalPriceARS), 0, ',', '.'); ?>
                                                 </div>
+                                                <?php 
+                                                // Calcular ahorro
+                                                $savings = $priceARS - $finalPriceARS;
+                                                if ($savings > 0): 
+                                                ?>
+                                                <div class="savings-badge">
+                                                    Ahorrás $<?php echo number_format(intval($savings), 0, ',', '.'); ?>
+                                                </div>
+                                                <?php endif; ?>
                                             </div>
                                         <?php else: ?>
                                             <!-- Precio normal sin descuento -->
@@ -960,46 +969,100 @@ require_once 'includes/header.php';
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-/* Contenedor de precio con descuento */
+/* Contenedor de precio con descuento - MEJORADO UX v2.35 */
 .product-price-container {
     position: relative;
     text-align: center;
     margin-top: auto;
-    padding: 0.5rem 0;
+    padding: 1rem 0.75rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Badge de descuento */
+/* Badge de descuento - MEJORADO */
 .discount-badge {
     position: absolute;
-    top: -8px;
-    right: 8px;
-    background: linear-gradient(135deg, #ff4444, #cc0000);
+    top: -12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ff1744, #d50000);
     color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(204, 0, 0, 0.4);
+    font-size: 0.8rem;
+    font-weight: 900;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(255, 23, 68, 0.5),
+                0 0 20px rgba(255, 23, 68, 0.3);
     z-index: 10;
     text-transform: uppercase;
+    letter-spacing: 0.8px;
+    animation: pulse-badge 2s ease-in-out infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Precio original tachado - MEJORADO */
+.product-price-original {
+    font-size: 1rem;
+    color: #999;
+    text-decoration: line-through;
+    text-decoration-color: #ff4444;
+    text-decoration-thickness: 2px;
+    margin-bottom: 0.5rem;
+    opacity: 0.75;
+    font-weight: 500;
     letter-spacing: 0.5px;
 }
 
-/* Precio original tachado */
-.product-price-original {
-    font-size: 0.9rem;
-    color: #ccc;
-    text-decoration: line-through;
-    margin-bottom: 0.25rem;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+/* Precio con descuento - MEJORADO */
+.product-price-discount {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #10b981;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5),
+                 0 2px 8px rgba(0, 0, 0, 0.5);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Precio con descuento */
-.product-price-discount {
-    font-size: 1.4rem;
+/* Efecto hover en el contenedor de precio */
+.product-card:hover .product-price-container {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(16, 185, 129, 0.2);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+/* Badge de ahorro - NUEVO UX v2.35 */
+.savings-badge {
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 6px;
+    color: #10b981;
+    font-size: 0.75rem;
     font-weight: 700;
-    color: #4ade80;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    animation: fade-in-up 0.5s ease-out;
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .product-price-usd {
@@ -1025,12 +1088,27 @@ require_once 'includes/header.php';
     display: inline-block;
 }
 
+/* Precio simple sin descuento - MEJORADO UX v2.35 */
 .product-price-simple {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #00ff88;
-    margin: 15px 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #10b981;
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5),
+                 0 2px 8px rgba(0, 0, 0, 0.5);
+    letter-spacing: -0.5px;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    transition: all 0.3s ease;
+}
+
+.product-card:hover .product-price-simple {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(16, 185, 129, 0.4);
+    transform: scale(1.02);
 }
 
 /* Botón wishlist fijo siempre visible */
@@ -1902,6 +1980,20 @@ require_once 'includes/header.php';
     .filters-sidebar {
         margin-bottom: 20px;
     }
+    
+    /* Ajustes de precios para tablet - UX v2.35 */
+    .product-price-discount {
+        font-size: 1.5rem;
+    }
+    
+    .product-price-simple {
+        font-size: 1.5rem;
+    }
+    
+    .discount-badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.55rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1912,6 +2004,40 @@ require_once 'includes/header.php';
     
     .product-card {
         height: 250px; /* Altura reducida en móvil */
+    }
+    
+    /* Ajustes de precios para móvil - UX v2.35 */
+    .product-price-container {
+        padding: 0.6rem 0.5rem;
+    }
+    
+    .product-price-discount {
+        font-size: 1.3rem;
+        letter-spacing: -0.3px;
+    }
+    
+    .product-price-simple {
+        font-size: 1.3rem;
+        padding: 0.6rem;
+        margin: 0.6rem 0;
+    }
+    
+    .product-price-original {
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .discount-badge {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.45rem;
+        top: -10px;
+        right: 8px;
+    }
+    
+    .savings-badge {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
+        margin-top: 0.3rem;
     }
     
     .btn-add-cart, .btn-no-stock {
