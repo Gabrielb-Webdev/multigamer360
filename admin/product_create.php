@@ -3,13 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.25 - FIX: Preview de descuentos mejorado (ambos ARS y USD)
+ * Version: 2.26 - FIX: Auto-rellenador ahora descarga imágenes correctamente
  * Fecha: 14 Feb 2026  
  * Cambios: 
- *  - ✅ FIX: Eliminado código viejo updateDiscountPreview() que causaba conflictos
- *  - ✅ MEJORA: Preview de descuentos ahora muestra precio tachado → precio final + badge
- *  - ✅ FIX: Preview se actualiza al cambiar precios Y al cambiar descuentos
- *  - ✅ FUNCIONAL: Ambos previews (ARS y USD) funcionan correctamente
+ *  - ✅ FIX: Imágenes del auto-rellenador ahora se agregan al área de imágenes
+ *  - ✅ FIX: Convertir imágenes descargadas a objetos File para el array selectedFiles
+ *  - ✅ MEJORA: Contador de imágenes descargadas en modal de éxito
+ *  - ✅ FUNCIONAL: Las imágenes se muestran con drag & drop, numeradas y ordenables
  */
 
 $product_id = null;
@@ -1886,12 +1886,15 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
 
             console.log('✅ Datos recibidos de autocomplete_game_info.php:', gameDetails);
 
+            // Variable para almacenar imágenes descargadas
+            let downloadedImagesCount = 0;
+
             // Descargar y subir imágenes si están disponibles
             if (gameDetails.images && gameDetails.images.length > 0) {
                 console.log('📸 Descargando', gameDetails.images.length, 'imágenes del juego...');
 
-                const imagePreview = document.getElementById('image-preview');
-                const downloadedImages = [];
+                const downloadedFiles = [];
+                let successCount = 0;
 
                 for (const imageUrl of gameDetails.images) {
                     try {
@@ -1910,31 +1913,36 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                         const imageResult = await imageResponse.json();
 
                         if (imageResult.success && imageResult.file_path) {
-                            console.log('✅ Imagen descargada exitosamente:', imageResult.file_path);
-                            downloadedImages.push(imageResult.file_path);
+                            console.log('✅ Imagen descargada:', imageResult.file_path);
                             
-                            // Mostrar imagen en el preview
-                            if (imagePreview) {
-                                const imgCol = document.createElement('div');
-                                imgCol.className = 'col-6 col-md-4';
-                                imgCol.innerHTML = `
-                                    <div class="position-relative">
-                                        <img src="${imageResult.file_path}" class="img-fluid rounded shadow-sm" alt="Preview">
-                                        <div class="position-absolute top-0 end-0 m-2">
-                                            <span class="badge bg-success"><i class="fas fa-check"></i> Descargada</span>
-                                        </div>
-                                    </div>
-                                `;
-                                imagePreview.appendChild(imgCol);
-                            }
+                            // Convertir la imagen descargada a un objeto File
+                            const response = await fetch(imageResult.file_path);
+                            const blob = await response.blob();
+                            const file = new File([blob], imageResult.file_name, { type: imageResult.mime_type || 'image/jpeg' });
+                            
+                            // Agregar al array de archivos seleccionados
+                            downloadedFiles.push(file);
+                            successCount++;
                         }
                     } catch (imageError) {
-                        console.error('Error descargando imagen:', imageError);
+                        console.error('❌ Error descargando imagen:', imageError);
                     }
                 }
 
-                if (downloadedImages.length > 0) {
-                    console.log(`✅ Total de imágenes descargadas: ${downloadedImages.length}`);
+                if (downloadedFiles.length > 0) {
+                    console.log(`✅ ${downloadedFiles.length} imágenes descargadas y convertidas`);
+                    
+                    // Agregar todas las imágenes al array global selectedFiles
+                    downloadedFiles.forEach(file => selectedFiles.push(file));
+                    
+                    // Regenerar la vista previa para mostrar las imágenes
+                    renderImagePreview();
+                    
+                    // Actualizar contador
+                    downloadedImagesCount = successCount;
+                    
+                    // Mostrar mensaje de éxito
+                    console.log(`🎉 ${successCount} imágenes agregadas al producto`);
                 }
             }
 
@@ -2073,10 +2081,13 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             
             // Actualizar contador de imágenes
             const imageCountEl = document.getElementById('imageCount');
-            if (downloadedImages && downloadedImages.length > 0) {
-                imageCountEl.textContent = `(${downloadedImages.length} descargadas)`;
-            } else {
-                imageCountEl.textContent = '(disponibles)';
+            if (imageCountEl) {
+                if (downloadedImagesCount > 0) {
+                    imageCountEl.textContent = `(${downloadedImagesCount} ${downloadedImagesCount === 1 ? 'imagen descargada' : 'imágenes descargadas'})`;
+                    imageCountEl.className = 'text-success';
+                } else {
+                    imageCountEl.textContent = '(disponibles)';
+                }
             }
             
             // Mostrar el modal de éxito
