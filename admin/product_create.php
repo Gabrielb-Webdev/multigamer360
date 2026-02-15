@@ -3,13 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.24 - FIX CRÍTICO: JavaScript estaba dentro de condicional  
+ * Version: 2.25 - FIX: Preview de descuentos mejorado (ambos ARS y USD)
  * Fecha: 14 Feb 2026  
  * Cambios: 
- *  - 🔴 CRÍTICO: MOVIDO código de formateo FUERA del condicional if ($showModal)
- *  - 🔴 CRÍTICO: JavaScript ahora se ejecuta SIEMPRE (antes solo con modal visible)
- *  - FIX: Separado script de formateo del script de modal
- *  - FIX: Ahora el formateo funciona en TODAS las cargas de página
+ *  - ✅ FIX: Eliminado código viejo updateDiscountPreview() que causaba conflictos
+ *  - ✅ MEJORA: Preview de descuentos ahora muestra precio tachado → precio final + badge
+ *  - ✅ FIX: Preview se actualiza al cambiar precios Y al cambiar descuentos
+ *  - ✅ FUNCIONAL: Ambos previews (ARS y USD) funcionan correctamente
  */
 
 $product_id = null;
@@ -1320,83 +1320,10 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
         });
     }
     
-    // Vista previa descuento
-    function updateDiscountPreview() {
-        // Descuento ARS
-        const priceArsEl = document.getElementById('price');
-        const discountArsEl = document.getElementById('discount_percentage_ars');
-        const previewArsEl = document.getElementById('discount-preview-ars');
-        
-        if (priceArsEl && discountArsEl && previewArsEl) {
-            const price = parseFloat(priceArsEl.value) || 0;
-            const discount = parseFloat(discountArsEl.value) || 0;
-            
-            if (discount > 0 && price > 0) {
-                const finalPrice = price - (price * discount / 100);
-                const formatter = new Intl.NumberFormat('es-AR', {
-                    style: 'currency',
-                    currency: 'ARS',
-                    minimumFractionDigits: 2
-                });
-                
-                previewArsEl.innerHTML = `
-                    <span class="text-danger"><del>${formatter.format(price)}</del></span> → 
-                    <span class="text-success fw-bold">${formatter.format(finalPrice)}</span> 
-                    <span class="badge bg-success">-${discount}%</span>
-                `;
-            } else {
-                previewArsEl.textContent = 'Sin descuento';
-            }
-        }
-        
-        // Descuento USD
-        const priceUsdEl = document.getElementById('price_dollars');
-        const discountUsdEl = document.getElementById('discount_percentage_usd');
-        const previewUsdEl = document.getElementById('discount-preview-usd');
-        
-        if (priceUsdEl && discountUsdEl && previewUsdEl) {
-            const price = parseFloat(priceUsdEl.value) || 0;
-            const discount = parseFloat(discountUsdEl.value) || 0;
-            
-            if (discount > 0 && price > 0) {
-                const finalPrice = price - (price * discount / 100);
-                const formatter = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2
-                });
-                
-                previewUsdEl.innerHTML = `
-                    <span class="text-danger"><del>${formatter.format(price)}</del></span> → 
-                    <span class="text-success fw-bold">${formatter.format(finalPrice)}</span> 
-                    <span class="badge bg-success">-${discount}%</span>
-                `;
-            } else {
-                previewUsdEl.textContent = 'Sin descuento';
-            }
-        }
-    }
-    
-    // Event listeners para precios y descuentos
-    const priceEl = document.getElementById('price');
-    if (priceEl) {
-        priceEl.addEventListener('input', updateDiscountPreview);
-    }
-    
-    const priceUsdEl = document.getElementById('price_dollars');
-    if (priceUsdEl) {
-        priceUsdEl.addEventListener('input', updateDiscountPreview);
-    }
-    
-    const discountArsEl = document.getElementById('discount_percentage_ars');
-    if (discountArsEl) {
-        discountArsEl.addEventListener('input', updateDiscountPreview);
-    }
-    
-    const discountUsdEl = document.getElementById('discount_percentage_usd');
-    if (discountUsdEl) {
-        discountUsdEl.addEventListener('input', updateDiscountPreview);
-    }
+    // ========================================================================
+    // NOTA: Vista previa de descuentos ahora manejada por initPriceFormatting()
+    // El código viejo fue eliminado para evitar conflictos con el nuevo sistema
+    // ========================================================================
     
     // Alerta de stock
     const stockQuantityEl = document.getElementById('stock_quantity');
@@ -2499,6 +2426,32 @@ if ($showModal):
             return rawPosition + newDots;
         }
         
+        // Función para actualizar preview de descuento cuando cambia el precio
+        function updateDiscountPreviewForPrice(priceFieldId) {
+            // Determinar qué campo de descuento corresponde
+            const discountId = priceFieldId === 'price_pesos' ? 'discount_percentage_ars' : 'discount_percentage_usd';
+            const previewId = priceFieldId === 'price_pesos' ? 'discount-preview-ars' : 'discount-preview-usd';
+            
+            const discountEl = document.getElementById(discountId);
+            const previewEl = document.getElementById(previewId);
+            const priceEl = document.getElementById(priceFieldId);
+            
+            if (discountEl && previewEl && priceEl) {
+                const discountValue = parseInt(discountEl.value || '0');
+                if (discountValue > 0) {
+                    const priceValue = parseInt(getRawValue(priceEl.value) || '0');
+                    const discountedPrice = priceValue * (1 - (discountValue / 100));
+                    
+                    previewEl.innerHTML = `
+                        <span class="text-danger"><del>$${formatNumberWithThousands(String(priceValue))}</del></span> → 
+                        <span class="text-success fw-bold">$${formatNumberWithThousands(String(Math.round(discountedPrice)))}</span> 
+                        <span class="badge bg-success">-${discountValue}%</span>
+                    `;
+                    previewEl.classList.add('text-success');
+                }
+            }
+        }
+        
         // Manejar campos de precio
         document.querySelectorAll('.price-input').forEach(input => {
             // Formatear valor inicial si existe
@@ -2531,6 +2484,9 @@ if ($showModal):
                     // Ajustar cursor
                     this.setSelectionRange(newCursorPosition, newCursorPosition);
                 }
+                
+                // Actualizar preview de descuento si hay descuento activo
+                updateDiscountPreviewForPrice(this.id);
             });
             
             // Al perder el foco, asegurar formato correcto
@@ -2540,6 +2496,8 @@ if ($showModal):
                 if (rawValue) {
                     this.value = formatNumberWithThousands(rawValue);
                 }
+                // Actualizar preview de descuento
+                updateDiscountPreviewForPrice(this.id);
             });
             
             // Al hacer focus, seleccionar todo para facilitar edición
@@ -2573,7 +2531,13 @@ if ($showModal):
                         if (priceEl) {
                             const priceValue = parseInt(getRawValue(priceEl.value) || '0');
                             const discountedPrice = priceValue * (1 - (value / 100));
-                            previewEl.textContent = `Precio con descuento: $${formatNumberWithThousands(String(Math.round(discountedPrice)))}`;
+                            
+                            // Formato mejorado con precio original tachado → precio con descuento + badge
+                            previewEl.innerHTML = `
+                                <span class="text-danger"><del>$${formatNumberWithThousands(String(priceValue))}</del></span> → 
+                                <span class="text-success fw-bold">$${formatNumberWithThousands(String(Math.round(discountedPrice)))}</span> 
+                                <span class="badge bg-success">-${value}%</span>
+                            `;
                             previewEl.classList.add('text-success');
                         }
                     } else {
