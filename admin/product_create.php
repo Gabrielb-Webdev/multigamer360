@@ -1238,20 +1238,27 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     // SUBMIT HANDLER ÚNICO (v2.33) - Procesa: Imágenes + Precios + Descuentos
     // ============================================================================
     const form = document.getElementById('product-form');
+    console.log('🎯 FORM ENCONTRADO:', form ? 'SI' : 'NO', form?.id);
+    
     if (form) {
+        console.log('✅ Registrando submit handler...');
         form.addEventListener('submit', function(e) {
-            console.log('SUBMIT - Iniciando validación...');
+            console.log('');
+            console.log('='.repeat(80));
+            console.log('🚀 SUBMIT - INICIANDO VALIDACIÓN');
+            console.log('='.repeat(80));
             
             // PASO 1: Actualizar imágenes
             if (imagesInput) {
                 const dt = new DataTransfer();
                 window.selectedFiles.forEach(file => dt.items.add(file));
                 imagesInput.files = dt.files;
-                console.log('Imágenes:', window.selectedFiles.length);
+                console.log('📸 Imágenes actualizadas:', window.selectedFiles.length);
             }
             
             // PASO 2: Limpiar precios
-            console.log('Limpiando precios...');
+            console.log('');
+            console.log('💰 PASO 2: LIMPIANDO PRECIOS...');
             let hasError = false;
             
             document.querySelectorAll('.price-input').forEach(input => {
@@ -1260,24 +1267,30 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 const dataRaw = input.getAttribute('data-raw-value') || '';
                 const origValue = input.value || '';
                 
-                console.log(`${input.id} ANTES: value="${origValue}" data-raw="${dataRaw}"`);
+                console.log(`  📋 ${input.id}:`);
+                console.log(`     - value visble: "${origValue}"`);
+                console.log(`     - data-raw-value: "${dataRaw}"`);
                 
                 let cleaned = '';
                 
                 // USAR data-raw-value si existe y no está vacío
                 if (dataRaw && dataRaw !== '' && dataRaw !== '0') {
                     cleaned = dataRaw.replace(/[^\d]/g, '');
-                    console.log(`  -> Usando data-raw-value: "${cleaned}"`);
+                    console.log(`     ✅ Usando data-raw-value: "${cleaned}"`);
                 } else {
                     // Fallback: limpiar manualmente el valor visible
                     cleaned = origValue.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '').replace(/[^\d]/g, '');
-                    console.log(`  -> Limpiando value manualmente: "${cleaned}"`);
+                    console.log(`     ⚠️ Limpiando value manualmente: "${cleaned}"`);
                 }
                 
                 // Validar price_pesos (campo obligatorio)
                 if (input.id === 'price_pesos') {
                     if (!cleaned || cleaned === '' || cleaned === '0') {
-                        console.error('❌ ERROR: price_pesos vacío!');
+                        console.log('');
+                        console.error('❌❌❌ ERROR CRÍTICO: price_pesos vacío o es 0!');
+                        console.error('   - origValue:', origValue);
+                        console.error('   - dataRaw:', dataRaw);
+                        console.error('   - cleaned:', cleaned);
                         alert('ERROR: El Precio en ARS es obligatorio y debe ser mayor a 0.');
                         input.focus();
                         input.style.border = '3px solid red';
@@ -1285,26 +1298,37 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                         hasError = true;
                         return;
                     }
+                    console.log(`     ✅✅✅ price_pesos VÁLIDO: "${cleaned}"`);
                 }
                 
                 if (!cleaned) cleaned = '0';
                 
-                console.log(`${input.id} DESPUES: "${cleaned}"`);
+                console.log(`     ➡️ ASIGNANDO input.value = "${cleaned}"`);
                 input.value = cleaned;
             });
             
-            if (hasError) return false;
+            if (hasError) {
+                console.error('❌ SUBMIT CANCELADO POR ERROR');
+                return false;
+            }
             
             // PASO 3: Limpiar descuentos
-            console.log('Limpiando descuentos...');
+            console.log('');
+            console.log('🎯 PASO 3: LIMPIANDO DESCUENTOS...');
             document.querySelectorAll('.discount-input').forEach(input => {
                 const rawValue = input.value.replace(/\D/g, '') || '0';
-                console.log(`${input.id}: "${input.value}" -> "${rawValue}"`);
+                console.log(`  ${input.id}: "${input.value}" -> "${rawValue}"`);
                 input.value = rawValue;
             });
             
-            console.log('SUBMIT - Enviando formulario...');
+            console.log('');
+            console.log('✅✅✅ SUBMIT - ENVIANDO FORMULARIO AL SERVIDOR...');
+            console.log('='.repeat(80));
+            console.log('');
         });
+        console.log('✅ Submit handler registrado correctamente');
+    } else {
+        console.error('❌ NO SE ENCONTRÓ EL FORMULARIO #product-form');
     }
     
     // Auto-generar SEO
