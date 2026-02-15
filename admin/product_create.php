@@ -1255,28 +1255,36 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             let hasError = false;
             
             document.querySelectorAll('.price-input').forEach(input => {
-                const origValue = input.value || '';
+                // PRIORIDAD 1: data-raw-value (ya está limpio por los event listeners)
+                // PRIORIDAD 2: input.value limpiado manualmente
                 const dataRaw = input.getAttribute('data-raw-value') || '';
+                const origValue = input.value || '';
                 
                 console.log(`${input.id} ANTES: value="${origValue}" data-raw="${dataRaw}"`);
                 
-                // Limpiar: eliminar puntos, comas, espacios - solo dígitos
-                let cleaned = origValue.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '').replace(/[^\d]/g, '');
+                let cleaned = '';
                 
-                // Fallback: usar data-raw si cleaned está vacío
-                if (!cleaned || cleaned === '') {
+                // USAR data-raw-value si existe y no está vacío
+                if (dataRaw && dataRaw !== '' && dataRaw !== '0') {
                     cleaned = dataRaw.replace(/[^\d]/g, '');
+                    console.log(`  -> Usando data-raw-value: "${cleaned}"`);
+                } else {
+                    // Fallback: limpiar manualmente el valor visible
+                    cleaned = origValue.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '').replace(/[^\d]/g, '');
+                    console.log(`  -> Limpiando value manualmente: "${cleaned}"`);
                 }
                 
                 // Validar price_pesos (campo obligatorio)
-                if (input.id === 'price_pesos' && (!cleaned || cleaned === '' || cleaned === '0')) {
-                    console.error('ERROR CRITICO: price_pesos está vacío o es 0!');
-                    alert('ERROR: El Precio en ARS es obligatorio y debe ser mayor a 0.');
-                    input.focus();
-                    input.style.border = '3px solid red';
-                    e.preventDefault();
-                    hasError = true;
-                    return;
+                if (input.id === 'price_pesos') {
+                    if (!cleaned || cleaned === '' || cleaned === '0') {
+                        console.error('❌ ERROR: price_pesos vacío!');
+                        alert('ERROR: El Precio en ARS es obligatorio y debe ser mayor a 0.');
+                        input.focus();
+                        input.style.border = '3px solid red';
+                        e.preventDefault();
+                        hasError = true;
+                        return;
+                    }
                 }
                 
                 if (!cleaned) cleaned = '0';
