@@ -3,13 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.26 - FIX: Auto-rellenador ahora descarga imágenes correctamente
+ * Version: 2.27 - FIX CRÍTICO: Scope global para selectedFiles y renderImagePreview
  * Fecha: 14 Feb 2026  
  * Cambios: 
- *  - ✅ FIX: Imágenes del auto-rellenador ahora se agregan al área de imágenes
- *  - ✅ FIX: Convertir imágenes descargadas a objetos File para el array selectedFiles
- *  - ✅ MEJORA: Contador de imágenes descargadas en modal de éxito
- *  - ✅ FUNCIONAL: Las imágenes se muestran con drag & drop, numeradas y ordenables
+ *  - ✅ FIX CRÍTICO: selectedFiles ahora es window.selectedFiles (acceso global)
+ *  - ✅ FIX CRÍTICO: renderImagePreview ahora es window.renderImagePreview (acceso global)
+ *  - ✅ ARQUITECTURA: Funciones de imágenes accesibles desde loadGameDataForPlatform
+ *  - ✅ FUNCIONAL: Auto-rellenador ahora puede agregar imágenes al preview correctamente
  */
 
 $product_id = null;
@@ -1097,8 +1097,8 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     });
 }
 
-    // Array para acumular archivos seleccionados
-    let selectedFiles = [];
+    // Array para acumular archivos seleccionados (GLOBAL para acceso desde auto-rellenar)
+    window.selectedFiles = [];
     let sortableInstance = null;
     
     // Vista previa de imágenes (acumulativa con drag & drop)
@@ -1112,23 +1112,24 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             const newFiles = Array.from(this.files);
             newFiles.forEach(file => {
                 if (file.type.startsWith('image/')) {
-                    selectedFiles.push(file);
+                    window.selectedFiles.push(file);
                 }
             });
             
             // Regenerar vista previa
-            renderImagePreview();
+            window.renderImagePreview();
             
-            console.log('Total de imágenes seleccionadas:', selectedFiles.length);
+            console.log('Total de imágenes seleccionadas:', window.selectedFiles.length);
         });
     }
     
-    function renderImagePreview() {
+    // Función global para renderizar preview (accesible desde auto-rellenar)
+    window.renderImagePreview = function() {
         if (!preview) return;
         
         preview.innerHTML = '';
         
-        if (selectedFiles.length === 0) {
+        if (window.selectedFiles.length === 0) {
             if (dragInfo) dragInfo.style.display = 'none';
             return;
         }
@@ -1136,7 +1137,7 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
         // Mostrar info de drag & drop
         if (dragInfo) dragInfo.style.display = 'block';
         
-        selectedFiles.forEach((file, index) => {
+        window.selectedFiles.forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const col = document.createElement('div');
@@ -1159,7 +1160,7 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 preview.appendChild(col);
                 
                 // Inicializar SortableJS después de agregar todas las imágenes
-                if (index === selectedFiles.length - 1) {
+                if (index === window.selectedFiles.length - 1) {
                     initSortable();
                 }
             };
@@ -1188,8 +1189,8 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 const newIndex = evt.newIndex;
                 
                 // Mover elemento en el array
-                const movedFile = selectedFiles.splice(oldIndex, 1)[0];
-                selectedFiles.splice(newIndex, 0, movedFile);
+                const movedFile = window.selectedFiles.splice(oldIndex, 1)[0];
+                window.selectedFiles.splice(newIndex, 0, movedFile);
                 
                 console.log('Imagen movida de posición', oldIndex, '→', newIndex);
                 
@@ -1227,9 +1228,9 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     
     // Función global para eliminar imagen de vista previa
     window.removePreviewImage = function(index) {
-        selectedFiles.splice(index, 1);
-        renderImagePreview();
-        console.log('Imágenes restantes:', selectedFiles.length);
+        window.selectedFiles.splice(index, 1);
+        window.renderImagePreview();
+        console.log('Imágenes restantes:', window.selectedFiles.length);
     };
     
     // Antes de enviar el formulario, actualizar el input con todos los archivos en el orden correcto
@@ -1238,11 +1239,11 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
         form.addEventListener('submit', function(e) {
             // Crear un DataTransfer para actualizar el input con todos los archivos acumulados
             const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
+            window.selectedFiles.forEach(file => dt.items.add(file));
             imagesInput.files = dt.files;
             
-            console.log('Enviando formulario con', selectedFiles.length, 'imágenes en orden:', 
-                        selectedFiles.map((f, i) => `#${i+1}: ${f.name}`));
+            console.log('Enviando formulario con', window.selectedFiles.length, 'imágenes en orden:', 
+                        window.selectedFiles.map((f, i) => `#${i+1}: ${f.name}`));
         });
     }
     
@@ -1933,10 +1934,10 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                     console.log(`✅ ${downloadedFiles.length} imágenes descargadas y convertidas`);
                     
                     // Agregar todas las imágenes al array global selectedFiles
-                    downloadedFiles.forEach(file => selectedFiles.push(file));
+                    downloadedFiles.forEach(file => window.selectedFiles.push(file));
                     
                     // Regenerar la vista previa para mostrar las imágenes
-                    renderImagePreview();
+                    window.renderImagePreview();
                     
                     // Actualizar contador
                     downloadedImagesCount = successCount;
