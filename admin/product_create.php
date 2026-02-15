@@ -3,15 +3,15 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.30 - FIX CRÍTICO: Submit handler consolidado + data-raw-value garantizado
+ * Version: 2.31 - FIX CRÍTICO: Preview descuento bidireccional + Submit handler mejorado
  * Fecha: 15 Feb 2026  
  * Cambios: 
- *  - ✅ FIX CRÍTICO: Eliminado event listener duplicado de submit (causaba conflictos)
- *  - ✅ FIX CRÍTICO: Submit handler consolidado procesa imágenes Y precios en un solo lugar
- *  - ✅ FIX: data-raw-value se inicializa al cargar la página
- *  - ✅ FIX: data-raw-value siempre tiene valor (mínimo '0')
- *  - ✅ DEBUG: Logs extensivos para rastrear valores en cada etapa
- *  - 🎯 OBJETIVO: Resolver definitivamente "El campo 'Precio (ARS)' es obligatorio"
+ *  - ✅ FIX CRÍTICO: Preview de descuento ahora es BIDIRECCIONAL (precio ↔ descuento)
+ *  - ✅ FIX CRÍTICO: Consolidada lógica de updateDiscountPreview() en UNA sola función
+ *  - ✅ FIX: Submit handler con múltiples fallbacks para obtener valores raw
+ *  - ✅ FIX: Actualización automática del preview sin importar el orden de llenado
+ *  - ✅ DEBUG: Logs mejorados con más contexto (data-raw, visible value, final value)
+ *  - 🎯 OBJETIVO: El descuento se actualiza al cambiar precio O descuento en cualquier orden
  */
 
 $product_id = null;
@@ -1250,18 +1250,25 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             
             // 2. Limpiar valores formateados de precios
             document.querySelectorAll('.price-input').forEach(input => {
-                const rawValue = input.getAttribute('data-raw-value') || '';
-                console.log(`  - ${input.id}: "${input.value}" → "${rawValue}" (data-raw-value)`);
+                const dataRaw = input.getAttribute('data-raw-value') || '';
+                const visibleValue = input.value || '';
                 
-                // Asignar el valor sin formato
-                if (rawValue !== '') {
-                    input.value = rawValue;
+                // Intentar obtener el valor raw de varias fuentes
+                let finalValue = '';
+                
+                if (dataRaw && dataRaw !== '0' && dataRaw !== '') {
+                    // Usar data-raw-value si existe
+                    finalValue = dataRaw;
+                } else if (visibleValue) {
+                    // Fallback: limpiar el valor visible
+                    finalValue = visibleValue.replace(/\./g, '').replace(/\D/g, '');
                 } else {
-                    // Fallback: intentar limpiar el valor visible
-                    const cleaned = input.value.replace(/\./g, '');
-                    console.log(`    ⚠️ Fallback: "${input.value}" → "${cleaned}"`);
-                    input.value = cleaned;
+                    // Si está completamente vacío, usar '0'
+                    finalValue = '0';
                 }
+                
+                console.log(`  - ${input.id}: "${visibleValue}" → "${finalValue}" (data-raw="${dataRaw}")`);
+                input.value = finalValue;
             });
             
             // 3. Limpiar descuentos (asegurar que sean enteros)
@@ -2484,29 +2491,38 @@ if ($showModal):
             return rawPosition + newDots;
         }
         
-        // Función para actualizar preview de descuento cuando cambia el precio
-        function updateDiscountPreviewForPrice(priceFieldId) {
-            // Determinar qué campo de descuento corresponde
-            const discountId = priceFieldId === 'price_pesos' ? 'discount_percentage_ars' : 'discount_percentage_usd';
-            const previewId = priceFieldId === 'price_pesos' ? 'discount-preview-ars' : 'discount-preview-usd';
+        // Función UNIFICADA para actualizar preview de descuento (se llama desde precio Y descuento)
+        function updateDiscountPreview(currency) {
+            // currency = 'ars' o 'usd'
+            const priceId = currency === 'ars' ? 'price_pesos' : 'price_dollars';
+            const discountId = currency === 'ars' ? 'discount_percentage_ars' : 'discount_percentage_usd';
+            const previewId = currency === 'ars' ? 'discount-preview-ars' : 'discount-preview-usd';
             
+            const priceEl = document.getElementById(priceId);
             const discountEl = document.getElementById(discountId);
             const previewEl = document.getElementById(previewId);
-            const priceEl = document.getElementById(priceFieldId);
             
-            if (discountEl && previewEl && priceEl) {
-                const discountValue = parseInt(discountEl.value || '0');
-                if (discountValue > 0) {
-                    const priceValue = parseInt(getRawValue(priceEl.value) || '0');
-                    const discountedPrice = priceValue * (1 - (discountValue / 100));
-                    
-                    previewEl.innerHTML = `
-                        <span class="text-danger"><del>$${formatNumberWithThousands(String(priceValue))}</del></span> → 
-                        <span class="text-success fw-bold">$${formatNumberWithThousands(String(Math.round(discountedPrice)))}</span> 
-                        <span class="badge bg-success">-${discountValue}%</span>
-                    `;
-                    previewEl.classList.add('text-success');
-                }
+            if (!priceEl || !discountEl || !previewEl) return;
+            
+            // Obtener valores
+            const priceRaw = priceEl.getAttribute('data-raw-value') || '0';
+            const priceValue = parseInt(priceRaw);
+            const discountValue = parseInt(discountEl.value || '0');
+            
+            console.log(`🔄 updateDiscountPreview(${currency}): precio=${priceValue}, descuento=${discountValue}%`);
+            
+            // Actualizar preview
+            if (discountValue > 0 && priceValue > 0) {
+                const discountedPrice = priceValue * (1 - (discountValue / 100));
+                previewEl.innerHTML = `
+                    <span class="text-danger"><del>$${formatNumberWithThousands(String(priceValue))}</del></span> → 
+                    <span class="text-success fw-bold">$${formatNumberWithThousands(String(Math.round(discountedPrice)))}</span> 
+                    <span class="badge bg-success">-${discountValue}%</span>
+                `;
+                previewEl.classList.add('text-success');
+            } else {
+                previewEl.textContent = 'Sin descuento';
+                previewEl.classList.remove('text-success');
             }
         }
         
@@ -2549,8 +2565,9 @@ if ($showModal):
                     this.setSelectionRange(newCursorPosition, newCursorPosition);
                 }
                 
-                // Actualizar preview de descuento si hay descuento activo
-                updateDiscountPreviewForPrice(this.id);
+                // Actualizar preview de descuento
+                const currency = this.id === 'price_pesos' ? 'ars' : 'usd';
+                updateDiscountPreview(currency);
             });
             
             // Al perder el foco, asegurar formato correcto
@@ -2566,7 +2583,8 @@ if ($showModal):
                     this.setAttribute('data-raw-value', '0');
                 }
                 // Actualizar preview de descuento
-                updateDiscountPreviewForPrice(this.id);
+                const currency = this.id === 'price_pesos' ? 'ars' : 'usd';
+                updateDiscountPreview(currency);
             });
             
             // Al hacer focus, seleccionar todo para facilitar edición
@@ -2590,34 +2608,13 @@ if ($showModal):
                 this.value = value || '';
                 this.setAttribute('data-raw-value', value || '0');
                 
-                // Actualizar preview de descuento si existe
-                const previewId = this.id.replace('discount_percentage', 'discount-preview');
-                const previewEl = document.getElementById(previewId);
-                if (previewEl) {
-                    if (value && value > 0) {
-                        const priceId = this.id.includes('ars') ? 'price_pesos' : 'price_dollars';
-                        const priceEl = document.getElementById(priceId);
-                        if (priceEl) {
-                            const priceValue = parseInt(getRawValue(priceEl.value) || '0');
-                            const discountedPrice = priceValue * (1 - (value / 100));
-                            
-                            // Formato mejorado con precio original tachado → precio con descuento + badge
-                            previewEl.innerHTML = `
-                                <span class="text-danger"><del>$${formatNumberWithThousands(String(priceValue))}</del></span> → 
-                                <span class="text-success fw-bold">$${formatNumberWithThousands(String(Math.round(discountedPrice)))}</span> 
-                                <span class="badge bg-success">-${value}%</span>
-                            `;
-                            previewEl.classList.add('text-success');
-                        }
-                    } else {
-                        previewEl.textContent = 'Sin descuento';
-                        previewEl.classList.remove('text-success');
-                    }
-                }
+                // Actualizar preview de descuento usando función unificada
+                const currency = this.id.includes('ars') ? 'ars' : 'usd';
+                updateDiscountPreview(currency);
             });
         });
         
-        console.log('✅ Price formatting system initialized - v2.29.1');
+        console.log('✅ Price formatting system initialized - v2.31');
     }
     
     // Ejecutar inmediatamente si el DOM está listo, o esperar al evento
