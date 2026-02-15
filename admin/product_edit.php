@@ -4,13 +4,13 @@
  * Este archivo es SOLO para editar productos existentes (requiere ID)
  * Para crear nuevos productos, usar product_create.php
  * 
- * Version: 4.1.1 - Formato de precios en tiempo real CRÍTICO FIX
+ * Version: 4.2.0 - Unificación total con product_create + FIX críticos
  * Fecha: 06 Feb 2026
  * Cambios:
- *  - CRÍTICO: Arreglado formato de precios en tiempo real (DOMContentLoaded)
- *  - Agregado: Campos separados discount_percentage_ars y discount_percentage_usd
- *  - Mejora: Interfaz mejorada para descuentos específicos por moneda
- *  - Actualizado: Formulario de edición para mostrar descuentos por moneda
+ *  - CRÍTICO: Eliminada función updateDiscountPreview() obsoleta (causaba error null)
+ *  - CRÍTICO: Corregido moneda ARS en lugar de COP
+ *  - UX: Tooltips unificados con product_create.php
+ *  - ARREGLADO: Formato de precios en tiempo real (DOMContentLoaded)
  *  - Mejora: Cálculo automático de posición del cursor durante formato
  */
 
@@ -582,14 +582,14 @@ require_once 'inc/header.php';
                                 <label for="price_pesos" class="form-label">
                                     Precio en Pesos (ARS) *
                                     <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
-                                       title="Precio en pesos colombianos"></i>
+                                       title="Precio en pesos argentinos"></i>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="text" class="form-control price-input" id="price_pesos" name="price_pesos" 
                                            value="<?php echo number_format($product['price_pesos'] ?? 0, 0, '', '.'); ?>" 
                                            required data-raw-value="<?php echo $product['price_pesos'] ?? '0'; ?>">
-                                    <span class="input-group-text">COP</span>
+                                    <span class="input-group-text">ARS</span>
                                 </div>
                             </div>
                             
@@ -1304,75 +1304,13 @@ if (isOnSaleSwitch) {
             discountSection.style.display = 'block';
         } else {
             discountSection.style.display = 'none';
-            document.getElementById('discount_percentage').value = '0';
-            updateDiscountPreview();
+            // Limpiar descuentos
+            const discountArs = document.getElementById('discount_percentage_ars');
+            const discountUsd = document.getElementById('discount_percentage_usd');
+            if (discountArs) discountArs.value = '0';
+            if (discountUsd) discountUsd.value = '0';
         }
     });
-}
-
-// Calcular precio con descuento por porcentaje
-function updateDiscountPreview() {
-    const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
-    const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
-    const preview = document.getElementById('discount-preview');
-    const isOnSale = document.getElementById('is_on_sale').checked;
-    
-    if (!isOnSale || discountPercentage === 0 || pricePesos === 0) {
-        preview.innerHTML = '';
-        return;
-    }
-    
-    // Validar que el porcentaje esté entre 0 y 100
-    if (discountPercentage < 0 || discountPercentage > 100) {
-        preview.innerHTML = `
-            <div class="alert alert-warning mb-0">
-                <i class="fas fa-exclamation-triangle"></i> El porcentaje debe estar entre 0 y 100
-            </div>
-        `;
-        return;
-    }
-    
-    // Calcular precio final
-    const discountAmount = (pricePesos * discountPercentage / 100);
-    const finalPrice = pricePesos - discountAmount;
-    
-    // Formatear números con separador de miles
-    const formatter = new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    });
-    
-    preview.innerHTML = `
-        <div class="alert alert-success mb-0">
-            <div class="row">
-                <div class="col-md-6">
-                    <strong><i class="fas fa-percentage"></i> Descuento: ${discountPercentage}%</strong><br>
-                    <small class="text-muted">Ahorro: ${formatter.format(discountAmount)}</small>
-                </div>
-                <div class="col-md-6 text-end">
-                    <div class="text-muted small">
-                        <del>${formatter.format(pricePesos)}</del>
-                    </div>
-                    <div class="text-success fs-5 fw-bold">
-                        ${formatter.format(finalPrice)}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-const pesosInput = document.getElementById('price_pesos');
-const discountPercentageInput = document.getElementById('discount_percentage');
-
-if (pesosInput) {
-    pesosInput.addEventListener('input', updateDiscountPreview);
-}
-
-if (discountPercentageInput) {
-    discountPercentageInput.addEventListener('input', updateDiscountPreview);
 }
 
 // Alerta de stock bajo
@@ -1395,7 +1333,6 @@ if (stockInput) {
 }
 
 // Inicializar
-updateDiscountPreview();
 updateStockAlert();
 
 // ============================================

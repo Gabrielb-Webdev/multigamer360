@@ -3,13 +3,14 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.21 - Formato de precios en tiempo real CRÍTICO FIX
+ * Version: 2.22 - Unificación total con product_edit + FIX críticos
  * Fecha: 06 Feb 2026  
  * Cambios: 
- *  - CRÍTICO: Arreglado formato de precios en tiempo real (DOMContentLoaded)
- *  - Agregado: Placeholders en campos discount_percentage_ars y discount_percentage_usd
- *  - UX: Todos los campos numéricos ahora usan placeholders en lugar de values
- *  - Mejora: Cálculo automático de posición del cursor durante formato
+ *  - CRÍTICO: Unificado ID de campo price → price_pesos (consistencia DB)
+ *  - CRÍTICO: Actualizado backend PHP para usar $_POST['price_pesos']
+ *  - UX: Agregados tooltips informativos en precios
+ *  - UX: Campo USD ahora opcional (no required)
+ *  - ARREGLADO: Formato de precios en tiempo real (DOMContentLoaded)
  */
 
 $product_id = null;
@@ -110,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'description' => trim($_POST['description']),
             'sku' => $sku,
             'product_type' => $_POST['product_type'] ?? 'game',
-            'price_pesos' => intval($_POST['price']), // Sin decimales
+            'price_pesos' => intval($_POST['price_pesos']), // Sin decimales
             'price_dollars' => !empty($_POST['price_dollars']) ? intval($_POST['price_dollars']) : 0, // Sin decimales
             'is_on_sale' => isset($_POST['is_on_sale']) ? 1 : 0,
             'discount_percentage_ars' => !empty($_POST['discount_percentage_ars']) ? intval($_POST['discount_percentage_ars']) : 0, // Sin decimales
@@ -507,23 +508,32 @@ function generateSlug($text) {
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="price" class="form-label">Precio (ARS) *</label>
+                                <label for="price_pesos" class="form-label">
+                                    Precio en Pesos (ARS) *
+                                    <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
+                                       title="Precio en pesos argentinos"></i>
+                                </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="text" class="form-control price-input" id="price" name="price" 
+                                    <input type="text" class="form-control price-input" id="price_pesos" name="price_pesos" 
                                            placeholder="0" required data-raw-value="">
                                     <span class="input-group-text">ARS</span>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="price_dollars" class="form-label">Precio en Dólares (USD) *</label>
+                                <label for="price_dollars" class="form-label">
+                                    Precio en Dólares (USD)
+                                    <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
+                                       title="Precio en dólares estadounidenses (opcional)"></i>
+                                </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="text" class="form-control price-input" id="price_dollars" name="price_dollars" 
                                            placeholder="0" required data-raw-value="">
                                     <span class="input-group-text">USD</span>
                                 </div>
+                                <div class="form-text">Opcional: Dejar vacío si no aplica</div>
                             </div>
                             
                             <hr>
@@ -2554,7 +2564,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const previewEl = document.getElementById(previewId);
             if (previewEl) {
                 if (value && value > 0) {
-                    const priceId = this.id.includes('ars') ? 'price' : 'price_dollars';
+                    const priceId = this.id.includes('ars') ? 'price_pesos' : 'price_dollars';
                     const priceEl = document.getElementById(priceId);
                     if (priceEl) {
                         const priceValue = parseInt(getRawValue(priceEl.value) || '0');
