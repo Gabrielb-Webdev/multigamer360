@@ -1,8 +1,14 @@
 <?php
 /**
  * Auto-completar información del juego - RAWG API Only
- * Version: 1.2 - Solo RAWG API (sin base de datos local)
+ * Version: 1.3 - Traducción al español + descripción corta
  * API Key: 575f338491134d84bd86df30627a95fe
+ * 
+ * Cambios:
+ * - Traducción automática al español con API MyMemory (PRODUCCIÓN)
+ * - Generación de descripción corta en español
+ * - Mapeo de categorías y géneros a español
+ * - Filtros avanzados de palabras sensibles
  */
 
 header('Content-Type: application/json');

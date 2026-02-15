@@ -3,11 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.20 - Placeholders en campos de descuento
- * Fecha: 13 Feb 2026
+ * Version: 2.21 - Formato de precios en tiempo real CRÍTICO FIX
+ * Fecha: 06 Feb 2026  
  * Cambios: 
+ *  - CRÍTICO: Arreglado formato de precios en tiempo real (DOMContentLoaded)
  *  - Agregado: Placeholders en campos discount_percentage_ars y discount_percentage_usd
  *  - UX: Todos los campos numéricos ahora usan placeholders en lugar de values
+ *  - Mejora: Cálculo automático de posición del cursor durante formato
  */
 
 $product_id = null;
@@ -2455,7 +2457,7 @@ if ($showModal):
 // ==========================================
 // FORMATO DE PRECIOS CON SEPARADOR DE MILES
 // ==========================================
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     'use strict';
     
     // Función para formatear número con puntos de miles
@@ -2475,32 +2477,61 @@ if ($showModal):
         return formattedValue.replace(/\./g, '');
     }
     
+    // Función para calcular nueva posición del cursor
+    function getNewCursorPosition(oldValue, newValue, oldPosition) {
+        const oldDots = (oldValue.substring(0, oldPosition).match(/\./g) || []).length;
+        const rawPosition = oldPosition - oldDots;
+        const newDots = (newValue.substring(0, rawPosition + Math.floor((newValue.length - rawPosition) / 4)).match(/\./g) || []).length;
+        return rawPosition + newDots;
+    }
+    
     // Manejar campos de precio
     document.querySelectorAll('.price-input').forEach(input => {
+        // Formatear valor inicial si existe
+        if (input.value) {
+            input.value = formatNumberWithThousands(input.value);
+        }
+        
         // Formatear en tiempo real mientras se escribe
         input.addEventListener('input', function(e) {
+            const oldValue = this.value;
             const cursorPosition = this.selectionStart;
-            const oldLength = this.value.length;
             
-            // Guardar valor sin formato
+            // Remover formato y obtener solo números
             const rawValue = getRawValue(this.value);
             this.setAttribute('data-raw-value', rawValue);
             
-            // Formatear valor
-            const formatted = formatNumberWithThousands(this.value);
-            this.value = formatted;
+            // Aplicar formato
+            const formatted = formatNumberWithThousands(rawValue);
             
-            // Ajustar posición del cursor
-            const newLength = formatted.length;
-            const diff = newLength - oldLength;
-            this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+            // Solo actualizar si cambió
+            if (this.value !== formatted) {
+                this.value = formatted;
+                
+                // Calcular nueva posición del cursor
+                const dotsBeforeCursor = (oldValue.substring(0, cursorPosition).match(/\./g) || []).length;
+                const digitsBeforeCursor = cursorPosition - dotsBeforeCursor;
+                const formattedBeforeCursor = formatted.substring(0, digitsBeforeCursor + Math.floor((formatted.length - digitsBeforeCursor) / 4));
+                const newCursorPosition = formattedBeforeCursor.length;
+                
+                // Ajustar cursor
+                this.setSelectionRange(newCursorPosition, newCursorPosition);
+            }
         });
         
         // Al perder el foco, asegurar formato correcto
         input.addEventListener('blur', function() {
             const rawValue = getRawValue(this.value);
             this.setAttribute('data-raw-value', rawValue);
-            this.value = formatNumberWithThousands(this.value);
+            if (rawValue) {
+                this.value = formatNumberWithThousands(rawValue);
+            }
+        });
+        
+        // Al hacer focus, seleccionar todo para facilitar edición
+        input.addEventListener('focus', function() {
+            // Opcional: descomentar para seleccionar todo al hacer click
+            // this.select();
         });
     });
     
@@ -2517,6 +2548,25 @@ if ($showModal):
             
             this.value = value || '';
             this.setAttribute('data-raw-value', value || '0');
+            
+            // Actualizar preview de descuento si existe
+            const previewId = this.id.replace('discount_percentage', 'discount-preview');
+            const previewEl = document.getElementById(previewId);
+            if (previewEl) {
+                if (value && value > 0) {
+                    const priceId = this.id.includes('ars') ? 'price' : 'price_dollars';
+                    const priceEl = document.getElementById(priceId);
+                    if (priceEl) {
+                        const priceValue = parseInt(getRawValue(priceEl.value) || '0');
+                        const discountedPrice = priceValue * (1 - (value / 100));
+                        previewEl.textContent = `Precio con descuento: $${formatNumberWithThousands(String(Math.round(discountedPrice)))}`;
+                        previewEl.classList.add('text-success');
+                    }
+                } else {
+                    previewEl.textContent = 'Sin descuento';
+                    previewEl.classList.remove('text-success');
+                }
+            }
         });
     });
     
@@ -2538,8 +2588,8 @@ if ($showModal):
         });
     }
     
-    console.log('✅ Price formatting system initialized');
-})();
+    console.log('✅ Price formatting system initialized - v1.1');
+});
 </script>
 <?php endif; ?>
 
