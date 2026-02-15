@@ -3,13 +3,13 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.27 - FIX CRÍTICO: Scope global para selectedFiles y renderImagePreview
+ * Version: 2.28 - FIX: Ruta relativa corregida para fetch de imágenes + Debug logs
  * Fecha: 14 Feb 2026  
  * Cambios: 
- *  - ✅ FIX CRÍTICO: selectedFiles ahora es window.selectedFiles (acceso global)
- *  - ✅ FIX CRÍTICO: renderImagePreview ahora es window.renderImagePreview (acceso global)
- *  - ✅ ARQUITECTURA: Funciones de imágenes accesibles desde loadGameDataForPlatform
- *  - ✅ FUNCIONAL: Auto-rellenador ahora puede agregar imágenes al preview correctamente
+ *  - ✅ FIX CRÍTICO: Ruta de imagen ajustada con '../' (admin/ → uploads/)
+ *  - ✅ DEBUG: Logs detallados para verificar window.selectedFiles y renderImagePreview
+ *  - ✅ ARQUITECTURA: fetch('../uploads/productos/...') en lugar de 'uploads/productos/...'
+ *  - 🎯 OBJETIVO: Hacer que las imágenes del auto-rellenador aparezcan en el preview
  */
 
 $product_id = null;
@@ -1917,9 +1917,15 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                             console.log('✅ Imagen descargada:', imageResult.file_path);
                             
                             // Convertir la imagen descargada a un objeto File
-                            const response = await fetch(imageResult.file_path);
+                            // Ajustar ruta relativa: estamos en admin/, necesitamos subir un nivel
+                            const imagePath = '../' + imageResult.file_path;
+                            console.log('📂 Ruta ajustada:', imagePath);
+                            
+                            const response = await fetch(imagePath);
                             const blob = await response.blob();
                             const file = new File([blob], imageResult.file_name, { type: imageResult.mime_type || 'image/jpeg' });
+                            
+                            console.log('📦 File object creado:', file.name, file.size, 'bytes');
                             
                             // Agregar al array de archivos seleccionados
                             downloadedFiles.push(file);
@@ -1933,10 +1939,22 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 if (downloadedFiles.length > 0) {
                     console.log(`✅ ${downloadedFiles.length} imágenes descargadas y convertidas`);
                     
+                    console.log('🔍 Estado ANTES de agregar:');
+                    console.log('  - window.selectedFiles existe?', typeof window.selectedFiles);
+                    console.log('  - window.renderImagePreview existe?', typeof window.renderImagePreview);
+                    console.log('  - window.selectedFiles.length:', window.selectedFiles ? window.selectedFiles.length : 'undefined');
+                    
                     // Agregar todas las imágenes al array global selectedFiles
-                    downloadedFiles.forEach(file => window.selectedFiles.push(file));
+                    downloadedFiles.forEach(file => {
+                        console.log('  → Agregando:', file.name);
+                        window.selectedFiles.push(file);
+                    });
+                    
+                    console.log('🔍 Estado DESPUÉS de agregar:');
+                    console.log('  - window.selectedFiles.length:', window.selectedFiles.length);
                     
                     // Regenerar la vista previa para mostrar las imágenes
+                    console.log('🎨 Llamando a window.renderImagePreview()...');
                     window.renderImagePreview();
                     
                     // Actualizar contador
