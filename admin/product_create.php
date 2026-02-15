@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
@@ -1234,23 +1234,9 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
         console.log('Imágenes restantes:', window.selectedFiles.length);
     };
     
-    // Antes de enviar el formulario, actualizar el input con todos los archivos en el orden correcto
-    // NOTA: Este event listener está DUPLICADO - ver línea 1253 para el handler consolidado
-    const formOld = document.getElementById('product-form');
-    if (formOld && imagesInput) {
-        formOld.addEventListener('submit', function(e) {
-            console.log('� Actualizando archivos de imágenes...');
-            
-            // Actualizar archivos de imágenes
-            const dt = new DataTransfer();
-            window.selectedFiles.forEach(file => dt.items.add(file));
-            imagesInput.files = dt.files;
-            
-            console.log('✅ Imágenes:', window.selectedFiles.length, 'archivos');
-        });
-    }
-    
-    // SUBMIT HANDLER CONSOLIDADO - TODO EN UN SOLO LUGAR
+    // ============================================================================
+    // SUBMIT HANDLER ÚNICO (v2.33) - Procesa: Imágenes + Precios + Descuentos
+    // ============================================================================
     const form = document.getElementById('product-form');
     if (form) {
         form.addEventListener('submit', function(e) {
