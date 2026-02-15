@@ -3,14 +3,14 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.22 - Unificación total con product_edit + FIX críticos
+ * Version: 2.23 - FIX CRÍTICO: JavaScript no se ejecutaba en producción
  * Fecha: 06 Feb 2026  
  * Cambios: 
+ *  - CRÍTICO: Cambiado DOMContentLoaded a IIFE con verificación de readyState
+ *  - CRÍTICO: Ejecuta inmediatamente si DOM ya está listo (soluciona problema en Hostinger)
  *  - CRÍTICO: Unificado ID de campo price → price_pesos (consistencia DB)
- *  - CRÍTICO: Actualizado backend PHP para usar $_POST['price_pesos']
  *  - UX: Agregados tooltips informativos en precios
  *  - UX: Campo USD ahora opcional (no required)
- *  - ARREGLADO: Formato de precios en tiempo real (DOMContentLoaded)
  */
 
 $product_id = null;
@@ -2467,139 +2467,148 @@ if ($showModal):
 // ==========================================
 // FORMATO DE PRECIOS CON SEPARADOR DE MILES
 // ==========================================
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     'use strict';
     
-    // Función para formatear número con puntos de miles
-    function formatNumberWithThousands(value) {
-        // Remover todo excepto dígitos
-        const num = value.replace(/\D/g, '');
-        
-        // Si está vacío, retornar vacío
-        if (!num) return '';
-        
-        // Formatear con puntos de miles
-        return parseInt(num, 10).toLocaleString('es-AR').replace(/,/g, '.');
-    }
-    
-    // Función para obtener el valor sin formato
-    function getRawValue(formattedValue) {
-        return formattedValue.replace(/\./g, '');
-    }
-    
-    // Función para calcular nueva posición del cursor
-    function getNewCursorPosition(oldValue, newValue, oldPosition) {
-        const oldDots = (oldValue.substring(0, oldPosition).match(/\./g) || []).length;
-        const rawPosition = oldPosition - oldDots;
-        const newDots = (newValue.substring(0, rawPosition + Math.floor((newValue.length - rawPosition) / 4)).match(/\./g) || []).length;
-        return rawPosition + newDots;
-    }
-    
-    // Manejar campos de precio
-    document.querySelectorAll('.price-input').forEach(input => {
-        // Formatear valor inicial si existe
-        if (input.value) {
-            input.value = formatNumberWithThousands(input.value);
+    function initPriceFormatting() {
+        // Función para formatear número con puntos de miles
+        function formatNumberWithThousands(value) {
+            // Remover todo excepto dígitos
+            const num = value.replace(/\D/g, '');
+            
+            // Si está vacío, retornar vacío
+            if (!num) return '';
+            
+            // Formatear con puntos de miles
+            return parseInt(num, 10).toLocaleString('es-AR').replace(/,/g, '.');
         }
         
-        // Formatear en tiempo real mientras se escribe
-        input.addEventListener('input', function(e) {
-            const oldValue = this.value;
-            const cursorPosition = this.selectionStart;
-            
-            // Remover formato y obtener solo números
-            const rawValue = getRawValue(this.value);
-            this.setAttribute('data-raw-value', rawValue);
-            
-            // Aplicar formato
-            const formatted = formatNumberWithThousands(rawValue);
-            
-            // Solo actualizar si cambió
-            if (this.value !== formatted) {
-                this.value = formatted;
-                
-                // Calcular nueva posición del cursor
-                const dotsBeforeCursor = (oldValue.substring(0, cursorPosition).match(/\./g) || []).length;
-                const digitsBeforeCursor = cursorPosition - dotsBeforeCursor;
-                const formattedBeforeCursor = formatted.substring(0, digitsBeforeCursor + Math.floor((formatted.length - digitsBeforeCursor) / 4));
-                const newCursorPosition = formattedBeforeCursor.length;
-                
-                // Ajustar cursor
-                this.setSelectionRange(newCursorPosition, newCursorPosition);
-            }
-        });
+        // Función para obtener el valor sin formato
+        function getRawValue(formattedValue) {
+            return formattedValue.replace(/\./g, '');
+        }
         
-        // Al perder el foco, asegurar formato correcto
-        input.addEventListener('blur', function() {
-            const rawValue = getRawValue(this.value);
-            this.setAttribute('data-raw-value', rawValue);
-            if (rawValue) {
-                this.value = formatNumberWithThousands(rawValue);
-            }
-        });
+        // Función para calcular nueva posición del cursor
+        function getNewCursorPosition(oldValue, newValue, oldPosition) {
+            const oldDots = (oldValue.substring(0, oldPosition).match(/\./g) || []).length;
+            const rawPosition = oldPosition - oldDots;
+            const newDots = (newValue.substring(0, rawPosition + Math.floor((newValue.length - rawPosition) / 4)).match(/\./g) || []).length;
+            return rawPosition + newDots;
+        }
         
-        // Al hacer focus, seleccionar todo para facilitar edición
-        input.addEventListener('focus', function() {
-            // Opcional: descomentar para seleccionar todo al hacer click
-            // this.select();
-        });
-    });
-    
-    // Manejar campos de descuento (solo enteros, sin decimales)
-    document.querySelectorAll('.discount-input').forEach(input => {
-        input.addEventListener('input', function(e) {
-            // Solo permitir números enteros hasta 100
-            let value = this.value.replace(/\D/g, ''); // Remover todo excepto dígitos
-            
-            if (value) {
-                value = parseInt(value, 10);
-                if (value > 100) value = 100; // Máximo 100%
+        // Manejar campos de precio
+        document.querySelectorAll('.price-input').forEach(input => {
+            // Formatear valor inicial si existe
+            if (input.value) {
+                input.value = formatNumberWithThousands(input.value);
             }
             
-            this.value = value || '';
-            this.setAttribute('data-raw-value', value || '0');
-            
-            // Actualizar preview de descuento si existe
-            const previewId = this.id.replace('discount_percentage', 'discount-preview');
-            const previewEl = document.getElementById(previewId);
-            if (previewEl) {
-                if (value && value > 0) {
-                    const priceId = this.id.includes('ars') ? 'price_pesos' : 'price_dollars';
-                    const priceEl = document.getElementById(priceId);
-                    if (priceEl) {
-                        const priceValue = parseInt(getRawValue(priceEl.value) || '0');
-                        const discountedPrice = priceValue * (1 - (value / 100));
-                        previewEl.textContent = `Precio con descuento: $${formatNumberWithThousands(String(Math.round(discountedPrice)))}`;
-                        previewEl.classList.add('text-success');
-                    }
-                } else {
-                    previewEl.textContent = 'Sin descuento';
-                    previewEl.classList.remove('text-success');
+            // Formatear en tiempo real mientras se escribe
+            input.addEventListener('input', function(e) {
+                const oldValue = this.value;
+                const cursorPosition = this.selectionStart;
+                
+                // Remover formato y obtener solo números
+                const rawValue = getRawValue(this.value);
+                this.setAttribute('data-raw-value', rawValue);
+                
+                // Aplicar formato
+                const formatted = formatNumberWithThousands(rawValue);
+                
+                // Solo actualizar si cambió
+                if (this.value !== formatted) {
+                    this.value = formatted;
+                    
+                    // Calcular nueva posición del cursor
+                    const dotsBeforeCursor = (oldValue.substring(0, cursorPosition).match(/\./g) || []).length;
+                    const digitsBeforeCursor = cursorPosition - dotsBeforeCursor;
+                    const formattedBeforeCursor = formatted.substring(0, digitsBeforeCursor + Math.floor((formatted.length - digitsBeforeCursor) / 4));
+                    const newCursorPosition = formattedBeforeCursor.length;
+                    
+                    // Ajustar cursor
+                    this.setSelectionRange(newCursorPosition, newCursorPosition);
                 }
-            }
-        });
-    });
-    
-    // Al enviar el formulario, convertir valores formateados a números
-    const form = document.getElementById('product-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // Convertir campos de precio a valores sin formato
-            document.querySelectorAll('.price-input').forEach(input => {
-                const rawValue = getRawValue(input.value);
-                input.value = rawValue || '0';
             });
             
-            // Asegurar que descuentos sean enteros
-            document.querySelectorAll('.discount-input').forEach(input => {
-                const rawValue = input.value.replace(/\D/g, '');
-                input.value = rawValue || '0';
+            // Al perder el foco, asegurar formato correcto
+            input.addEventListener('blur', function() {
+                const rawValue = getRawValue(this.value);
+                this.setAttribute('data-raw-value', rawValue);
+                if (rawValue) {
+                    this.value = formatNumberWithThousands(rawValue);
+                }
+            });
+            
+            // Al hacer focus, seleccionar todo para facilitar edición
+            input.addEventListener('focus', function() {
+                // Opcional: descomentar para seleccionar todo al hacer click
+                // this.select();
             });
         });
+        
+        // Manejar campos de descuento (solo enteros, sin decimales)
+        document.querySelectorAll('.discount-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                // Solo permitir números enteros hasta 100
+                let value = this.value.replace(/\D/g, ''); // Remover todo excepto dígitos
+                
+                if (value) {
+                    value = parseInt(value, 10);
+                    if (value > 100) value = 100; // Máximo 100%
+                }
+                
+                this.value = value || '';
+                this.setAttribute('data-raw-value', value || '0');
+                
+                // Actualizar preview de descuento si existe
+                const previewId = this.id.replace('discount_percentage', 'discount-preview');
+                const previewEl = document.getElementById(previewId);
+                if (previewEl) {
+                    if (value && value > 0) {
+                        const priceId = this.id.includes('ars') ? 'price_pesos' : 'price_dollars';
+                        const priceEl = document.getElementById(priceId);
+                        if (priceEl) {
+                            const priceValue = parseInt(getRawValue(priceEl.value) || '0');
+                            const discountedPrice = priceValue * (1 - (value / 100));
+                            previewEl.textContent = `Precio con descuento: $${formatNumberWithThousands(String(Math.round(discountedPrice)))}`;
+                            previewEl.classList.add('text-success');
+                        }
+                    } else {
+                        previewEl.textContent = 'Sin descuento';
+                        previewEl.classList.remove('text-success');
+                    }
+                }
+            });
+        });
+        
+        // Al enviar el formulario, convertir valores formateados a números
+        const form = document.getElementById('product-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Convertir campos de precio a valores sin formato
+                document.querySelectorAll('.price-input').forEach(input => {
+                    const rawValue = getRawValue(input.value);
+                    input.value = rawValue || '0';
+                });
+                
+                // Asegurar que descuentos sean enteros
+                document.querySelectorAll('.discount-input').forEach(input => {
+                    const rawValue = input.value.replace(/\D/g, '');
+                    input.value = rawValue || '0';
+                });
+            });
+        }
+        
+        console.log('✅ Price formatting system initialized - v1.1');
     }
     
-    console.log('✅ Price formatting system initialized - v1.1');
-});
+    // Ejecutar inmediatamente si el DOM está listo, o esperar al evento
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPriceFormatting);
+    } else {
+        initPriceFormatting();
+    }
+})();
 </script>
 <?php endif; ?>
 

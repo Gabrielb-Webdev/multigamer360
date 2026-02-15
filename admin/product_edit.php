@@ -4,14 +4,14 @@
  * Este archivo es SOLO para editar productos existentes (requiere ID)
  * Para crear nuevos productos, usar product_create.php
  * 
- * Version: 4.2.0 - Unificación total con product_create + FIX críticos
+ * Version: 4.2.1 - FIX CRÍTICO: JavaScript no se ejecutaba en producción
  * Fecha: 06 Feb 2026
  * Cambios:
- *  - CRÍTICO: Eliminada función updateDiscountPreview() obsoleta (causaba error null)
- *  - CRÍTICO: Corregido moneda ARS en lugar de COP
+ *  - CRÍTICO: Cambiado DOMContentLoaded a IIFE con verificación de readyState
+ *  - CRÍTICO: Ejecuta inmediatamente si DOM ya está listo (soluciona problema en Hostinger)
+ *  - CRÍTICO: Corregido ID 'price' → 'price_pesos' en preview de descuentos
+ *  - Eliminada función updateDiscountPreview() obsoleta (causaba error null)
  *  - UX: Tooltips unificados con product_create.php
- *  - ARREGLADO: Formato de precios en tiempo real (DOMContentLoaded)
- *  - Mejora: Cálculo automático de posición del cursor durante formato
  */
 
 // Incluir autenticación PRIMERO (sin HTML, pero con sesión y DB)
@@ -1621,13 +1621,21 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 // ==========================================
 // FORMATO DE PRECIOS CON SEPARADOR DE MILES
 // ==========================================
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     'use strict';
     
-    // Función para formatear número con puntos de miles
-    function formatNumberWithThousands(value) {
-        // Remover todo excepto dígitos
-        const num = value.replace(/\D/g, '');
+    function initPriceFormatting() {
+        // Función para formatear número con puntos de miles
+        function formatNumberWithThousands(value) {
+            // Remover todo excepto dígitos
+            const num = value.replace(/\D/g, '');
+            
+            // Si está vacío, retornar vacío
+            if (!num) return '';
+            
+            // Formatear con puntos de miles
+            return parseInt(num, 10).toLocaleString('es-AR').replace(/,/g, '.');
+        }
         
         // Si está vacío, retornar vacío
         if (!num) return '';
@@ -1718,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const previewEl = document.getElementById(previewId);
             if (previewEl) {
                 if (value && value > 0) {
-                    const priceId = this.id.includes('ars') ? 'price' : 'price_dollars';
+                    const priceId = this.id.includes('ars') ? 'price_pesos' : 'price_dollars';
                     const priceEl = document.getElementById(priceId);
                     if (priceEl) {
                         const priceValue = parseInt(getRawValue(priceEl.value) || '0');
@@ -1753,7 +1761,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('✅ Price formatting system initialized - v1.1 (Edit Mode)');
-});
+    }
+    
+    // Ejecutar inmediatamente si el DOM está listo, o esperar al evento
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPriceFormatting);
+    } else {
+        initPriceFormatting();
+    }
+})();
 </script>
 
 <?php require_once 'inc/footer.php'; ?>
