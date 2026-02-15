@@ -3,13 +3,15 @@
  * CREAR NUEVO PRODUCTO
  * Formulario exclusivo para la creación de nuevos productos
  * 
- * Version: 2.29 - FIX CRÍTICO: Campo USD opcional + Mejor manejo submit de precios
+ * Version: 2.30 - FIX CRÍTICO: Submit handler consolidado + data-raw-value garantizado
  * Fecha: 15 Feb 2026  
  * Cambios: 
- *  - ✅ FIX CRÍTICO: Campo price_dollars ahora es opcional (sin required)
- *  - ✅ FIX: Submit handler mejorado con fallback a data-raw-value
- *  - ✅ DEBUG: Logs de consola para verificar limpieza de valores formateados
- *  - 🎯 OBJETIVO: Resolver error "El campo 'Precio (ARS)' es obligatorio"
+ *  - ✅ FIX CRÍTICO: Eliminado event listener duplicado de submit (causaba conflictos)
+ *  - ✅ FIX CRÍTICO: Submit handler consolidado procesa imágenes Y precios en un solo lugar
+ *  - ✅ FIX: data-raw-value se inicializa al cargar la página
+ *  - ✅ FIX: data-raw-value siempre tiene valor (mínimo '0')
+ *  - ✅ DEBUG: Logs extensivos para rastrear valores en cada etapa
+ *  - 🎯 OBJETIVO: Resolver definitivamente "El campo 'Precio (ARS)' es obligatorio"
  */
 
 $product_id = null;
@@ -1237,13 +1239,39 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     const form = document.getElementById('product-form');
     if (form && imagesInput) {
         form.addEventListener('submit', function(e) {
-            // Crear un DataTransfer para actualizar el input con todos los archivos acumulados
+            console.log('🚀 SUBMIT HANDLER - Preparando formulario...');
+            
+            // 1. Actualizar archivos de imágenes
             const dt = new DataTransfer();
             window.selectedFiles.forEach(file => dt.items.add(file));
             imagesInput.files = dt.files;
             
-            console.log('Enviando formulario con', window.selectedFiles.length, 'imágenes en orden:', 
-                        window.selectedFiles.map((f, i) => `#${i+1}: ${f.name}`));
+            console.log('✅ Imágenes:', window.selectedFiles.length, 'archivos');
+            
+            // 2. Limpiar valores formateados de precios
+            document.querySelectorAll('.price-input').forEach(input => {
+                const rawValue = input.getAttribute('data-raw-value') || '';
+                console.log(`  - ${input.id}: "${input.value}" → "${rawValue}" (data-raw-value)`);
+                
+                // Asignar el valor sin formato
+                if (rawValue !== '') {
+                    input.value = rawValue;
+                } else {
+                    // Fallback: intentar limpiar el valor visible
+                    const cleaned = input.value.replace(/\./g, '');
+                    console.log(`    ⚠️ Fallback: "${input.value}" → "${cleaned}"`);
+                    input.value = cleaned;
+                }
+            });
+            
+            // 3. Limpiar descuentos (asegurar que sean enteros)
+            document.querySelectorAll('.discount-input').forEach(input => {
+                const rawValue = input.value.replace(/\D/g, '') || '0';
+                console.log(`  - ${input.id}: "${input.value}" → "${rawValue}"`);
+                input.value = rawValue;
+            });
+            
+            console.log('✅ SUBMIT - Formulario preparado, enviando...');
         });
     }
     
@@ -2484,10 +2512,16 @@ if ($showModal):
         
         // Manejar campos de precio
         document.querySelectorAll('.price-input').forEach(input => {
+            // Inicializar data-raw-value desde el principio
+            const initialRawValue = getRawValue(input.value || '0');
+            input.setAttribute('data-raw-value', initialRawValue);
+            
             // Formatear valor inicial si existe
             if (input.value) {
                 input.value = formatNumberWithThousands(input.value);
             }
+            
+            console.log(`📋 Campo inicializado: ${input.id} = "${input.value}" (raw: "${initialRawValue}")`);
             
             // Formatear en tiempo real mientras se escribe
             input.addEventListener('input', function(e) {
@@ -2521,10 +2555,15 @@ if ($showModal):
             
             // Al perder el foco, asegurar formato correcto
             input.addEventListener('blur', function() {
-                const rawValue = getRawValue(this.value);
+                const rawValue = getRawValue(this.value) || '0';
                 this.setAttribute('data-raw-value', rawValue);
-                if (rawValue) {
+                console.log(`📤 Blur en ${this.id}: data-raw-value = "${rawValue}"`);
+                
+                if (rawValue && rawValue !== '0') {
                     this.value = formatNumberWithThousands(rawValue);
+                } else {
+                    this.value = ''; // Dejar vacío visualmente si es 0
+                    this.setAttribute('data-raw-value', '0');
                 }
                 // Actualizar preview de descuento
                 updateDiscountPreviewForPrice(this.id);
@@ -2578,31 +2617,7 @@ if ($showModal):
             });
         });
         
-        // Al enviar el formulario, convertir valores formateados a números
-        const form = document.getElementById('product-form');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                console.log('🚀 Submit del formulario - Limpiando valores formateados');
-                
-                // Convertir campos de precio a valores sin formato
-                document.querySelectorAll('.price-input').forEach(input => {
-                    const rawValue = getRawValue(input.value) || input.getAttribute('data-raw-value') || '';
-                    console.log(`  - ${input.id}: "${input.value}" → "${rawValue}"`);
-                    input.value = rawValue;
-                });
-                
-                // Asegurar que descuentos sean enteros
-                document.querySelectorAll('.discount-input').forEach(input => {
-                    const rawValue = input.value.replace(/\D/g, '');
-                    console.log(`  - ${input.id}: "${input.value}" → "${rawValue}"`);
-                    input.value = rawValue || '0';
-                });
-                
-                console.log('✅ Valores limpiados - Enviando formulario');
-            });
-        }
-        
-        console.log('✅ Price formatting system initialized - v1.1');
+        console.log('✅ Price formatting system initialized - v2.29.1');
     }
     
     // Ejecutar inmediatamente si el DOM está listo, o esperar al evento
