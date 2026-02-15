@@ -586,14 +586,44 @@ require_once 'includes/header.php';
                                             </span>
                                         </div>
                                         
-                                        <!-- 3. Precio (ARS o USD) -->
+                                        <!-- 3. Precio (ARS o USD) con descuentos -->
                                         <?php 
                                         $priceARS = $product['price_pesos'] ?? $product['price'] ?? 0;
                                         $priceUSD = $product['price_dollars'] ?? $product['price_usd'] ?? 0;
+                                        $discountARS = $product['discount_percentage_ars'] ?? 0;
+                                        $discountUSD = $product['discount_percentage_usd'] ?? 0;
+                                        $isOnSale = !empty($product['is_on_sale']);
+                                        
+                                        // Calcular precios finales con descuento
+                                        $finalPriceARS = $priceARS;
+                                        $finalPriceUSD = $priceUSD;
+                                        
+                                        if ($isOnSale && $discountARS > 0) {
+                                            $finalPriceARS = $priceARS * (1 - ($discountARS / 100));
+                                        }
+                                        
+                                        if ($isOnSale && $discountUSD > 0) {
+                                            $finalPriceUSD = $priceUSD * (1 - ($discountUSD / 100));
+                                        }
                                         ?>
-                                        <div class="product-price-simple" data-price-ars="<?php echo $priceARS; ?>" data-price-usd="<?php echo $priceUSD; ?>">
-                                            $<?php echo number_format($priceARS, 0, ',', '.'); ?>
-                                        </div>
+                                        
+                                        <?php if ($isOnSale && $discountARS > 0): ?>
+                                            <!-- Producto con descuento -->
+                                            <div class="product-price-container">
+                                                <div class="discount-badge"><?php echo intval($discountARS); ?>% OFF</div>
+                                                <div class="product-price-original" data-price-ars="<?php echo $priceARS; ?>" data-price-usd="<?php echo $priceUSD; ?>">
+                                                    $<?php echo number_format($priceARS, 0, ',', '.'); ?>
+                                                </div>
+                                                <div class="product-price-discount" data-price-ars="<?php echo intval($finalPriceARS); ?>" data-price-usd="<?php echo intval($finalPriceUSD); ?>">
+                                                    $<?php echo number_format(intval($finalPriceARS), 0, ',', '.'); ?>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <!-- Precio normal sin descuento -->
+                                            <div class="product-price-simple" data-price-ars="<?php echo $priceARS; ?>" data-price-usd="<?php echo $priceUSD; ?>">
+                                                $<?php echo number_format($priceARS, 0, ',', '.'); ?>
+                                            </div>
+                                        <?php endif; ?>
                                         
                                         <!-- 4. Botón de agregar al carrito -->
                                         <div class="product-actions">
@@ -917,6 +947,59 @@ require_once 'includes/header.php';
 
 .product-pricing {
     margin-bottom: 5px;
+}
+
+/* Precio simple (sin descuento) */
+.product-price-simple {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    margin-top: auto;
+    padding: 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Contenedor de precio con descuento */
+.product-price-container {
+    position: relative;
+    text-align: center;
+    margin-top: auto;
+    padding: 0.5rem 0;
+}
+
+/* Badge de descuento */
+.discount-badge {
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(204, 0, 0, 0.4);
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Precio original tachado */
+.product-price-original {
+    font-size: 0.9rem;
+    color: #ccc;
+    text-decoration: line-through;
+    margin-bottom: 0.25rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Precio con descuento */
+.product-price-discount {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #4ade80;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .product-price-usd {

@@ -266,21 +266,45 @@ include 'includes/header.php';
                                         <p class="product-console-name"><?php echo htmlspecialchars($product['console_name']); ?></p>
                                     <?php endif; ?>
                                     <?php 
-                                            // Calcular precio en efectivo (con 10% de descuento del precio regular)
-                                            $product_price = $product['price_pesos'] ?? $product['price'];
-                                            $cash_price = $product_price * 0.9;
-                                            $regular_price = $product_price;
+                                            // Obtener precios y descuentos
+                                            $product_price_ars = $product['price_pesos'] ?? $product['price'] ?? 0;
+                                            $product_price_usd = $product['price_dollars'] ?? $product['price_usd'] ?? 0;
+                                            $discountARS = $product['discount_percentage_ars'] ?? 0;
+                                            $discountUSD = $product['discount_percentage_usd'] ?? 0;
+                                            $isOnSale = !empty($product['is_on_sale']);
                                             
-                                            // Si hay precio de oferta, usarlo como base
-                                            if (!empty($product['sale_price']) && $product['sale_price'] > 0) {
-                                                $cash_price = $product['sale_price'] * 0.9;
-                                                $regular_price = $product['sale_price'];
+                                            // Calcular precios finales con descuento
+                                            $finalPriceARS = $product_price_ars;
+                                            $finalPriceUSD = $product_price_usd;
+                                            
+                                            if ($isOnSale && $discountARS > 0) {
+                                                $finalPriceARS = $product_price_ars * (1 - ($discountARS / 100));
+                                            }
+                                            
+                                            if ($isOnSale && $discountUSD > 0) {
+                                                $finalPriceUSD = $product_price_usd * (1 - ($discountUSD / 100));
                                             }
                                             ?>
-                                    <p class="product-price-cash">
-                                        $<?php echo number_format($cash_price, 0, ',', '.'); ?> En efectivo</p>
-                                    <p class="product-price-card">
-                                        $<?php echo number_format($regular_price, 0, ',', '.'); ?></p>
+                                    
+                                    <?php if ($isOnSale && $discountARS > 0): ?>
+                                        <!-- Producto con descuento -->
+                                        <div class="price-with-discount">
+                                            <span class="discount-badge-home"><?php echo intval($discountARS); ?>% OFF</span>
+                                            <p class="product-price-original-home">
+                                                $<?php echo number_format($product_price_ars, 0, ',', '.'); ?>
+                                            </p>
+                                            <p class="product-price-discount-home">
+                                                $<?php echo number_format(intval($finalPriceARS), 0, ',', '.'); ?>
+                                            </p>
+                                        </div>
+                                    <?php else: ?>
+                                        <!-- Precio normal (sin descuento) -->
+                                        <p class="product-price-cash">
+                                            $<?php echo number_format($product_price_ars * 0.9, 0, ',', '.'); ?> En efectivo</p>
+                                        <p class="product-price-card">
+                                            $<?php echo number_format($product_price_ars, 0, ',', '.'); ?>
+                                        </p>
+                                    <?php endif; ?>
                                     <div class="card-buttons">
                                         <a href="<?php echo getProductUrl($product); ?>"
                                             class="btn btn-secondary view-details me-2">
@@ -485,6 +509,45 @@ include 'includes/header.php';
 </section>
 
 <script>
+// Estilos para descuentos en index.php
+const discountStyles = document.createElement('style');
+discountStyles.textContent = `
+    .price-with-discount {
+        position: relative;
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .discount-badge-home {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff4444, #cc0000);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        margin-bottom: 5px;
+        box-shadow: 0 2px 6px rgba(204, 0, 0, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .product-price-original-home {
+        font-size: 0.9rem;
+        color: #999;
+        text-decoration: line-through;
+        margin: 5px 0 2px 0;
+    }
+    
+    .product-price-discount-home {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #4ade80;
+        margin: 0;
+    }
+`;
+document.head.appendChild(discountStyles);
+
 // Debug: Mostrar estado actual del carrito en la consola
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== DEBUG CARRITO ===');

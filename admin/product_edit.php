@@ -122,18 +122,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $pdo->beginTransaction();
         
-        // Datos del producto
+        // Datos del producto (sin decimales innecesarios)
         $product_data = [
             'name' => trim($_POST['name']),
             'slug' => $slug,
             'description' => trim($_POST['description']),
             'sku' => $sku,
-            'price_pesos' => floatval($_POST['price_pesos']),
-            'price_dollars' => !empty($_POST['price_dollars']) ? floatval($_POST['price_dollars']) : null,
+            'price_pesos' => intval($_POST['price_pesos']), // Sin decimales
+            'price_dollars' => !empty($_POST['price_dollars']) ? intval($_POST['price_dollars']) : null, // Sin decimales
             'is_on_sale' => isset($_POST['is_on_sale']) ? 1 : 0,
-            'discount_percentage' => !empty($_POST['discount_percentage']) ? floatval($_POST['discount_percentage']) : 0.00,
-            'discount_percentage_ars' => !empty($_POST['discount_percentage_ars']) ? floatval($_POST['discount_percentage_ars']) : 0.00,
-            'discount_percentage_usd' => !empty($_POST['discount_percentage_usd']) ? floatval($_POST['discount_percentage_usd']) : 0.00,
+            'discount_percentage' => !empty($_POST['discount_percentage']) ? intval($_POST['discount_percentage']) : 0, // Sin decimales
+            'discount_percentage_ars' => !empty($_POST['discount_percentage_ars']) ? intval($_POST['discount_percentage_ars']) : 0, // Sin decimales
+            'discount_percentage_usd' => !empty($_POST['discount_percentage_usd']) ? intval($_POST['discount_percentage_usd']) : 0, // Sin decimales
             'stock_quantity' => intval($_POST['stock_quantity']),
             'category_id' => intval($_POST['category_id']),
             'brand_id' => !empty($_POST['brand_id']) ? intval($_POST['brand_id']) : null,
@@ -584,9 +584,9 @@ require_once 'inc/header.php';
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="price_pesos" name="price_pesos" 
-                                           value="<?php echo $product['price_pesos'] ?? ''; ?>" 
-                                           min="0" step="0.01" required>
+                                    <input type="text" class="form-control price-input" id="price_pesos" name="price_pesos" 
+                                           value="<?php echo number_format($product['price_pesos'] ?? 0, 0, '', '.'); ?>" 
+                                           required data-raw-value="<?php echo $product['price_pesos'] ?? '0'; ?>">
                                     <span class="input-group-text">COP</span>
                                 </div>
                             </div>
@@ -599,9 +599,9 @@ require_once 'inc/header.php';
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="price_dollars" name="price_dollars" 
-                                           value="<?php echo $product['price_dollars'] ?? ''; ?>" 
-                                           min="0" step="0.01">
+                                    <input type="text" class="form-control price-input" id="price_dollars" name="price_dollars" 
+                                           value="<?php echo number_format($product['price_dollars'] ?? 0, 0, '', '.'); ?>" 
+                                           data-raw-value="<?php echo $product['price_dollars'] ?? '0'; ?>">
                                     <span class="input-group-text">USD</span>
                                 </div>
                                 <div class="form-text">Opcional: Dejar vacío si no aplica</div>
@@ -626,9 +626,9 @@ require_once 'inc/header.php';
                                         <i class="fas fa-percent me-1"></i>Descuento (ARS) %
                                     </label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="discount_percentage_ars" name="discount_percentage_ars" 
-                                               value="<?php echo $product['discount_percentage_ars'] ?? '0'; ?>" 
-                                               min="0" max="100" step="0.01">
+                                        <input type="text" class="form-control discount-input" id="discount_percentage_ars" name="discount_percentage_ars" 
+                                               value="<?php echo intval($product['discount_percentage_ars'] ?? 0); ?>" 
+                                               data-raw-value="<?php echo intval($product['discount_percentage_ars'] ?? 0); ?>">
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <small class="text-muted" id="discount-preview-ars">Sin descuento</small>
@@ -639,9 +639,9 @@ require_once 'inc/header.php';
                                         <i class="fas fa-percent me-1"></i>Descuento (USD) %
                                     </label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="discount_percentage_usd" name="discount_percentage_usd" 
-                                               value="<?php echo $product['discount_percentage_usd'] ?? '0'; ?>" 
-                                               min="0" max="100" step="0.01">
+                                        <input type="text" class="form-control discount-input" id="discount_percentage_usd" name="discount_percentage_usd" 
+                                               value="<?php echo intval($product['discount_percentage_usd'] ?? 0); ?>" 
+                                               data-raw-value="<?php echo intval($product['discount_percentage_usd'] ?? 0); ?>">
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <small class="text-muted" id="discount-preview-usd">Sin descuento</small>
@@ -1678,6 +1678,95 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 });
 
 }); // Fin de DOMContentLoaded
+
+// ==========================================
+// FORMATO DE PRECIOS CON SEPARADOR DE MILES
+// ==========================================
+(function() {
+    'use strict';
+    
+    // Función para formatear número con puntos de miles
+    function formatNumberWithThousands(value) {
+        // Remover todo excepto dígitos
+        const num = value.replace(/\D/g, '');
+        
+        // Si está vacío, retornar vacío
+        if (!num) return '';
+        
+        // Formatear con puntos de miles
+        return parseInt(num, 10).toLocaleString('es-AR').replace(/,/g, '.');
+    }
+    
+    // Función para obtener el valor sin formato
+    function getRawValue(formattedValue) {
+        return formattedValue.replace(/\./g, '');
+    }
+    
+    // Manejar campos de precio
+    document.querySelectorAll('.price-input').forEach(input => {
+        // Formatear en tiempo real mientras se escribe
+        input.addEventListener('input', function(e) {
+            const cursorPosition = this.selectionStart;
+            const oldLength = this.value.length;
+            
+            // Guardar valor sin formato
+            const rawValue = getRawValue(this.value);
+            this.setAttribute('data-raw-value', rawValue);
+            
+            // Formatear valor
+            const formatted = formatNumberWithThousands(this.value);
+            this.value = formatted;
+            
+            // Ajustar posición del cursor
+            const newLength = formatted.length;
+            const diff = newLength - oldLength;
+            this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+        });
+        
+        // Al perder el foco, asegurar formato correcto
+        input.addEventListener('blur', function() {
+            const rawValue = getRawValue(this.value);
+            this.setAttribute('data-raw-value', rawValue);
+            this.value = formatNumberWithThousands(this.value);
+        });
+    });
+    
+    // Manejar campos de descuento (solo enteros, sin decimales)
+    document.querySelectorAll('.discount-input').forEach(input => {
+        input.addEventListener('input', function(e) {
+            // Solo permitir números enteros hasta 100
+            let value = this.value.replace(/\D/g, ''); // Remover todo excepto dígitos
+            
+            if (value) {
+                value = parseInt(value, 10);
+                if (value > 100) value = 100; // Máximo 100%
+            }
+            
+            this.value = value || '';
+            this.setAttribute('data-raw-value', value || '0');
+        });
+    });
+    
+    // Al enviar el formulario, convertir valores formateados a números
+    const form = document.getElementById('edit-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Convertir campos de precio a valores sin formato
+            document.querySelectorAll('.price-input').forEach(input => {
+                const rawValue = getRawValue(input.value);
+                input.value = rawValue || '0';
+            });
+            
+            // Asegurar que descuentos sean enteros
+            document.querySelectorAll('.discount-input').forEach(input => {
+                const rawValue = input.value.replace(/\D/g, '');
+                input.value = rawValue || '0';
+            });
+        });
+    }
+    
+    console.log('✅ Price formatting system initialized (Edit Mode)');
+})();
 </script>
 
 <?php require_once 'inc/footer.php'; ?>
