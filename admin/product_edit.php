@@ -397,11 +397,6 @@ require_once 'inc/header.php';
 
 <div class="row">
     <div class="col-12">
-        <div class="alert alert-primary">
-            <i class="fas fa-edit me-2"></i>
-            <strong>Editando:</strong> <?php echo htmlspecialchars($product['name']); ?>
-        </div>
-        
         <!-- Botón para auto-completar -->
         <div class="text-center mb-4">
             <button type="button" class="btn btn-success btn-lg" id="autoCompleteBtn" style="min-width: 300px;">
@@ -412,7 +407,17 @@ require_once 'inc/header.php';
         
         <form method="POST" enctype="multipart/form-data" id="product-form">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-            <input type="hidden" name="primary_image_id" id="primary_image_id" value="">
+            <!-- Version: 2.16 - BASE DE DATOS EXPANDIDA:
+                1. Ahora incluye 200+ juegos verificados (antes 100+)
+                2. 65+ franquicias distintas de videojuegos
+                3. Series agregadas: Pokemon, Dragon Ball, Naruto, Witcher, Tomb Raider, Batman Arkham
+                4. Juegos online/esports: Valorant, League of Legends, Dota 2, Counter-Strike
+                5. Juegos deportes: NBA 2K, Madden NFL, WWE 2K
+                6. Juegos AAA recientes: Starfield, Cyberpunk 2077, Dying Light 2
+                7. Modal verifica plataformas ANTES de mostrar resultados
+                8. Badge "✓ Verificado" para juegos de base de datos conocida
+                Base de datos: 200+ juegos | Fuentes: Wikipedia, IGN, MobyGames
+            -->
             
             <div class="row">
                 <!-- Información básica -->
@@ -483,7 +488,7 @@ require_once 'inc/header.php';
                                           rows="6" required><?php echo htmlspecialchars($product['description'] ?? ''); ?></textarea>
                             </div>
                             
-                            <div class="form-check">
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" 
                                        value="1" <?php echo (!empty($product['is_featured'])) ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="is_featured">
@@ -491,19 +496,11 @@ require_once 'inc/header.php';
                                 </label>
                             </div>
                             
-                            <div class="form-check">
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" id="is_new" name="is_new" 
                                        value="1" <?php echo (!empty($product['is_new'])) ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="is_new">
                                     ⭐ Novedad (aparece en "Novedades" del home)
-                                </label>
-                            </div>
-                            
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
-                                       value="1" <?php echo (isset($product['is_active']) ? $product['is_active'] : 1) ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="is_active">
-                                    Visible en la tienda
                                 </label>
                             </div>
                         </div>
@@ -518,25 +515,21 @@ require_once 'inc/header.php';
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="alert alert-warning">
-                                <i class="fas fa-lightbulb me-2"></i>
-                                <strong>Consejo:</strong> Arrastra las imágenes para cambiar el orden. La primera imagen será la portada del producto.
-                            </div>
-                            
                             <div class="mb-3">
-                                <label for="images" class="form-label">Agregar Imágenes</label>
-                                <input type="file" class="form-control" id="images" name="images[]"
-                                       multiple accept="image/jpeg,image/png,image/webp,image/jpg">
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-images me-2"></i>Imágenes del Producto
+                                </label>
+                                <div class="upload-area border border-2 border-dashed rounded-3 p-4 text-center" id="imageUploadArea" style="cursor: pointer; transition: all 0.3s;">
+                                    <input type="file" class="d-none" id="images" name="images[]" multiple accept="image/jpeg,image/png,image/webp,image/jpg">
+                                    <div class="upload-icon mb-3">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-primary"></i>
+                                    </div>
+                                    <h5 class="mb-2">Arrastra imágenes aquí o haz clic para seleccionar</h5>
+                                    <p class="text-muted mb-0">
+                                        <small><i class="fas fa-info-circle me-1"></i>Formatos: JPG, PNG, WebP • Máximo 5MB por imagen</small>
+                                    </p>
                                 </div>
                             </div>
-                            
-                            <div class="alert alert-info" id="drag-drop-info" style="display: none;">
-                                <i class="fas fa-hand-rock"></i> <strong>Arrastra las imágenes</strong> para cambiar el orden. La primera imagen será la portada.
-                            </div>
-                            
-                            <!-- Vista previa con drag & drop -->
                             <div id="image-preview" class="row g-3"></div>
                         </div>
                     </div>
@@ -668,14 +661,10 @@ require_once 'inc/header.php';
                             <hr>
                             
                             <div class="mb-3">
-                                <label for="stock_quantity" class="form-label">
-                                    Cantidad en Stock *
-                                    <i class="fas fa-boxes text-muted"></i>
-                                </label>
-                                <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" 
+                                <label for="stock_quantity" class="form-label">Cantidad en Stock *</label>
+                                <input type="number" class="form-control form-control-lg" id="stock_quantity" name="stock_quantity" 
                                        value="<?php echo $product['stock_quantity'] ?? '0'; ?>" 
-                                       min="0" required>
-                                <div id="stock-alert" class="form-text"></div>
+                                       placeholder="0" min="0" required>
                             </div>
                         </div>
                     </div>
@@ -701,17 +690,17 @@ require_once 'inc/header.php';
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                                        <i class="fas fa-plus"></i>
+                                    <button class="btn btn-outline-success" type="button" id="addCategoryBtn" title="Agregar nueva categoría">
+                                        <i class="fas fa-plus"></i> Agregar
                                     </button>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="brand_id" class="form-label">Marca</label>
+                                <label for="brand_id" class="form-label">Marca *</label>
                                 <div class="input-group">
-                                    <select class="form-select" id="brand_id" name="brand_id">
-                                        <option value="">Sin marca</option>
+                                    <select class="form-select" id="brand_id" name="brand_id" required>
+                                        <option value="">Seleccionar marca</option>
                                         <?php foreach ($brands as $brand): ?>
                                             <option value="<?php echo $brand['id']; ?>" 
                                                     <?php echo ($product['brand_id'] ?? '') == $brand['id'] ? 'selected' : ''; ?>>
@@ -719,17 +708,17 @@ require_once 'inc/header.php';
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#addBrandModal">
-                                        <i class="fas fa-plus"></i>
+                                    <button class="btn btn-outline-success" type="button" id="addBrandBtn" title="Agregar nueva marca">
+                                        <i class="fas fa-plus"></i> Agregar
                                     </button>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="console_id" class="form-label">Consola / Plataforma</label>
+                                <label for="console_id" class="form-label">Consola / Plataforma *</label>
                                 <div class="input-group">
-                                    <select class="form-select" id="console_id" name="console_id">
-                                        <option value="">Sin consola</option>
+                                    <select class="form-select" id="console_id" name="console_id" required>
+                                        <option value="">Seleccionar consola</option>
                                         <?php foreach ($consoles as $console): ?>
                                             <option value="<?php echo $console['id']; ?>" 
                                                     <?php echo ($product['console_id'] ?? '') == $console['id'] ? 'selected' : ''; ?>>
@@ -737,18 +726,17 @@ require_once 'inc/header.php';
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#addConsoleModal">
-                                        <i class="fas fa-plus"></i>
+                                    <button class="btn btn-outline-success" type="button" id="addConsoleBtn" title="Agregar nueva consola">
+                                        <i class="fas fa-plus"></i> Agregar
                                     </button>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">
-                                    Géneros
-                                    <button class="btn btn-sm btn-outline-success ms-2" type="button" 
-                                            data-bs-toggle="modal" data-bs-target="#addGenreModal">
-                                        <i class="fas fa-plus"></i> Agregar
+                                <label class="form-label d-flex justify-content-between align-items-center">
+                                    <span>Géneros</span>
+                                    <button class="btn btn-sm btn-outline-success" type="button" id="addGenreBtn" title="Agregar nuevo género">
+                                        <i class="fas fa-plus"></i> Agregar género
                                     </button>
                                 </label>
                                 <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
@@ -772,7 +760,6 @@ require_once 'inc/header.php';
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <div class="form-text">Puede seleccionar múltiples géneros</div>
                             </div>
                         </div>
                     </div>
@@ -781,20 +768,14 @@ require_once 'inc/header.php';
                     <div class="card">
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="fas fa-save me-2"></i>
                                     Actualizar Producto
                                 </button>
                                 
                                 <a href="products.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>
-                                    Volver a Productos
-                                </a>
-                                
-                                <a href="../<?php echo getProductUrl($product); ?>" 
-                                   class="btn btn-outline-info" target="_blank">
-                                    <i class="fas fa-eye me-2"></i>
-                                    Ver en Sitio
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
                                 </a>
                             </div>
                         </div>
@@ -811,24 +792,21 @@ require_once 'inc/header.php';
 <div class="modal fade" id="addCategoryModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>Nueva Categoría</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Agregar Nueva Categoría</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="new_category_name" class="form-label">Nombre *</label>
-                    <input type="text" class="form-control" id="new_category_name" required>
+                    <label for="newCategoryName" class="form-label">Nombre de la Categoría *</label>
+                    <input type="text" class="form-control" id="newCategoryName" placeholder="Ej: Ediciones Especiales" required>
                 </div>
-                <div class="mb-3">
-                    <label for="new_category_description" class="form-label">Descripción</label>
-                    <textarea class="form-control" id="new_category_description" rows="3"></textarea>
-                </div>
+                <div id="addCategoryResult"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveNewCategory()">
-                    <i class="fas fa-save"></i> Guardar
+                <button type="button" class="btn btn-success" id="saveCategoryBtn">
+                    <i class="fas fa-save me-2"></i>Guardar
                 </button>
             </div>
         </div>
@@ -839,20 +817,21 @@ require_once 'inc/header.php';
 <div class="modal fade" id="addBrandModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-trademark me-2"></i>Nueva Marca</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Agregar Nueva Marca</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="new_brand_name" class="form-label">Nombre *</label>
-                    <input type="text" class="form-control" id="new_brand_name" required>
+                    <label for="newBrandName" class="form-label">Nombre de la Marca *</label>
+                    <input type="text" class="form-control" id="newBrandName" placeholder="Ej: PlayStation Studios" required>
                 </div>
+                <div id="addBrandResult"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveNewBrand()">
-                    <i class="fas fa-save"></i> Guardar
+                <button type="button" class="btn btn-success" id="saveBrandBtn">
+                    <i class="fas fa-save me-2"></i>Guardar
                 </button>
             </div>
         </div>
@@ -863,24 +842,21 @@ require_once 'inc/header.php';
 <div class="modal fade" id="addConsoleModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-gamepad me-2"></i>Nueva Consola</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Agregar Nueva Consola</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="new_console_name" class="form-label">Nombre *</label>
-                    <input type="text" class="form-control" id="new_console_name" required>
+                    <label for="newConsoleName" class="form-label">Nombre de la Consola *</label>
+                    <input type="text" class="form-control" id="newConsoleName" placeholder="Ej: PlayStation 1" required>
                 </div>
-                <div class="mb-3">
-                    <label for="new_console_manufacturer" class="form-label">Fabricante</label>
-                    <input type="text" class="form-control" id="new_console_manufacturer">
-                </div>
+                <div id="addConsoleResult"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveNewConsole()">
-                    <i class="fas fa-save"></i> Guardar
+                <button type="button" class="btn btn-success" id="saveConsoleBtn">
+                    <i class="fas fa-save me-2"></i>Guardar
                 </button>
             </div>
         </div>
@@ -891,24 +867,21 @@ require_once 'inc/header.php';
 <div class="modal fade" id="addGenreModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-list-ul me-2"></i>Nuevo Género</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Agregar Nuevo Género</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="new_genre_name" class="form-label">Nombre *</label>
-                    <input type="text" class="form-control" id="new_genre_name" required>
+                    <label for="newGenreName" class="form-label">Nombre del Género *</label>
+                    <input type="text" class="form-control" id="newGenreName" placeholder="Ej: Survival Horror" required>
                 </div>
-                <div class="mb-3">
-                    <label for="new_genre_description" class="form-label">Descripción</label>
-                    <textarea class="form-control" id="new_genre_description" rows="3"></textarea>
-                </div>
+                <div id="addGenreResult"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveNewGenre()">
-                    <i class="fas fa-save"></i> Guardar
+                <button type="button" class="btn btn-success" id="saveGenreBtn">
+                    <i class="fas fa-save me-2"></i>Guardar
                 </button>
             </div>
         </div>
@@ -921,6 +894,29 @@ require_once 'inc/header.php';
  * Versión: 2.2.0 - Simplificado (sin drag & drop)
  * Última actualización: 2025-01-10
  */
+
+/* Estilos para drag & drop de imágenes */
+.upload-area {
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background-color: #e9ecef;
+    border-color: #0d6efd !important;
+}
+
+.upload-area.border-primary {
+    background-color: #cfe2ff !important;
+}
+
+.upload-icon {
+    transition: transform 0.3s ease;
+}
+
+.upload-area:hover .upload-icon i {
+    transform: translateY(-5px);
+}
 
 /* Cards de imágenes */
 .image-item {
@@ -977,6 +973,98 @@ require_once 'inc/header.php';
 
 .sortable-image-item:hover {
     transform: translateY(-5px);
+}
+
+/* Estilos para modal de búsqueda de juegos */
+.game-result-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    min-height: 200px;
+}
+
+.game-result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    border-color: #0d6efd;
+}
+
+.game-result-card img {
+    min-height: 120px;
+    max-height: 120px;
+    display: block;
+}
+
+.game-result-card .card-body {
+    padding: 0.75rem;
+}
+
+.game-result-card .card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.2;
+    max-height: 2.4em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Estilos para Modal de Éxito */
+#successInfoModal .modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+#successInfoModal .modal-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    padding: 1.5rem;
+}
+
+#successInfoModal .success-animation {
+    animation: successPulse 1.5s ease-in-out;
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+#successInfoModal .alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+#successInfoModal .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+#successInfoModal .list-unstyled li {
+    padding: 0.4rem 0;
+    transition: all 0.3s ease;
+}
+
+#successInfoModal .list-unstyled li:hover {
+    padding-left: 5px;
+    background-color: rgba(40, 167, 69, 0.05);
+    border-radius: 5px;
+}
+
+#successInfoModal .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#successInfoModal .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 </style>
 
@@ -1516,154 +1604,205 @@ if (productForm) {
 }
 
 // ============================================
-// FUNCIONES PARA AGREGAR NUEVOS ELEMENTOS
+// BOTONES DE AGREGAR CATEGORÍA, MARCA, CONSOLA Y GÉNERO
 // ============================================
 
-function saveNewCategory() {
-    const name = document.getElementById('new_category_name').value.trim();
-    const description = document.getElementById('new_category_description').value.trim();
-    
-    if (!name) {
-        alert('El nombre es requerido');
-        return;
-    }
-    
-    fetch('api/add_category.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Agregar opción al select
-            const option = new Option(data.category.name, data.category.id, true, true);
-            document.getElementById('category_id').add(option);
-            
-            // Cerrar modal
-            const modal = document.getElementById('addCategoryModal');
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
-            }
-            
-            // Limpiar campos
-            document.getElementById('new_category_name').value = '';
-            document.getElementById('new_category_description').value = '';
-            
-            alert('Categoría creada correctamente');
-        } else {
-            alert('Error: ' + (data.message || 'No se pudo crear la categoría'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión');
+// Agregar Categoría
+const addCategoryBtn = document.getElementById('addCategoryBtn');
+if (addCategoryBtn) {
+    addCategoryBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+        modal.show();
     });
 }
 
-function saveNewBrand() {
-    const name = document.getElementById('new_brand_name').value.trim();
-    
+const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+if (saveCategoryBtn) {
+    saveCategoryBtn.addEventListener('click', function() {
+    const name = document.getElementById('newCategoryName').value.trim();
     if (!name) {
-        alert('El nombre es requerido');
+        alert('Por favor ingrese un nombre para la categoría');
         return;
     }
     
-    fetch('api/add_brand.php', {
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    
+    fetch('ajax/save_category.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name: name })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
         if (data.success) {
-            const option = new Option(data.brand.name, data.brand.id, true, true);
-            document.getElementById('brand_id').add(option);
-            
-            const modal = document.getElementById('addBrandModal');
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
-            }
-            
-            document.getElementById('new_brand_name').value = '';
-            alert('Marca creada correctamente');
+            const select = document.getElementById('category_id');
+            const option = new Option(name, data.id, true, true);
+            select.add(option);
+            bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+            document.getElementById('newCategoryName').value = '';
         } else {
-            alert('Error: ' + (data.message || 'No se pudo crear la marca'));
+            alert(data.message || 'Error al agregar categoría');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión');
+    .catch(e => alert('Error: ' + e.message))
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+    });
     });
 }
 
-function saveNewConsole() {
-    const name = document.getElementById('new_console_name').value.trim();
-    const manufacturer = document.getElementById('new_console_manufacturer').value.trim();
-    
-    if (!name) {
-        alert('El nombre es requerido');
-        return;
-    }
-    
-    fetch('api/add_console.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, manufacturer })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const option = new Option(data.console.name, data.console.id, true, true);
-            document.getElementById('console_id').add(option);
-            
-            const modal = document.getElementById('addConsoleModal');
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
-            }
-            
-            document.getElementById('new_console_name').value = '';
-            document.getElementById('new_console_manufacturer').value = '';
-            alert('Consola creada correctamente');
-        } else {
-            alert('Error: ' + (data.message || 'No se pudo crear la consola'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión');
+// Agregar Marca
+const addBrandBtn = document.getElementById('addBrandBtn');
+if (addBrandBtn) {
+    addBrandBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addBrandModal'));
+        modal.show();
     });
 }
 
-function saveNewGenre() {
-    const name = document.getElementById('new_genre_name').value.trim();
-    const description = document.getElementById('new_genre_description').value.trim();
-    
+const saveBrandBtn = document.getElementById('saveBrandBtn');
+if (saveBrandBtn) {
+    saveBrandBtn.addEventListener('click', function() {
+    const name = document.getElementById('newBrandName').value.trim();
     if (!name) {
-        alert('El nombre es requerido');
+        alert('Por favor ingrese un nombre para la marca');
         return;
     }
     
-    fetch('api/add_genre.php', {
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    
+    fetch('ajax/save_brand.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description })
+        body: JSON.stringify({ name: name })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
         if (data.success) {
-            // Recargar página para mostrar el nuevo género en los checkboxes
-            location.reload();
+            const select = document.getElementById('brand_id');
+            const option = new Option(name, data.id, true, true);
+            select.add(option);
+            bootstrap.Modal.getInstance(document.getElementById('addBrandModal')).hide();
+            document.getElementById('newBrandName').value = '';
         } else {
-            alert('Error: ' + (data.message || 'No se pudo crear el género'));
+            alert(data.message || 'Error al agregar marca');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión');
+    .catch(e => alert('Error: ' + e.message))
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+    });
+    });
+}
+
+// Agregar Consola
+const addConsoleBtn = document.getElementById('addConsoleBtn');
+if (addConsoleBtn) {
+    addConsoleBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addConsoleModal'));
+        modal.show();
+    });
+}
+
+const saveConsoleBtn = document.getElementById('saveConsoleBtn');
+if (saveConsoleBtn) {
+    saveConsoleBtn.addEventListener('click', function() {
+    const name = document.getElementById('newConsoleName').value.trim();
+    if (!name) {
+        alert('Por favor ingrese un nombre para la consola');
+        return;
+    }
+    
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    
+    fetch('ajax/save_console.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById('console_id');
+            const option = new Option(name, data.id, true, true);
+            select.add(option);
+            bootstrap.Modal.getInstance(document.getElementById('addConsoleModal')).hide();
+            document.getElementById('newConsoleName').value = '';
+        } else {
+            alert(data.message || 'Error al agregar consola');
+        }
+    })
+    .catch(e => alert('Error: ' + e.message))
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+    });
+    });
+}
+
+// Agregar Género
+const addGenreBtn = document.getElementById('addGenreBtn');
+if (addGenreBtn) {
+    addGenreBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addGenreModal'));
+        modal.show();
+    });
+}
+
+const saveGenreBtn = document.getElementById('saveGenreBtn');
+if (saveGenreBtn) {
+    saveGenreBtn.addEventListener('click', function() {
+    const name = document.getElementById('newGenreName').value.trim();
+    if (!name) {
+        alert('Por favor ingrese un nombre para el género');
+        return;
+    }
+    
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    
+    fetch('ajax/save_genre.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar el nuevo género a la lista
+            const genreContainer = document.querySelector('.border.rounded');
+            const newGenreHTML = `
+                <div class="col-md-6 mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" 
+                               name="genres[]" value="${data.id}" 
+                               id="genre_${data.id}" checked>
+                        <label class="form-check-label" for="genre_${data.id}">
+                            ${name}
+                        </label>
+                    </div>
+                </div>
+            `;
+            const row = genreContainer.querySelector('.row');
+            if (row) {
+                row.insertAdjacentHTML('beforeend', newGenreHTML);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('addGenreModal')).hide();
+            document.getElementById('newGenreName').value = '';
+        } else {
+            alert(data.message || 'Error al agregar género');
+        }
+    })
+    .catch(e => alert('Error: ' + e.message))
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+    });
     });
 }
 
@@ -2513,6 +2652,44 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                         <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
                     </div>
                 `;
+            }
+        });
+    }
+    
+    // Mejorar área de drag & drop de imágenes
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imageInput = document.getElementById('images');
+    
+    if (imageUploadArea && imageInput) {
+        // Click en el área abre el selector de archivos
+        imageUploadArea.addEventListener('click', function() {
+            imageInput.click();
+        });
+        
+        // Drag & drop
+        imageUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('border-primary', 'bg-light');
+        });
+        
+        imageUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('border-primary', 'bg-light');
+        });
+        
+        imageUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('border-primary', 'bg-light');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                // Asignar archivos al input
+                imageInput.files = files;
+                // Disparar evento change
+                imageInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
     }
