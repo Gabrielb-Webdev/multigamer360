@@ -1517,8 +1517,16 @@ if (isOnSaleSwitch) {
 
 // Alerta de stock bajo
 function updateStockAlert() {
-    const stock = parseInt(document.getElementById('stock_quantity').value) || 0;
+    const stockInput = document.getElementById('stock_quantity');
+    if (!stockInput) return;
+    
+    const stock = parseInt(stockInput.value) || 0;
     const alert = document.getElementById('stock-alert');
+    
+    // Validar que el elemento existe
+    if (!alert) {
+        return;
+    }
     
     if (stock === 0) {
         alert.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle"></i> Sin stock</span>';
@@ -1534,8 +1542,10 @@ if (stockInput) {
     stockInput.addEventListener('input', updateStockAlert);
 }
 
-// Inicializar
-updateStockAlert();
+// Inicializar solo si el elemento existe
+if (document.getElementById('stock-alert')) {
+    updateStockAlert();
+}
 
 // ============================================
 // GENERAR SKU AUTOMÁTICO
@@ -1547,6 +1557,7 @@ const nameInputForSku = document.getElementById('name');
 if (nameInputForSku) {
     nameInputForSku.addEventListener('blur', function() {
     const skuField = document.getElementById('sku');
+    if (!skuField) return;
     if (!skuField.value && this.value) {
         // Limpiar y tomar hasta 6 caracteres
         let prefix = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 6);
@@ -1573,23 +1584,39 @@ if (nameInputForSku) {
 const productForm = document.getElementById('product-form');
 if (productForm) {
     productForm.addEventListener('submit', function(e) {
-        const pricePesos = parseFloat(document.getElementById('price_pesos').value) || 0;
-        const isOnSale = document.getElementById('is_on_sale').checked;
-        const discountPercentage = parseFloat(document.getElementById('discount_percentage').value) || 0;
+        const isOnSale = document.getElementById('is_on_sale');
+        const discountArs = document.getElementById('discount_percentage_ars');
+        const discountUsd = document.getElementById('discount_percentage_usd');
         
-        // Validar porcentaje de descuento si está en oferta
-        if (isOnSale && (discountPercentage < 0 || discountPercentage > 100)) {
-            e.preventDefault();
-            alert('El porcentaje de descuento debe estar entre 0 y 100');
-            document.getElementById('discount_percentage').focus();
-            return false;
+        // Validar porcentajes de descuento si está en oferta
+        if (isOnSale && isOnSale.checked) {
+            if (discountArs) {
+                const discountArsValue = parseFloat(discountArs.value) || 0;
+                if (discountArsValue < 0 || discountArsValue > 100) {
+                    e.preventDefault();
+                    alert('El porcentaje de descuento ARS debe estar entre 0 y 100');
+                    discountArs.focus();
+                    return false;
+                }
+            }
+            
+            if (discountUsd) {
+                const discountUsdValue = parseFloat(discountUsd.value) || 0;
+                if (discountUsdValue < 0 || discountUsdValue > 100) {
+                    e.preventDefault();
+                    alert('El porcentaje de descuento USD debe estar entre 0 y 100');
+                    discountUsd.focus();
+                    return false;
+                }
+            }
         }
         
         // Validar que tenga al menos una categoría
-        if (!document.getElementById('category_id').value) {
+        const categorySelect = document.getElementById('category_id');
+        if (categorySelect && !categorySelect.value) {
             e.preventDefault();
             alert('Debe seleccionar una categoría');
-            document.getElementById('category_id').focus();
+            categorySelect.focus();
             return false;
         }
         
@@ -1614,7 +1641,9 @@ if (addCategoryBtn) {
 const saveCategoryBtn = document.getElementById('saveCategoryBtn');
 if (saveCategoryBtn) {
     saveCategoryBtn.addEventListener('click', function() {
-    const name = document.getElementById('newCategoryName').value.trim();
+    const nameInput = document.getElementById('newCategoryName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
     if (!name) {
         alert('Por favor ingrese un nombre para la categoría');
         return;
@@ -1632,10 +1661,17 @@ if (saveCategoryBtn) {
     .then(data => {
         if (data.success) {
             const select = document.getElementById('category_id');
-            const option = new Option(name, data.id, true, true);
-            select.add(option);
-            bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
-            document.getElementById('newCategoryName').value = '';
+            if (select) {
+                const option = new Option(name, data.id, true, true);
+                select.add(option);
+            }
+            const modalEl = document.getElementById('addCategoryModal');
+            if (modalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+            const nameInput = document.getElementById('newCategoryName');
+            if (nameInput) nameInput.value = '';
         } else {
             alert(data.message || 'Error al agregar categoría');
         }
@@ -1660,7 +1696,9 @@ if (addBrandBtn) {
 const saveBrandBtn = document.getElementById('saveBrandBtn');
 if (saveBrandBtn) {
     saveBrandBtn.addEventListener('click', function() {
-    const name = document.getElementById('newBrandName').value.trim();
+    const nameInput = document.getElementById('newBrandName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
     if (!name) {
         alert('Por favor ingrese un nombre para la marca');
         return;
@@ -1678,10 +1716,17 @@ if (saveBrandBtn) {
     .then(data => {
         if (data.success) {
             const select = document.getElementById('brand_id');
-            const option = new Option(name, data.id, true, true);
-            select.add(option);
-            bootstrap.Modal.getInstance(document.getElementById('addBrandModal')).hide();
-            document.getElementById('newBrandName').value = '';
+            if (select) {
+                const option = new Option(name, data.id, true, true);
+                select.add(option);
+            }
+            const modalEl = document.getElementById('addBrandModal');
+            if (modalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+            const nameInput = document.getElementById('newBrandName');
+            if (nameInput) nameInput.value = '';
         } else {
             alert(data.message || 'Error al agregar marca');
         }
@@ -1706,7 +1751,9 @@ if (addConsoleBtn) {
 const saveConsoleBtn = document.getElementById('saveConsoleBtn');
 if (saveConsoleBtn) {
     saveConsoleBtn.addEventListener('click', function() {
-    const name = document.getElementById('newConsoleName').value.trim();
+    const nameInput = document.getElementById('newConsoleName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
     if (!name) {
         alert('Por favor ingrese un nombre para la consola');
         return;
@@ -1724,10 +1771,17 @@ if (saveConsoleBtn) {
     .then(data => {
         if (data.success) {
             const select = document.getElementById('console_id');
-            const option = new Option(name, data.id, true, true);
-            select.add(option);
-            bootstrap.Modal.getInstance(document.getElementById('addConsoleModal')).hide();
-            document.getElementById('newConsoleName').value = '';
+            if (select) {
+                const option = new Option(name, data.id, true, true);
+                select.add(option);
+            }
+            const modalEl = document.getElementById('addConsoleModal');
+            if (modalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+            const nameInput = document.getElementById('newConsoleName');
+            if (nameInput) nameInput.value = '';
         } else {
             alert(data.message || 'Error al agregar consola');
         }
@@ -1752,7 +1806,9 @@ if (addGenreBtn) {
 const saveGenreBtn = document.getElementById('saveGenreBtn');
 if (saveGenreBtn) {
     saveGenreBtn.addEventListener('click', function() {
-    const name = document.getElementById('newGenreName').value.trim();
+    const nameInput = document.getElementById('newGenreName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
     if (!name) {
         alert('Por favor ingrese un nombre para el género');
         return;
@@ -1787,8 +1843,13 @@ if (saveGenreBtn) {
             if (row) {
                 row.insertAdjacentHTML('beforeend', newGenreHTML);
             }
-            bootstrap.Modal.getInstance(document.getElementById('addGenreModal')).hide();
-            document.getElementById('newGenreName').value = '';
+            const modalEl = document.getElementById('addGenreModal');
+            if (modalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+            const nameInput = document.getElementById('newGenreName');
+            if (nameInput) nameInput.value = '';
         } else {
             alert(data.message || 'Error al agregar género');
         }
@@ -1807,58 +1868,82 @@ if (saveGenreBtn) {
 
 // Actualizar contadores de SEO
 function updateSEOCounters() {
-    const metaTitle = document.getElementById('meta_title').value;
-    const metaDesc = document.getElementById('meta_description').value;
+    const metaTitleEl = document.getElementById('meta_title');
+    const metaDescEl = document.getElementById('meta_description');
+    const titleCounterEl = document.getElementById('meta-title-counter');
+    const descCounterEl = document.getElementById('meta-desc-counter');
     
-    document.getElementById('meta-title-counter').textContent = `(${metaTitle.length}/60)`;
-    document.getElementById('meta-desc-counter').textContent = `(${metaDesc.length}/160)`;
+    if (metaTitleEl && titleCounterEl) {
+        titleCounterEl.textContent = `(${metaTitleEl.value.length}/60)`;
+    }
+    
+    if (metaDescEl && descCounterEl) {
+        descCounterEl.textContent = `(${metaDescEl.value.length}/160)`;
+    }
 }
 
 // Auto-generar meta tags desde el nombre y descripción
-document.getElementById('auto-generate-seo').addEventListener('click', function() {
-    const productName = document.getElementById('name').value.trim();
-    const description = document.getElementById('description').value.trim();
-    
-    if (!productName) {
-        alert('Primero ingrese el nombre del producto');
-        document.getElementById('name').focus();
-        return;
-    }
-    
-    // Generar meta title (máximo 60 caracteres)
-    let metaTitle = productName;
-    if (metaTitle.length > 60) {
-        metaTitle = metaTitle.substring(0, 57) + '...';
-    }
-    
-    // Generar meta description (máximo 160 caracteres)
-    let metaDesc = description;
-    if (metaDesc.length > 160) {
-        metaDesc = metaDesc.substring(0, 157) + '...';
-    }
-    
-    document.getElementById('meta_title').value = metaTitle;
-    document.getElementById('meta_description').value = metaDesc;
-    
-    updateSEOCounters();
-    
-    // Feedback visual
-    const btn = this;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check"></i> Generado';
-    btn.classList.remove('btn-outline-primary');
-    btn.classList.add('btn-success');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-outline-primary');
-    }, 2000);
-});
+const autoGenerateSeoBtn = document.getElementById('auto-generate-seo');
+if (autoGenerateSeoBtn) {
+    autoGenerateSeoBtn.addEventListener('click', function() {
+        const nameEl = document.getElementById('name');
+        const descriptionEl = document.getElementById('description');
+        const metaTitleEl = document.getElementById('meta_title');
+        const metaDescEl = document.getElementById('meta_description');
+        
+        if (!nameEl) return;
+        
+        const productName = nameEl.value.trim();
+        const description = descriptionEl ? descriptionEl.value.trim() : '';
+        
+        if (!productName) {
+            alert('Primero ingrese el nombre del producto');
+            nameEl.focus();
+            return;
+        }
+        
+        // Generar meta title (máximo 60 caracteres)
+        let metaTitle = productName;
+        if (metaTitle.length > 60) {
+            metaTitle = metaTitle.substring(0, 57) + '...';
+        }
+        
+        // Generar meta description (máximo 160 caracteres)
+        let metaDesc = description;
+        if (metaDesc.length > 160) {
+            metaDesc = metaDesc.substring(0, 157) + '...';
+        }
+        
+        if (metaTitleEl) metaTitleEl.value = metaTitle;
+        if (metaDescEl) metaDescEl.value = metaDesc;
+        
+        updateSEOCounters();
+        
+        // Feedback visual
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Generado';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    });
+}
 
 // Actualizar contadores en tiempo real
-document.getElementById('meta_title').addEventListener('input', updateSEOCounters);
-document.getElementById('meta_description').addEventListener('input', updateSEOCounters);
+const metaTitleInput = document.getElementById('meta_title');
+const metaDescInput = document.getElementById('meta_description');
+
+if (metaTitleInput) {
+    metaTitleInput.addEventListener('input', updateSEOCounters);
+}
+if (metaDescInput) {
+    metaDescInput.addEventListener('input', updateSEOCounters);
+}
 
 // Inicializar contadores al cargar la página
 updateSEOCounters();
@@ -1989,7 +2074,7 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         });
         
         // Al enviar el formulario, convertir valores formateados a números
-        const form = document.getElementById('edit-form');
+        const form = document.getElementById('product-form');
         if (form) {
             form.addEventListener('submit', function(e) {
                 // Convertir campos de precio a valores sin formato
@@ -2166,6 +2251,8 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         try {
             // Mostrar mensaje de carga
             const resultsDiv = document.getElementById('gameSearchResults');
+            if (!resultsDiv) return;
+            
             resultsDiv.innerHTML = `
                 <div class="col-12 text-center py-5">
                     <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
@@ -2508,27 +2595,37 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             modal.hide();
 
             // Mostrar modal de éxito elegante
-            const successModal = new bootstrap.Modal(document.getElementById('successInfoModal'));
-            
-            // Actualizar contenido del modal
-            document.getElementById('successGameTitle').textContent = gameDetails.title || 'Juego';
-            document.getElementById('successPlatformInfo').innerHTML = platform 
-                ? `<i class="fas fa-gamepad me-1"></i>${platform}` 
-                : '<i class="fas fa-gamepad me-1"></i>Información cargada';
-            
-            // Actualizar contador de imágenes
-            const imageCountEl = document.getElementById('imageCount');
-            if (imageCountEl) {
-                if (downloadedImagesCount > 0) {
-                    imageCountEl.textContent = `(${downloadedImagesCount} ${downloadedImagesCount === 1 ? 'imagen descargada' : 'imágenes descargadas'})`;
-                    imageCountEl.className = 'text-success';
-                } else {
-                    imageCountEl.textContent = '(disponibles)';
+            const successModalEl = document.getElementById('successInfoModal');
+            if (successModalEl) {
+                const successModal = new bootstrap.Modal(successModalEl);
+                
+                // Actualizar contenido del modal
+                const successGameTitleEl = document.getElementById('successGameTitle');
+                if (successGameTitleEl) {
+                    successGameTitleEl.textContent = gameDetails.title || 'Juego';
                 }
-            }
+                
+                const successPlatformInfoEl = document.getElementById('successPlatformInfo');
+                if (successPlatformInfoEl) {
+                    successPlatformInfoEl.innerHTML = platform 
+                        ? `<i class="fas fa-gamepad me-1"></i>${platform}` 
+                        : '<i class="fas fa-gamepad me-1"></i>Información cargada';
+                }
             
-            // Mostrar el modal de éxito
-            successModal.show();
+                // Actualizar contador de imágenes
+                const imageCountEl = document.getElementById('imageCount');
+                if (imageCountEl) {
+                    if (downloadedImagesCount > 0) {
+                        imageCountEl.textContent = `(${downloadedImagesCount} ${downloadedImagesCount === 1 ? 'imagen descargada' : 'imágenes descargadas'})`;
+                        imageCountEl.className = 'text-success';
+                    } else {
+                        imageCountEl.textContent = '(disponibles)';
+                    }
+                }
+                
+                // Mostrar el modal de éxito
+                successModal.show();
+            }
 
         } catch (error) {
             console.error('Error cargando datos del juego:', error);
@@ -2548,19 +2645,27 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
     const autoCompleteBtn = document.getElementById('autoCompleteBtn');
     if (autoCompleteBtn) {
         autoCompleteBtn.addEventListener('click', async function() {
-            const title = document.getElementById('name').value.trim();
+            const nameInput = document.getElementById('name');
+            if (!nameInput) return;
+            const title = nameInput.value.trim();
             
             if (!title) {
                 alert('Por favor ingrese primero el nombre del producto');
-                document.getElementById('name').focus();
+                nameInput.focus();
                 return;
             }
             
             // Abrir modal y buscar juegos
-            const modal = new bootstrap.Modal(document.getElementById('gameSearchModal'));
-            const searchInput = document.getElementById('gameSearchInput');
-            const resultsDiv = document.getElementById('gameSearchResults');
+            const gameSearchModalEl = document.getElementById('gameSearchModal');
+            if (!gameSearchModalEl) return;
             
+            const searchInput = document.getElementById('gameSearchInput');
+            if (!searchInput) return;
+            
+            const resultsDiv = document.getElementById('gameSearchResults');
+            if (!resultsDiv) return;
+            
+            const modal = new bootstrap.Modal(gameSearchModalEl);
             searchInput.value = title;
             modal.show();
             
