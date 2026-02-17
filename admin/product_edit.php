@@ -402,6 +402,14 @@ require_once 'inc/header.php';
             <strong>Editando:</strong> <?php echo htmlspecialchars($product['name']); ?>
         </div>
         
+        <!-- Botón para auto-completar -->
+        <div class="text-center mb-4">
+            <button type="button" class="btn btn-success btn-lg" id="autoCompleteBtn" style="min-width: 300px;">
+                <i class="fas fa-magic me-2"></i>Auto-Rellenar Información del Juego
+            </button>
+            <div><small class="text-muted">Busca automáticamente descripción, géneros, plataforma, etc.</small></div>
+        </div>
+        
         <form method="POST" enctype="multipart/form-data" id="product-form">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <input type="hidden" name="primary_image_id" id="primary_image_id" value="">
@@ -971,6 +979,111 @@ require_once 'inc/header.php';
     transform: translateY(-5px);
 }
 </style>
+
+<!-- Modal: Búsqueda de Juegos -->
+<div class="modal fade" id="gameSearchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-search me-2"></i>Buscar Juego</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-lg" id="gameSearchInput" readonly 
+                           placeholder="Buscando..." value="">
+                </div>
+                <div id="gameSearchResults" class="row g-3">
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                        <p class="text-muted">Buscando información del juego...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito: Información Cargada -->
+<div class="modal fade" id="successInfoModal" tabindex="-1" aria-labelledby="successInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="successInfoModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>¡Información Cargada!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="success-animation mb-3">
+                        <i class="fas fa-gamepad fa-4x text-success"></i>
+                    </div>
+                    <h5 class="text-success fw-bold mb-2" id="successGameTitle">Kingdom Hearts</h5>
+                    <p class="text-muted mb-0" id="successPlatformInfo">
+                        <i class="fas fa-gamepad me-1"></i>PlayStation 2
+                    </p>
+                </div>
+                
+                <div class="alert alert-success border-0 mb-3" role="alert">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-language fa-2x me-3 text-success"></i>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Traducido al Español</h6>
+                            <small class="text-muted">Toda la información ha sido traducida automáticamente</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-check-double text-success me-2"></i>Datos Rellenados:
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Descripción completa</strong> <span class="text-muted">(en español)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Géneros del juego</strong> <span class="text-muted">(traducidos)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Plataforma/Consola</strong> <span class="text-muted">(asignada)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Marca/Publisher</strong> <span class="text-muted">(verificado)</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Meta datos SEO</strong> <span class="text-muted">(optimizados)</span>
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-check text-success me-2"></i>
+                                <strong>Imágenes del producto</strong> <span class="text-muted" id="imageCount">(descargadas)</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Revisa los campos y ajusta los precios antes de guardar
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-thumbs-up me-2"></i>¡Entendido!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- SortableJS para Drag & Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -1767,6 +1880,641 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         document.addEventListener('DOMContentLoaded', initPriceFormatting);
     } else {
         initPriceFormatting();
+    }
+
+    // ==========================================
+    // BOTÓN DE AUTO-RELLENAR CON BÚSQUEDA MULTI-FUENTE
+    // Version: 2.15 - Verificación de plataformas antes de mostrar
+    // Agregado a product_edit.php para igualar funcionalidad con product_create.php
+    // ==========================================
+
+    // Función para mostrar los resultados de búsqueda con plataformas verificadas
+    async function displayGameResults(games, container, modal) {
+        container.innerHTML = '<div class="col-12 text-center py-3"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><p class="mt-2">🔍 Verificando plataformas correctas para cada juego...</p></div>';
+
+        const safeGames = Array.isArray(games) ? games : [];
+
+        // Obtener plataformas correctas para todos los juegos
+        const gamesWithCorrectPlatforms = await Promise.all(
+            safeGames.map(async (game) => {
+                try {
+                    const gameName = game && game.name ? game.name : 'Juego sin nombre';
+
+                    // Consultar plataformas correctas de la base de datos
+                    const platformsResponse = await fetch(`ajax/get_game_platforms.php?game_name=${encodeURIComponent(gameName)}`);
+                    const platformsResult = await platformsResponse.json();
+
+                    let correctPlatforms = [];
+                    let platformSource = 'RAWG';
+
+                    if (platformsResult.success && platformsResult.platforms) {
+                        // Asegurar que sean strings (extraer .name si son objetos)
+                        correctPlatforms = platformsResult.platforms.map(p => 
+                            typeof p === 'string' ? p : (p.name || p)
+                        );
+                        platformSource = platformsResult.source;
+                        console.log(`✅ Plataformas verificadas para "${gameName}":`, correctPlatforms, `(Fuente: ${platformSource})`);
+                    } else {
+                        // Fallback a RAWG si no hay en base de datos
+                        correctPlatforms = Array.isArray(game && game.platforms)
+                            ? game.platforms
+                                .map(p => (p && p.platform && p.platform.name) ? p.platform.name : null)
+                                .filter(Boolean)
+                            : [];
+                        console.log(`⚠️ Usando RAWG para "${gameName}":`, correctPlatforms);
+                    }
+
+                    return {
+                        ...game,
+                        correctPlatforms: correctPlatforms,
+                        platformSource: platformSource
+                    };
+                } catch (error) {
+                    console.error('Error obteniendo plataformas para', game.name, error);
+                    // En caso de error, usar las de RAWG
+                    return {
+                        ...game,
+                        correctPlatforms: Array.isArray(game && game.platforms)
+                            ? game.platforms.map(p => p.platform?.name).filter(Boolean)
+                            : [],
+                        platformSource: 'RAWG (error)'
+                    };
+                }
+            })
+        );
+
+        // Limpiar contenedor y mostrar resultados
+        container.innerHTML = '';
+
+        gamesWithCorrectPlatforms.forEach(game => {
+            try {
+                const safeName = game && game.name ? game.name : 'Juego sin nombre';
+
+                // USAR LAS PLATAFORMAS CORRECTAS - Asegurar que sean strings
+                const platformStrings = game.correctPlatforms && game.correctPlatforms.length > 0
+                    ? game.correctPlatforms.map(p => typeof p === 'string' ? p : (p.name || String(p)))
+                    : [];
+                
+                const platformsDisplay = platformStrings.length > 0
+                    ? platformStrings.slice(0, 3).join(', ') + (platformStrings.length > 3 ? ', ...' : '')
+                    : 'N/A';
+
+                const platformCount = game.correctPlatforms ? game.correctPlatforms.length : 0;
+                const platformBadge = game.platformSource === 'KNOWN_DATABASE'
+                    ? '<span class="badge bg-success" style="font-size: 0.6rem;">✓ Verificado</span>'
+                    : '';
+
+                const imageUrl = (game && typeof game.background_image === 'string' && game.background_image.trim() !== '')
+                    ? game.background_image
+                    : 'https://via.placeholder.com/200x150?text=Sin+Imagen';
+                const released = (game && game.released) ? new Date(game.released).getFullYear() : 'N/A';
+                const rating = (game && typeof game.rating === 'number') ? game.rating.toFixed(1) : 'N/A';
+
+            const col = document.createElement('div');
+            col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
+
+            col.innerHTML = `
+                <div class="card game-result-card h-100 shadow-sm" style="cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease;">
+                    <div style="position: relative; overflow: hidden; height: 120px; background: #f0f0f0;">
+                        <img src="${imageUrl}"
+                             class="img-fluid"
+                             style="width: 100%; height: 100%; object-fit: cover;"
+                             alt="${safeName}"
+                             loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/200x150?text=No+Image'">
+                        ${platformBadge ? `<div style="position: absolute; top: 5px; right: 5px;">${platformBadge}</div>` : ''}
+                    </div>
+                    <div class="card-body p-2" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${safeName}
+                        </h6>
+                        <div class="mt-auto" style="font-size: 0.75rem;">
+                            <p class="card-text mb-1" style="color: #666;">
+                                <i class="fas fa-gamepad me-1" style="color: #007bff;"></i><strong>${platformCount > 1 ? platformCount + ' plataformas' : platformsDisplay}</strong>
+                            </p>
+                            ${platformCount > 1 ? `<p class="card-text mb-1" style="color: #999; font-size: 0.7rem;">${platformsDisplay}</p>` : ''}
+                            <p class="card-text mb-1" style="color: #666;">
+                                <i class="fas fa-calendar me-1" style="color: #28a745;"></i>${released}
+                            </p>
+                            <p class="card-text" style="color: #ffc107;">
+                                <i class="fas fa-star me-1"></i>${rating}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            col.querySelector('.game-result-card').addEventListener('click', function() {
+                fillGameData(game, modal);
+            });
+
+            col.querySelector('.game-result-card').addEventListener('mouseenter', function() {
+                this.style.borderColor = '#007bff';
+                this.style.boxShadow = '0 4px 8px rgba(0,123,255,0.3)';
+                this.style.transform = 'translateY(-3px)';
+            });
+
+            col.querySelector('.game-result-card').addEventListener('mouseleave', function() {
+                this.style.borderColor = 'transparent';
+                this.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
+                this.style.transform = 'translateY(0)';
+            });
+            
+            container.appendChild(col);
+            } catch (e) {
+                console.warn('Error renderizando juego:', e, game);
+            }
+        });
+    }
+    
+    // Función para rellenar los datos del juego seleccionado
+    async function fillGameData(game, modal) {
+        try {
+            // Mostrar mensaje de carga
+            const resultsDiv = document.getElementById('gameSearchResults');
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                    <p class="text-muted">Obteniendo plataformas disponibles para "${game.name}"...</p>
+                </div>
+            `;
+
+            // PASO 1: Obtener las plataformas disponibles para este juego
+            console.log('📋 Obteniendo plataformas para:', game.name);
+
+            const platformsResponse = await fetch(`ajax/get_game_platforms.php?game_name=${encodeURIComponent(game.name)}`);
+            const platformsResult = await platformsResponse.json();
+
+            if (!platformsResult.success) {
+                throw new Error(platformsResult.error || 'Error al obtener plataformas');
+            }
+
+            const availablePlatforms = platformsResult.platforms;
+            console.log('🎮 Plataformas disponibles:', availablePlatforms);
+            console.log('📍 Fuente de datos:', platformsResult.source);
+
+            // PASO 2: Si hay múltiples plataformas, mostrar opciones separadas
+            if (availablePlatforms.length > 1) {
+                console.log('⚠️ Múltiples plataformas detectadas, mostrando opciones...');
+
+                resultsDiv.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info mb-4">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>${game.name} - Seleccionar Plataforma
+                            </h5>
+                            <p class="mb-0">Este juego está disponible en <strong>${availablePlatforms.length} plataformas diferentes</strong>.</p>
+                            <p class="mb-0 mt-2">Selecciona la plataforma específica para la cual deseas actualizar el producto.</p>
+                        </div>
+                    </div>
+                `;
+
+                // Crear una card por cada plataforma
+                availablePlatforms.forEach((platform, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12 col-sm-6 col-lg-4 mb-3';
+
+                    // Generar ícono según la plataforma
+                    let icon = 'fas fa-gamepad';
+                    const platformLower = platform.toLowerCase();
+                    if (platformLower.includes('pc')) icon = 'fas fa-laptop';
+                    else if (platformLower.includes('ps') || platformLower.includes('playstation')) icon = 'fab fa-playstation';
+                    else if (platformLower.includes('xbox')) icon = 'fab fa-xbox';
+                    else if (platformLower.includes('switch') || platformLower.includes('nintendo')) icon = 'fas fa-gamepad';
+                    else if (platformLower.includes('mobile') || platformLower.includes('ios') || platformLower.includes('android')) icon = 'fas fa-mobile-alt';
+
+                    col.innerHTML = `
+                        <div class="card platform-option-card h-100 shadow-sm border-0" 
+                             style="cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-center text-white">
+                                <div class="mb-3">
+                                    <i class="${icon} fa-2x" style="opacity: 0.9;"></i>
+                                </div>
+                                <h6 class="card-title mb-2" style="font-size: 1.1rem; font-weight: 600;">${platform}</h6>
+                                <p class="card-text small mb-2" style="opacity: 0.95;">Opción ${index + 1} de ${availablePlatforms.length}</p>
+                                <p class="text-white-50 small mb-0 mt-2" style="font-size: 0.85rem;">Clic para continuar →</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Evento de clic para seleccionar esta plataforma
+                    col.querySelector('.platform-option-card').addEventListener('click', async function() {
+                        console.log(`✅ Usuario seleccionó: ${game.name} - ${platform}`);
+                        await loadGameDataForPlatform(game.name, platform, modal, resultsDiv);
+                    });
+
+                    // Hover effects mejorados
+                    col.querySelector('.platform-option-card').addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-8px)';
+                        this.style.boxShadow = '0 12px 24px rgba(102, 126, 234, 0.4)';
+                    });
+
+                    col.querySelector('.platform-option-card').addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                        this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    });
+
+                    resultsDiv.appendChild(col);
+                });
+
+            } else {
+                // Solo una plataforma, proceder directamente
+                console.log('✅ Una sola plataforma, cargando datos...');
+                await loadGameDataForPlatform(game.name, availablePlatforms[0], modal, resultsDiv);
+            }
+
+        } catch (error) {
+            console.error('Error obteniendo plataformas del juego:', error);
+
+            const resultsDiv = document.getElementById('gameSearchResults');
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <p class="text-muted"><strong>Error al obtener plataformas</strong></p>
+                    <p class="small text-muted">${error.message}</p>
+                    <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            `;
+        }
+    }
+
+    // Función para cargar los datos del juego para una plataforma específica
+    async function loadGameDataForPlatform(gameName, platform, modal, resultsDiv) {
+        try {
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                    <p class="text-muted">Cargando información completa de "${gameName}" para ${platform}...</p>
+                </div>
+            `;
+
+            // USAR AUTOCOMPLETE_GAME_INFO.PHP que tiene toda la lógica de traducción y mapeo al español
+            console.log(`📥 Obteniendo información en español para: ${gameName} - ${platform}`);
+
+            const url = `ajax/autocomplete_game_info.php?game_name=${encodeURIComponent(gameName)}&platform=${encodeURIComponent(platform)}`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.message || 'Error al obtener información del juego');
+            }
+
+            // Usar los datos ya traducidos y mapeados al español
+            const gameDetails = result.data;
+
+            console.log('✅ Datos recibidos de autocomplete_game_info.php:', gameDetails);
+
+            // Variable para almacenar imágenes descargadas
+            let downloadedImagesCount = 0;
+
+            // Descargar y subir imágenes si están disponibles
+            if (gameDetails.images && gameDetails.images.length > 0) {
+                console.log('📸 Descargando', gameDetails.images.length, 'imágenes del juego...');
+
+                const downloadedFiles = [];
+                let successCount = 0;
+
+                for (const imageUrl of gameDetails.images) {
+                    try {
+                        // Crear FormData para subir la imagen
+                        const formData = new FormData();
+                        formData.append('action', 'download_game_image');
+                        formData.append('image_url', imageUrl);
+                        formData.append('game_name', gameDetails.title);
+
+                        // Enviar solicitud para descargar y subir imagen
+                        const imageResponse = await fetch('ajax/upload_game_image.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const imageResult = await imageResponse.json();
+
+                        if (imageResult.success && imageResult.file_path) {
+                            console.log('✅ Imagen descargada:', imageResult.file_path);
+                            
+                            // Convertir la imagen descargada a un objeto File
+                            // Ajustar ruta relativa: estamos en admin/, necesitamos subir un nivel
+                            const imagePath = '../' + imageResult.file_path;
+                            console.log('📂 Ruta ajustada:', imagePath);
+                            
+                            const response = await fetch(imagePath);
+                            const blob = await response.blob();
+                            const file = new File([blob], imageResult.file_name, { type: imageResult.mime_type || 'image/jpeg' });
+                            
+                            console.log('📦 File object creado:', file.name, file.size, 'bytes');
+                            
+                            // Agregar al array de archivos seleccionados
+                            downloadedFiles.push(file);
+                            successCount++;
+                        }
+                    } catch (imageError) {
+                        console.error('❌ Error descargando imagen:', imageError);
+                    }
+                }
+
+                if (downloadedFiles.length > 0) {
+                    console.log(`✅ ${downloadedFiles.length} imágenes descargadas y convertidas`);
+                    
+                    console.log('🔍 Estado ANTES de agregar:');
+                    console.log('  - window.selectedFiles existe?', typeof window.selectedFiles);
+                    console.log('  - window.renderImagePreview existe?', typeof window.renderImagePreview);
+                    console.log('  - window.selectedFiles.length:', window.selectedFiles ? window.selectedFiles.length : 'undefined');
+                    
+                    // Agregar todas las imágenes al array global selectedFiles
+                    downloadedFiles.forEach(file => {
+                        console.log('  → Agregando:', file.name);
+                        window.selectedFiles.push(file);
+                    });
+                    
+                    console.log('🔍 Estado DESPUÉS de agregar:');
+                    console.log('  - window.selectedFiles.length:', window.selectedFiles.length);
+                    
+                    // Regenerar la vista previa para mostrar las imágenes
+                    console.log('🎨 Llamando a window.renderImagePreview()...');
+                    window.renderImagePreview();
+                    
+                    // Actualizar contador
+                    downloadedImagesCount = successCount;
+                    
+                    // Mostrar mensaje de éxito
+                    console.log(`🎉 ${successCount} imágenes agregadas al producto`);
+                }
+            }
+
+            // Rellenar nombre
+            const nameEl = document.getElementById('name');
+            if (nameEl && gameDetails.title) {
+                nameEl.value = gameDetails.title;
+                console.log('✓ Nombre rellenado:', gameDetails.title);
+            }
+
+            // Rellenar descripción (YA ESTÁ EN ESPAÑOL)
+            const descriptionEl = document.getElementById('description');
+            if (descriptionEl && gameDetails.description) {
+                descriptionEl.value = gameDetails.description;
+                console.log('✓ Descripción rellenada:', gameDetails.description.substring(0, 50) + '...');
+            } else {
+                console.warn('⚠️ No se pudo rellenar descripción:', {
+                    elementExists: !!descriptionEl,
+                    hasDescription: !!gameDetails.description,
+                    description: gameDetails.description
+                });
+            }
+
+            // Rellenar géneros (YA ESTÁN EN ESPAÑOL)
+            if (gameDetails.genres && gameDetails.genres.length > 0) {
+                console.log('🎮 Géneros en español:', gameDetails.genres);
+
+                // Los géneros ya están en español, buscar checkboxes que coincidan
+                const genreCheckboxes = document.querySelectorAll('input[name="genres[]"]');
+                genreCheckboxes.forEach(checkbox => {
+                    const label = checkbox.nextElementSibling.textContent.toLowerCase().trim();
+                    const isMatch = gameDetails.genres.some(genre =>
+                        genre.toLowerCase() === label || label.includes(genre.toLowerCase())
+                    );
+                    if (isMatch) {
+                        checkbox.checked = true;
+                        console.log('✓ Género seleccionado:', label);
+                    }
+                });
+            }
+
+            // Rellenar plataforma/consola basado en la plataforma seleccionada
+            console.log('🎮 Plataforma seleccionada:', platform);
+
+            const consoleSelect = document.getElementById('console_id');
+            if (consoleSelect && platform) {
+                const platformLower = platform.toLowerCase();
+
+                // Buscar coincidencia en el select
+                let found = false;
+                Array.from(consoleSelect.options).forEach(option => {
+                    const optionText = option.text.toLowerCase();
+                    if (optionText.includes(platformLower) || platformLower.includes(optionText)) {
+                        option.selected = true;
+                        found = true;
+                        console.log('✓ Consola seleccionada:', option.text);
+                    }
+                });
+
+                if (!found && gameDetails.platforms && gameDetails.platforms.length > 0) {
+                    // Si no encontró coincidencia exacta, intentar con la primera plataforma disponible
+                    const firstPlatform = gameDetails.platforms[0].toLowerCase();
+                    Array.from(consoleSelect.options).forEach(option => {
+                        const optionText = option.text.toLowerCase();
+                        if (optionText.includes(firstPlatform) || firstPlatform.includes(optionText)) {
+                            option.selected = true;
+                            console.log('✓ Consola (fallback) seleccionada:', option.text);
+                        }
+                    });
+                }
+            }
+
+            // Rellenar marca/brand (YA ESTÁ EN ESPAÑOL)
+            if (gameDetails.brand) {
+                console.log('🏢 Marca:', gameDetails.brand);
+
+                const brandSelect = document.getElementById('brand_id');
+                if (brandSelect) {
+                    const brandLower = gameDetails.brand.toLowerCase();
+
+                    // Buscar coincidencia exacta o parcial
+                    Array.from(brandSelect.options).forEach(option => {
+                        const optionText = option.text.toLowerCase();
+                        if (optionText.includes(brandLower) || brandLower.includes(optionText)) {
+                            option.selected = true;
+                            console.log('✓ Marca seleccionada:', option.text);
+                        }
+                    });
+                }
+            }
+
+            // Rellenar categoría (YA ESTÁ EN ESPAÑOL)
+            if (gameDetails.category) {
+                console.log('📁 Categoría:', gameDetails.category);
+
+                const categorySelect = document.getElementById('category_id');
+                if (categorySelect) {
+                    const categoryLower = gameDetails.category.toLowerCase();
+
+                    // Buscar coincidencia
+                    Array.from(categorySelect.options).forEach(option => {
+                        const optionText = option.text.toLowerCase();
+                        if (optionText.includes(categoryLower) || categoryLower.includes(optionText)) {
+                            option.selected = true;
+                            console.log('✓ Categoría seleccionada:', option.text);
+                        }
+                    });
+                }
+            }
+
+            // Rellenar meta título y descripción SEO
+            const metaTitleEl = document.getElementById('meta_title');
+            if (metaTitleEl && gameDetails.title) {
+                metaTitleEl.value = gameDetails.title;
+            }
+
+            const metaDescEl = document.getElementById('meta_description');
+            if (metaDescEl && gameDetails.short_description) {
+                metaDescEl.value = gameDetails.short_description;
+            }
+
+            // Actualizar contadores SEO si la función existe
+            if (typeof updateSEOCounters === 'function') {
+                updateSEOCounters();
+            }
+
+            // Cerrar modal de búsqueda
+            modal.hide();
+
+            // Mostrar modal de éxito elegante
+            const successModal = new bootstrap.Modal(document.getElementById('successInfoModal'));
+            
+            // Actualizar contenido del modal
+            document.getElementById('successGameTitle').textContent = gameDetails.title || 'Juego';
+            document.getElementById('successPlatformInfo').innerHTML = platform 
+                ? `<i class="fas fa-gamepad me-1"></i>${platform}` 
+                : '<i class="fas fa-gamepad me-1"></i>Información cargada';
+            
+            // Actualizar contador de imágenes
+            const imageCountEl = document.getElementById('imageCount');
+            if (imageCountEl) {
+                if (downloadedImagesCount > 0) {
+                    imageCountEl.textContent = `(${downloadedImagesCount} ${downloadedImagesCount === 1 ? 'imagen descargada' : 'imágenes descargadas'})`;
+                    imageCountEl.className = 'text-success';
+                } else {
+                    imageCountEl.textContent = '(disponibles)';
+                }
+            }
+            
+            // Mostrar el modal de éxito
+            successModal.show();
+
+        } catch (error) {
+            console.error('Error cargando datos del juego:', error);
+
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <p class="text-muted"><strong>Error al cargar datos del juego</strong></p>
+                    <p class="small text-muted">${error.message}</p>
+                    <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            `;
+        }
+    }
+
+    // Configurar el botón de auto-rellenar
+    const autoCompleteBtn = document.getElementById('autoCompleteBtn');
+    if (autoCompleteBtn) {
+        autoCompleteBtn.addEventListener('click', async function() {
+            const title = document.getElementById('name').value.trim();
+            
+            if (!title) {
+                alert('Por favor ingrese primero el nombre del producto');
+                document.getElementById('name').focus();
+                return;
+            }
+            
+            // Abrir modal y buscar juegos
+            const modal = new bootstrap.Modal(document.getElementById('gameSearchModal'));
+            const searchInput = document.getElementById('gameSearchInput');
+            const resultsDiv = document.getElementById('gameSearchResults');
+            
+            searchInput.value = title;
+            modal.show();
+            
+            // Buscar juegos en RAWG API
+            try {
+                resultsDiv.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                        <p class="text-muted">Buscando "${title}"...</p>
+                    </div>
+                `;
+                
+                console.log('Buscando:', title);
+                
+                // Intentar con el endpoint multi-fuente primero
+                let response = await fetch(`ajax/search_game_multi.php?action=search&query=${encodeURIComponent(title)}`);
+                
+                // Si falla, intentar con el endpoint principal
+                if (!response.ok) {
+                    console.warn('Multi-source failed, trying RAWG directly...');
+                    response = await fetch(`ajax/search_game_rawg.php?action=search&query=${encodeURIComponent(title)}`);
+                }
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Resultados:', result);
+                console.log('📊 Total de resultados recibidos de la API:', result.data?.results?.length || 0);
+                console.log('📍 Fuente de datos:', result.source);
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Error desconocido');
+                }
+                
+                const data = result.data;
+                
+                // Mostrar fuente en consola
+                if (result.source) {
+                    console.log('Fuente de datos:', result.source);
+                    console.log('Resultados encontrados:', data.results.length);
+                }
+                
+                if (data.results && data.results.length > 0) {
+                    await displayGameResults(data.results, resultsDiv, modal);
+                } else {
+                    // Sin resultados
+                    if (result.source === 'RAWG') {
+                        resultsDiv.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                <p class="text-muted">No se encontraron resultados para "${title}"</p>
+                                <p class="small text-muted">en la base de datos de RAWG</p>
+                                <p class="small text-muted mt-3">Intente con:</p>
+                                <ul class="small text-muted list-unstyled">
+                                    <li>• Otro nombre más conocido</li>
+                                    <li>• Solo el nombre sin la versión (ej: "Zelda" en lugar de "Zelda BOTW")</li>
+                                    <li>• El nombre en inglés</li>
+                                </ul>
+                                <button class="btn btn-outline-secondary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        `;
+                    } else if (result.source === 'MOCK') {
+                        // Si es MOCK, mostrar la opción mock para rellenar
+                        await displayGameResults(data.results, resultsDiv, modal);
+                    }
+                }
+            } catch (error) {
+                console.error('Error buscando juegos:', error);
+                resultsDiv.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                        <p class="text-muted"><strong>Error al buscar</strong></p>
+                        <p class="small text-muted">${error.message}</p>
+                        <p class="small text-muted mt-3">Puede:</p>
+                        <ul class="small text-muted list-unstyled">
+                            <li>✓ Rellenar los datos manualmente</li>
+                            <li>✓ Intentar más tarde</li>
+                            <li>✓ Contactar soporte si persiste</li>
+                        </ul>
+                        <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                `;
+            }
+        });
     }
 })();
 </script>
