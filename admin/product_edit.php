@@ -1256,7 +1256,6 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     // Vista previa de imágenes (drag & drop)
     const imagesInput = document.getElementById('images');
     const preview = document.getElementById('image-preview');
-    const dragInfo = document.getElementById('drag-drop-info');
     
     // Renderizar imágenes existentes al cargar
     renderAllImages();
@@ -1284,12 +1283,8 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
         const totalImages = existingImages.length + selectedFiles.length;
         
         if (totalImages === 0) {
-            dragInfo.style.display = 'none';
             return;
         }
-        
-        // Mostrar info de drag & drop
-        dragInfo.style.display = 'block';
         
         let currentIndex = 0;
         
