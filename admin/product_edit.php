@@ -1236,20 +1236,21 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 const col = document.createElement('div');
                 col.className = 'col-md-3 sortable-image-item';
                 col.dataset.index = index;
-                col.innerHTML = `
-                    <div class="card border-success h-100" style="cursor: move;">
-                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
-                            <small><i class="fas fa-grip-vertical"></i> #${index + 1}</small>
-                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
-                                    onclick="removePreviewImage(${index})" aria-label="Eliminar"></button>
-                        </div>
-                        <img src="${e.target.result}" class="card-img-top" 
-                             style="height: 150px; object-fit: cover;" alt="Vista previa">
-                        <div class="card-body p-2 text-center">
-                            ${index === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Extra</span>'}
-                        </div>
-                    </div>
-                `;
+                
+                const cardHTML = '<div class="card border-success h-100" style="cursor: move;">' +
+                    '<div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">' +
+                        '<small><i class="fas fa-grip-vertical"></i> #' + (index + 1) + '</small>' +
+                        '<button type="button" class="btn btn-sm btn-close btn-close-white" ' +
+                            'onclick="removePreviewImage(' + index + ')" aria-label="Eliminar"></button>' +
+                    '</div>' +
+                    '<img src="' + e.target.result + '" class="card-img-top" ' +
+                         'style="height: 150px; object-fit: cover;" alt="Vista previa">' +
+                    '<div class="card-body p-2 text-center">' +
+                        (index === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Extra</span>') +
+                    '</div>' +
+                '</div>';
+                
+                col.innerHTML = cardHTML;
                 preview.appendChild(col);
                 
                 // Inicializar SortableJS después de agregar todas las imágenes
@@ -2699,20 +2700,21 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
             col.dataset.index = currentIndex;
             col.dataset.imageId = img.id;
             col.dataset.isExisting = 'true';
-            col.innerHTML = `
-                <div class="card border-primary h-100" style="cursor: move;">
-                    <div class="card-header bg-primary text-white py-1 d-flex justify-content-between align-items-center">
-                        <small><i class="fas fa-grip-vertical"></i> #${currentIndex + 1}</small>
-                        <button type="button" class="btn btn-sm btn-close btn-close-white" 
-                                onclick="removeExistingImage(${img.id})" aria-label="Eliminar"></button>
-                    </div>
-                    <img src="${img.url}" class="card-img-top" 
-                         style="height: 150px; object-fit: cover;" alt="Imagen existente">
-                    <div class="card-body p-2 text-center">
-                        ${currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-info">Existente</span>'}
-                    </div>
-                </div>
-            `;
+            
+            const cardHTML = '<div class="card border-primary h-100" style="cursor: move;">' +
+                '<div class="card-header bg-primary text-white py-1 d-flex justify-content-between align-items-center">' +
+                    '<small><i class="fas fa-grip-vertical"></i> #' + (currentIndex + 1) + '</small>' +
+                    '<button type="button" class="btn btn-sm btn-close btn-close-white" ' +
+                        'onclick="removeExistingImage(' + img.id + ')" aria-label="Eliminar"></button>' +
+                '</div>' +
+                '<img src="' + img.url + '" class="card-img-top" ' +
+                     'style="height: 150px; object-fit: cover;" alt="Imagen existente">' +
+                '<div class="card-body p-2 text-center">' +
+                    (currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-info">Existente</span>') +
+                '</div>' +
+            '</div>';
+            
+            col.innerHTML = cardHTML;
             preview.appendChild(col);
             currentIndex++;
         });
@@ -2725,20 +2727,21 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 col.className = 'col-md-3 sortable-image-item';
                 col.dataset.index = currentIndex;
                 col.dataset.isExisting = 'false';
-                col.innerHTML = `
-                    <div class="card border-success h-100" style="cursor: move;">
-                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
-                            <small><i class="fas fa-grip-vertical"></i> #${currentIndex + 1}</small>
-                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
-                                    onclick="removeNewImage(${index})" aria-label="Eliminar"></button>
-                        </div>
-                        <img src="${e.target.result}" class="card-img-top" 
-                             style="height: 150px; object-fit: cover;" alt="Nueva imagen">
-                        <div class="card-body p-2 text-center">
-                            ${currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Nueva</span>'}
-                        </div>
-                    </div>
-                `;
+                
+                const cardHTML = '<div class="card border-success h-100" style="cursor: move;">' +
+                    '<div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">' +
+                        '<small><i class="fas fa-grip-vertical"></i> #' + (currentIndex + 1) + '</small>' +
+                        '<button type="button" class="btn btn-sm btn-close btn-close-white" ' +
+                            'onclick="removeNewImage(' + index + ')" aria-label="Eliminar"></button>' +
+                    '</div>' +
+                    '<img src="' + e.target.result + '" class="card-img-top" ' +
+                         'style="height: 150px; object-fit: cover;" alt="Nueva imagen">' +
+                    '<div class="card-body p-2 text-center">' +
+                        (currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Nueva</span>') +
+                    '</div>' +
+                '</div>';
+                
+                col.innerHTML = cardHTML;
                 preview.appendChild(col);
                 currentIndex++;
                 
