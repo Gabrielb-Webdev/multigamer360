@@ -1029,6 +1029,50 @@ require_once 'inc/header.php';
 .sortable-image-item:hover {
     transform: translateY(-5px);
 }
+
+/* Mejoras de UX/UI adicionales */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font-weight: 600;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.btn-success {
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    transform: translateY(-2px);
+}
+
+#autoCompleteBtn {
+    font-size: 1.1rem;
+    padding: 0.75rem 2rem;
+    box-shadow: 0 4px 6px rgba(40, 167, 69, 0.25);
+}
+
+#autoCompleteBtn:hover {
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.35);
+    transform: translateY(-3px);
+}
 </style>
 
 <!-- Modal: Búsqueda de Juegos -->
@@ -2618,8 +2662,6 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
     }
 })();
 </script>
-
-<?php require_once 'inc/footer.php'; ?>
 
 <script>
     // ============================================
