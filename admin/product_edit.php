@@ -888,13 +888,9 @@ require_once 'inc/header.php';
     </div>
 </div>
 
-<style>
-/**
- * ESTILOS PARA SISTEMA DE IMÁGENES
- * Versión: 2.2.0 - Simplificado (sin drag & drop)
- * Última actualización: 2025-01-10
- */
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+<style>
 /* Estilos para drag & drop de imágenes */
 .upload-area {
     background-color: #f8f9fa;
@@ -915,63 +911,6 @@ require_once 'inc/header.php';
 }
 
 .upload-area:hover .upload-icon i {
-    transform: translateY(-5px);
-}
-
-/* Cards de imágenes */
-.image-item {
-    transition: all 0.3s ease;
-}
-
-.image-item .card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.image-item:hover .card {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Botones de reordenamiento */
-.image-item .btn-group button {
-    flex: 1;
-}
-
-.image-item .btn-group button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* Vista previa de imágenes nuevas */
-.pending-image-preview {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* Estilos para Drag & Drop con SortableJS */
-.sortable-ghost {
-    opacity: 0.4;
-    background: #f8f9fa;
-}
-
-.sortable-chosen {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(0,0,0,0.2);
-}
-
-.sortable-drag {
-    opacity: 0.8;
-}
-
-.sortable-image-item {
-    transition: transform 0.2s ease;
-}
-
-.sortable-image-item:hover {
     transform: translateY(-5px);
 }
 
@@ -1008,6 +947,12 @@ require_once 'inc/header.php';
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
+}
+
+/* Estilos para sortable de imágenes */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f8f9fa;
 }
 
 /* Estilos para Modal de Éxito */
@@ -1065,6 +1010,24 @@ require_once 'inc/header.php';
 #successInfoModal .btn-success:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+
+.sortable-chosen {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+}
+
+.sortable-image-item {
+    transition: transform 0.2s;
+}
+
+.sortable-image-item:hover {
+    transform: translateY(-5px);
 }
 </style>
 
@@ -1177,14 +1140,9 @@ require_once 'inc/header.php';
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-/**
- * SISTEMA DE IMÁGENES CON DRAG & DROP
- * Versión: 4.0.0 - Igual que product_create.php
- */
-
+// JavaScript para creación con Drag & Drop
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Sistema de imágenes con Drag & Drop cargado');
-    
+
 // ============================================
 // GENERACIÓN AUTOMÁTICA DE SLUG
 // ============================================
@@ -1200,6 +1158,1303 @@ function generateSlugFromName(name) {
         .replace(/\s+/g, '-')                  // Reemplazar espacios con guiones
         .replace(/-+/g, '-');                  // Reemplazar múltiples guiones con uno solo
 }
+
+// Actualizar slug cuando cambia el nombre del producto
+const nameInput = document.getElementById('name');
+const slugPreview = document.getElementById('slug_preview');
+
+if (nameInput && slugPreview) {
+    nameInput.addEventListener('input', function() {
+        const slug = generateSlugFromName(this.value);
+        slugPreview.value = slug;
+    });
+}
+
+// Botón para regenerar slug manualmente
+const regenerateSlugBtn = document.getElementById('regenerate_slug');
+if (regenerateSlugBtn && nameInput && slugPreview) {
+    regenerateSlugBtn.addEventListener('click', function() {
+        const slug = generateSlugFromName(nameInput.value);
+        slugPreview.value = slug;
+        
+        // Feedback visual
+        this.innerHTML = '<i class="fas fa-check"></i>';
+        this.classList.add('btn-success');
+        this.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            this.classList.remove('btn-success');
+            this.classList.add('btn-outline-secondary');
+        }, 1500);
+    });
+}
+
+    // Array para acumular archivos seleccionados (GLOBAL para acceso desde auto-rellenar)
+    window.selectedFiles = [];
+    let sortableInstance = null;
+    
+    // Vista previa de imágenes (acumulativa con drag & drop)
+    const imagesInput = document.getElementById('images');
+    const preview = document.getElementById('image-preview');
+    const dragInfo = document.getElementById('drag-drop-info');
+    
+    if (imagesInput) {
+        imagesInput.addEventListener('change', function(e) {
+            // Agregar nuevos archivos al array existente
+            const newFiles = Array.from(this.files);
+            newFiles.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    window.selectedFiles.push(file);
+                }
+            });
+            
+            // Regenerar vista previa
+            window.renderImagePreview();
+            
+            console.log('Total de imágenes seleccionadas:', window.selectedFiles.length);
+        });
+    }
+    
+    // Función global para renderizar preview (accesible desde auto-rellenar)
+    window.renderImagePreview = function() {
+        if (!preview) return;
+        
+        preview.innerHTML = '';
+        
+        if (window.selectedFiles.length === 0) {
+            if (dragInfo) dragInfo.style.display = 'none';
+            return;
+        }
+        
+        // Mostrar info de drag & drop
+        if (dragInfo) dragInfo.style.display = 'block';
+        
+        window.selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 sortable-image-item';
+                col.dataset.index = index;
+                col.innerHTML = `
+                    <div class="card border-success h-100" style="cursor: move;">
+                        <div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">
+                            <small><i class="fas fa-grip-vertical"></i> #${index + 1}</small>
+                            <button type="button" class="btn btn-sm btn-close btn-close-white" 
+                                    onclick="removePreviewImage(${index})" aria-label="Eliminar"></button>
+                        </div>
+                        <img src="${e.target.result}" class="card-img-top" 
+                             style="height: 150px; object-fit: cover;" alt="Vista previa">
+                        <div class="card-body p-2 text-center">
+                            ${index === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Extra</span>'}
+                        </div>
+                    </div>
+                `;
+                preview.appendChild(col);
+                
+                // Inicializar SortableJS después de agregar todas las imágenes
+                if (index === window.selectedFiles.length - 1) {
+                    initSortable();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    function initSortable() {
+        if (!preview) return;
+        
+        // Destruir instancia anterior si existe
+        if (sortableInstance) {
+            sortableInstance.destroy();
+        }
+        
+        // Crear nueva instancia de Sortable
+        sortableInstance = new Sortable(preview, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: '.card', // Toda la card es arrastrable
+            onEnd: function(evt) {
+                // Reordenar el array de archivos según el nuevo orden
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+                
+                // Mover elemento en el array
+                const movedFile = window.selectedFiles.splice(oldIndex, 1)[0];
+                window.selectedFiles.splice(newIndex, 0, movedFile);
+                
+                console.log('Imagen movida de posición', oldIndex, '→', newIndex);
+                
+                // Actualizar números y badges
+                updateImageNumbers();
+            }
+        });
+    }
+    
+    function updateImageNumbers() {
+        if (!preview) return;
+        
+        const items = preview.querySelectorAll('.sortable-image-item');
+        items.forEach((item, index) => {
+            // Actualizar número
+            const numberSpan = item.querySelector('.card-header small');
+            numberSpan.innerHTML = `<i class="fas fa-grip-vertical"></i> #${index + 1}`;
+            
+            // Actualizar badge (portada solo para el primero)
+            const badgeDiv = item.querySelector('.card-body');
+            if (index === 0) {
+                badgeDiv.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>';
+            } else {
+                badgeDiv.innerHTML = '<span class="badge bg-secondary">Extra</span>';
+            }
+            
+            // Actualizar data-index
+            item.dataset.index = index;
+            
+            // Actualizar onclick del botón eliminar
+            const closeBtn = item.querySelector('.btn-close');
+            closeBtn.setAttribute('onclick', `removePreviewImage(${index})`);
+        });
+    }
+    
+    // Función global para eliminar imagen de vista previa
+    window.removePreviewImage = function(index) {
+        window.selectedFiles.splice(index, 1);
+        window.renderImagePreview();
+        console.log('Imágenes restantes:', window.selectedFiles.length);
+    };
+    
+    // ============================================================================
+    // SUBMIT HANDLER ÚNICO (v2.33) - Procesa: Imágenes + Precios + Descuentos
+    // ============================================================================
+    const form = document.getElementById('product-form');
+    console.log('🎯 FORM ENCONTRADO:', form ? 'SI' : 'NO', form?.id);
+    
+    if (form) {
+        console.log('✅ Registrando submit handler...');
+        form.addEventListener('submit', function(e) {
+            console.log('');
+            console.log('='.repeat(80));
+            console.log('🚀 SUBMIT - INICIANDO VALIDACIÓN');
+            console.log('='.repeat(80));
+            
+            // PASO 1: Actualizar imágenes
+            if (imagesInput) {
+                const dt = new DataTransfer();
+                window.selectedFiles.forEach(file => dt.items.add(file));
+                imagesInput.files = dt.files;
+                console.log('📸 Imágenes actualizadas:', window.selectedFiles.length);
+            }
+            
+            // PASO 2: Limpiar precios
+            console.log('');
+            console.log('💰 PASO 2: LIMPIANDO PRECIOS...');
+            let hasError = false;
+            
+            document.querySelectorAll('.price-input').forEach(input => {
+                // PRIORIDAD 1: data-raw-value (ya está limpio por los event listeners)
+                // PRIORIDAD 2: input.value limpiado manualmente
+                const dataRaw = input.getAttribute('data-raw-value') || '';
+                const origValue = input.value || '';
+                
+                console.log(`  📋 ${input.id}:`);
+                console.log(`     - value visble: "${origValue}"`);
+                console.log(`     - data-raw-value: "${dataRaw}"`);
+                
+                let cleaned = '';
+                
+                // USAR data-raw-value si existe y no está vacío
+                if (dataRaw && dataRaw !== '' && dataRaw !== '0') {
+                    cleaned = dataRaw.replace(/[^\d]/g, '');
+                    console.log(`     ✅ Usando data-raw-value: "${cleaned}"`);
+                } else {
+                    // Fallback: limpiar manualmente el valor visible
+                    cleaned = origValue.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '').replace(/[^\d]/g, '');
+                    console.log(`     ⚠️ Limpiando value manualmente: "${cleaned}"`);
+                }
+                
+                // Validar price_pesos (campo obligatorio)
+                if (input.id === 'price_pesos') {
+                    if (!cleaned || cleaned === '' || cleaned === '0') {
+                        console.log('');
+                        console.error('❌❌❌ ERROR CRÍTICO: price_pesos vacío o es 0!');
+                        console.error('   - origValue:', origValue);
+                        console.error('   - dataRaw:', dataRaw);
+                        console.error('   - cleaned:', cleaned);
+                        alert('ERROR: El Precio en ARS es obligatorio y debe ser mayor a 0.');
+                        input.focus();
+                        input.style.border = '3px solid red';
+                        e.preventDefault();
+                        hasError = true;
+                        return;
+                    }
+                    console.log(`     ✅✅✅ price_pesos VÁLIDO: "${cleaned}"`);
+                }
+                
+                if (!cleaned) cleaned = '0';
+                
+                console.log(`     ➡️ ASIGNANDO input.value = "${cleaned}"`);
+                input.value = cleaned;
+            });
+            
+            if (hasError) {
+                console.error('❌ SUBMIT CANCELADO POR ERROR');
+                return false;
+            }
+            
+            // PASO 3: Limpiar descuentos
+            console.log('');
+            console.log('🎯 PASO 3: LIMPIANDO DESCUENTOS...');
+            document.querySelectorAll('.discount-input').forEach(input => {
+                const rawValue = input.value.replace(/\D/g, '') || '0';
+                console.log(`  ${input.id}: "${input.value}" -> "${rawValue}"`);
+                input.value = rawValue;
+            });
+            
+            console.log('');
+            console.log('✅✅✅ SUBMIT - ENVIANDO FORMULARIO AL SERVIDOR...');
+            console.log('='.repeat(80));
+            console.log('');
+        });
+        console.log('✅ Submit handler registrado correctamente');
+    } else {
+        console.error('❌ NO SE ENCONTRÓ EL FORMULARIO #product-form');
+    }
+    
+    // Auto-generar SEO
+    const autoGenerateSeoBtn = document.getElementById('auto-generate-seo');
+    if (autoGenerateSeoBtn) {
+        autoGenerateSeoBtn.addEventListener('click', function() {
+        const nameEl = document.getElementById('name');
+        const descriptionEl = document.getElementById('description');
+        const name = nameEl ? nameEl.value : '';
+        const description = descriptionEl ? descriptionEl.value : '';
+        
+        if (!name) {
+            alert('Por favor ingrese el nombre del producto primero');
+            return;
+        }
+        
+        let metaTitle = name;
+        if (metaTitle.length > 60) {
+            metaTitle = metaTitle.substring(0, 57) + '...';
+        }
+        const metaTitleEl = document.getElementById('meta_title');
+        if (metaTitleEl) {
+            metaTitleEl.value = metaTitle;
+        }
+        
+        let metaDesc = description || name;
+        metaDesc = metaDesc.replace(/<[^>]*>/g, '').trim();
+        if (metaDesc.length > 160) {
+            metaDesc = metaDesc.substring(0, 157) + '...';
+        }
+        const metaDescEl = document.getElementById('meta_description');
+        if (metaDescEl) {
+            metaDescEl.value = metaDesc;
+        }
+        
+        updateSEOCounters();
+        });
+    }
+    
+    // Contadores SEO
+    function updateSEOCounters() {
+        const metaTitleEl = document.getElementById('meta_title');
+        const metaDescEl = document.getElementById('meta_description');
+        const titleCounter = document.getElementById('meta-title-counter');
+        const descCounter = document.getElementById('meta-desc-counter');
+        if (!metaTitleEl || !metaDescEl || !titleCounter || !descCounter) {
+            return;
+        }
+        
+        const metaTitle = metaTitleEl.value;
+        const metaDesc = metaDescEl.value;
+        
+        titleCounter.textContent = `(${metaTitle.length}/60)`;
+        descCounter.textContent = `(${metaDesc.length}/160)`;
+    }
+    
+    const metaTitleEl = document.getElementById('meta_title');
+    if (metaTitleEl) {
+        metaTitleEl.addEventListener('input', updateSEOCounters);
+    }
+    const metaDescEl = document.getElementById('meta_description');
+    if (metaDescEl) {
+        metaDescEl.addEventListener('input', updateSEOCounters);
+    }
+    
+    // Toggle descuento
+    const isOnSaleEl = document.getElementById('is_on_sale');
+    if (isOnSaleEl) {
+        isOnSaleEl.addEventListener('change', function() {
+            const discountSection = document.getElementById('discount-section');
+            if (discountSection) {
+                discountSection.style.display = this.checked ? 'block' : 'none';
+            }
+        });
+    }
+    
+    // ========================================================================
+    // NOTA: Vista previa de descuentos ahora manejada por initPriceFormatting()
+    // El código viejo fue eliminado para evitar conflictos con el nuevo sistema
+    // ========================================================================
+    
+    // Alerta de stock
+    const stockQuantityEl = document.getElementById('stock_quantity');
+    if (stockQuantityEl) {
+        stockQuantityEl.addEventListener('input', function() {
+        const stock = parseInt(this.value) || 0;
+        const alert = document.getElementById('stock-alert');
+        if (!alert) {
+            return;
+        }
+        
+        if (stock === 0) {
+            alert.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle"></i> Sin stock</span>';
+        } else if (stock < 5) {
+            alert.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Stock bajo</span>';
+        } else {
+            alert.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Stock disponible</span>';
+        }
+        });
+    }
+    
+    // Auto-generar SKU en tiempo real mientras escribe
+    // Versión 2.1 - SKU con formato: PREFIX(6)-TIMESTAMP(5)-RANDOM(4)
+    let skuManuallyEdited = false; // Bandera para saber si el usuario editó el SKU
+    
+    const nameEl = document.getElementById('name');
+    if (nameEl) {
+        nameEl.addEventListener('input', function() {
+        const skuField = document.getElementById('sku');
+        if (!skuField) {
+            return;
+        }
+        
+        // Solo regenerar si el SKU no ha sido editado manualmente
+        if (!skuManuallyEdited && this.value) {
+            // Limpiar y tomar hasta 6 caracteres
+            let prefix = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 6);
+            
+            // Rellenar si es muy corto
+            if (prefix.length < 3) {
+                prefix = prefix.padEnd(3, 'X');
+            }
+            
+            // Generar sufijo con timestamp + random más robusto
+            // Formato: PREFIJO-TIMESTAMP(5)-RANDOM(4)
+            const timestamp = String(Math.floor(Date.now() / 1000)).slice(-5); // Últimos 5 dígitos del timestamp
+            const random = Math.floor(Math.random() * 9000 + 1000); // 4 dígitos random (1000-9999)
+            
+            skuField.value = prefix + '-' + timestamp + random;
+        } else if (!skuManuallyEdited && !this.value) {
+            // Si borra el nombre, limpiar el SKU también
+            skuField.value = '';
+        }
+        });
+    }
+    
+    // Detectar cuando el usuario edita manualmente el SKU
+    const skuEl = document.getElementById('sku');
+    if (skuEl) {
+        skuEl.addEventListener('input', function() {
+            skuManuallyEdited = true;
+        });
+    }
+    
+    // Si el usuario borra completamente el SKU, volver a habilitar generación automática
+    if (skuEl) {
+        skuEl.addEventListener('input', function() {
+            if (this.value === '') {
+                skuManuallyEdited = false;
+            }
+        });
+    }
+    
+    // ==========================================
+    // BOTONES DE AGREGAR CATEGORÍA, MARCA, CONSOLA Y GÉNERO
+    // ==========================================
+    
+    // Agregar Categoría
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
+    if (addCategoryBtn) {
+        addCategoryBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+            modal.show();
+        });
+    }
+    
+    const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+    if (saveCategoryBtn) {
+        saveCategoryBtn.addEventListener('click', function() {
+        const name = document.getElementById('newCategoryName').value.trim();
+        if (!name) {
+            alert('Por favor ingrese un nombre para la categoría');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        
+        fetch('ajax/save_category.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('category_id');
+                const option = new Option(name, data.id, true, true);
+                select.add(option);
+                bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+                document.getElementById('newCategoryName').value = '';
+            } else {
+                alert(data.message || 'Error al agregar categoría');
+            }
+        })
+        .catch(e => alert('Error: ' + e.message))
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+        });
+        });
+    }
+    
+    // Agregar Marca
+    const addBrandBtn = document.getElementById('addBrandBtn');
+    if (addBrandBtn) {
+        addBrandBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('addBrandModal'));
+            modal.show();
+        });
+    }
+    
+    const saveBrandBtn = document.getElementById('saveBrandBtn');
+    if (saveBrandBtn) {
+        saveBrandBtn.addEventListener('click', function() {
+        const name = document.getElementById('newBrandName').value.trim();
+        if (!name) {
+            alert('Por favor ingrese un nombre para la marca');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        
+        fetch('ajax/save_brand.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('brand_id');
+                const option = new Option(name, data.id, true, true);
+                select.add(option);
+                bootstrap.Modal.getInstance(document.getElementById('addBrandModal')).hide();
+                document.getElementById('newBrandName').value = '';
+            } else {
+                alert(data.message || 'Error al agregar marca');
+            }
+        })
+        .catch(e => alert('Error: ' + e.message))
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+        });
+        });
+    }
+    
+    // Agregar Consola
+    const addConsoleBtn = document.getElementById('addConsoleBtn');
+    if (addConsoleBtn) {
+        addConsoleBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('addConsoleModal'));
+            modal.show();
+        });
+    }
+    
+    const saveConsoleBtn = document.getElementById('saveConsoleBtn');
+    if (saveConsoleBtn) {
+        saveConsoleBtn.addEventListener('click', function() {
+        const name = document.getElementById('newConsoleName').value.trim();
+        if (!name) {
+            alert('Por favor ingrese un nombre para la consola');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        
+        fetch('ajax/save_console.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('console_id');
+                const option = new Option(name, data.id, true, true);
+                select.add(option);
+                bootstrap.Modal.getInstance(document.getElementById('addConsoleModal')).hide();
+                document.getElementById('newConsoleName').value = '';
+            } else {
+                alert(data.message || 'Error al agregar consola');
+            }
+        })
+        .catch(e => alert('Error: ' + e.message))
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+        });
+        });
+    }
+    
+    // Agregar Género
+    const addGenreBtn = document.getElementById('addGenreBtn');
+    if (addGenreBtn) {
+        addGenreBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('addGenreModal'));
+            modal.show();
+        });
+    }
+    
+    const saveGenreBtn = document.getElementById('saveGenreBtn');
+    if (saveGenreBtn) {
+        saveGenreBtn.addEventListener('click', function() {
+        const name = document.getElementById('newGenreName').value.trim();
+        if (!name) {
+            alert('Por favor ingrese un nombre para el género');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+        
+        fetch('ajax/save_genre.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Agregar el nuevo género a la lista
+                const genreContainer = document.querySelector('.border.rounded');
+                const newGenreHTML = `
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="genres[]" value="${data.id}" 
+                                   id="genre_${data.id}" checked>
+                            <label class="form-check-label" for="genre_${data.id}">
+                                ${name}
+                            </label>
+                        </div>
+                    </div>
+                `;
+                const row = genreContainer.querySelector('.row');
+                if (row) {
+                    row.insertAdjacentHTML('beforeend', newGenreHTML);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('addGenreModal')).hide();
+                document.getElementById('newGenreName').value = '';
+            } else {
+                alert(data.message || 'Error al agregar género');
+            }
+        })
+        .catch(e => alert('Error: ' + e.message))
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+        });
+        });
+    }
+
+    // ==========================================
+    // BOTÓN DE AUTO-RELLENAR CON BÚSQUEDA MULTI-FUENTE
+    // Version: 2.15 - Verificación de plataformas antes de mostrar
+    // ==========================================
+
+    // Función para mostrar los resultados de búsqueda con plataformas verificadas
+    async function displayGameResults(games, container, modal) {
+        container.innerHTML = '<div class="col-12 text-center py-3"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><p class="mt-2">🔍 Verificando plataformas correctas para cada juego...</p></div>';
+
+        const safeGames = Array.isArray(games) ? games : [];
+
+        // Obtener plataformas correctas para todos los juegos
+        const gamesWithCorrectPlatforms = await Promise.all(
+            safeGames.map(async (game) => {
+                try {
+                    const gameName = game && game.name ? game.name : 'Juego sin nombre';
+
+                    // Consultar plataformas correctas de la base de datos
+                    const platformsResponse = await fetch(`ajax/get_game_platforms.php?game_name=${encodeURIComponent(gameName)}`);
+                    const platformsResult = await platformsResponse.json();
+
+                    let correctPlatforms = [];
+                    let platformSource = 'RAWG';
+
+                    if (platformsResult.success && platformsResult.platforms) {
+                        // Asegurar que sean strings (extraer .name si son objetos)
+                        correctPlatforms = platformsResult.platforms.map(p => 
+                            typeof p === 'string' ? p : (p.name || p)
+                        );
+                        platformSource = platformsResult.source;
+                        console.log(`✅ Plataformas verificadas para "${gameName}":`, correctPlatforms, `(Fuente: ${platformSource})`);
+                    } else {
+                        // Fallback a RAWG si no hay en base de datos
+                        correctPlatforms = Array.isArray(game && game.platforms)
+                            ? game.platforms
+                                .map(p => (p && p.platform && p.platform.name) ? p.platform.name : null)
+                                .filter(Boolean)
+                            : [];
+                        console.log(`⚠️ Usando RAWG para "${gameName}":`, correctPlatforms);
+                    }
+
+                    return {
+                        ...game,
+                        correctPlatforms: correctPlatforms,
+                        platformSource: platformSource
+                    };
+                } catch (error) {
+                    console.error('Error obteniendo plataformas para', game.name, error);
+                    // En caso de error, usar las de RAWG
+                    return {
+                        ...game,
+                        correctPlatforms: Array.isArray(game && game.platforms)
+                            ? game.platforms.map(p => p.platform?.name).filter(Boolean)
+                            : [],
+                        platformSource: 'RAWG (error)'
+                    };
+                }
+            })
+        );
+
+        // Limpiar contenedor y mostrar resultados
+        container.innerHTML = '';
+
+        gamesWithCorrectPlatforms.forEach(game => {
+            try {
+                const safeName = game && game.name ? game.name : 'Juego sin nombre';
+
+                // USAR LAS PLATAFORMAS CORRECTAS - Asegurar que sean strings
+                const platformStrings = game.correctPlatforms && game.correctPlatforms.length > 0
+                    ? game.correctPlatforms.map(p => typeof p === 'string' ? p : (p.name || String(p)))
+                    : [];
+                
+                const platformsDisplay = platformStrings.length > 0
+                    ? platformStrings.slice(0, 3).join(', ') + (platformStrings.length > 3 ? ', ...' : '')
+                    : 'N/A';
+
+                const platformCount = game.correctPlatforms ? game.correctPlatforms.length : 0;
+                const platformBadge = game.platformSource === 'KNOWN_DATABASE'
+                    ? '<span class="badge bg-success" style="font-size: 0.6rem;">✓ Verificado</span>'
+                    : '';
+
+                const imageUrl = (game && typeof game.background_image === 'string' && game.background_image.trim() !== '')
+                    ? game.background_image
+                    : 'https://via.placeholder.com/200x150?text=Sin+Imagen';
+                const released = (game && game.released) ? new Date(game.released).getFullYear() : 'N/A';
+                const rating = (game && typeof game.rating === 'number') ? game.rating.toFixed(1) : 'N/A';
+
+            const col = document.createElement('div');
+            col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
+
+            col.innerHTML = `
+                <div class="card game-result-card h-100 shadow-sm" style="cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease;">
+                    <div style="position: relative; overflow: hidden; height: 120px; background: #f0f0f0;">
+                        <img src="${imageUrl}"
+                             class="img-fluid"
+                             style="width: 100%; height: 100%; object-fit: cover;"
+                             alt="${safeName}"
+                             loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/200x150?text=No+Image'">
+                        ${platformBadge ? `<div style="position: absolute; top: 5px; right: 5px;">${platformBadge}</div>` : ''}
+                    </div>
+                    <div class="card-body p-2" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${safeName}
+                        </h6>
+                        <div class="mt-auto" style="font-size: 0.75rem;">
+                            <p class="card-text mb-1" style="color: #666;">
+                                <i class="fas fa-gamepad me-1" style="color: #007bff;"></i><strong>${platformCount > 1 ? platformCount + ' plataformas' : platformsDisplay}</strong>
+                            </p>
+                            ${platformCount > 1 ? `<p class="card-text mb-1" style="color: #999; font-size: 0.7rem;">${platformsDisplay}</p>` : ''}
+                            <p class="card-text mb-1" style="color: #666;">
+                                <i class="fas fa-calendar me-1" style="color: #28a745;"></i>${released}
+                            </p>
+                            <p class="card-text" style="color: #ffc107;">
+                                <i class="fas fa-star me-1"></i>${rating}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            col.querySelector('.game-result-card').addEventListener('click', function() {
+                fillGameData(game, modal);
+            });
+
+            col.querySelector('.game-result-card').addEventListener('mouseenter', function() {
+                this.style.borderColor = '#007bff';
+                this.style.boxShadow = '0 4px 8px rgba(0,123,255,0.3)';
+                this.style.transform = 'translateY(-3px)';
+            });
+
+            col.querySelector('.game-result-card').addEventListener('mouseleave', function() {
+                this.style.borderColor = 'transparent';
+                this.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
+                this.style.transform = 'translateY(0)';
+            });
+            
+            container.appendChild(col);
+            } catch (e) {
+                console.warn('Error renderizando juego:', e, game);
+            }
+        });
+    }
+    
+    // Función para rellenar los datos del juego seleccionado
+    async function fillGameData(game, modal) {
+        try {
+            // Mostrar mensaje de carga
+            const resultsDiv = document.getElementById('gameSearchResults');
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                    <p class="text-muted">Obteniendo plataformas disponibles para "${game.name}"...</p>
+                </div>
+            `;
+
+            // PASO 1: Obtener las plataformas disponibles para este juego
+            console.log('📋 Obteniendo plataformas para:', game.name);
+
+            const platformsResponse = await fetch(`ajax/get_game_platforms.php?game_name=${encodeURIComponent(game.name)}`);
+            const platformsResult = await platformsResponse.json();
+
+            if (!platformsResult.success) {
+                throw new Error(platformsResult.error || 'Error al obtener plataformas');
+            }
+
+            const availablePlatforms = platformsResult.platforms;
+            console.log('🎮 Plataformas disponibles:', availablePlatforms);
+            console.log('📍 Fuente de datos:', platformsResult.source);
+
+            // PASO 2: Si hay múltiples plataformas, mostrar opciones separadas
+            if (availablePlatforms.length > 1) {
+                console.log('⚠️ Múltiples plataformas detectadas, mostrando opciones...');
+
+                resultsDiv.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info mb-4">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>${game.name} - Seleccionar Plataforma
+                            </h5>
+                            <p class="mb-0">Este juego está disponible en <strong>${availablePlatforms.length} plataformas diferentes</strong>.</p>
+                            <p class="mb-0 mt-2">Selecciona la plataforma específica para la cual deseas crear el producto. Cada plataforma tendrá su propia consola asignada.</p>
+                        </div>
+                    </div>
+                `;
+
+                // Crear una card por cada plataforma
+                availablePlatforms.forEach((platform, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12 col-sm-6 col-lg-4 mb-3';
+
+                    // Generar ícono según la plataforma
+                    let icon = 'fas fa-gamepad';
+                    const platformLower = platform.toLowerCase();
+                    if (platformLower.includes('pc')) icon = 'fas fa-laptop';
+                    else if (platformLower.includes('ps') || platformLower.includes('playstation')) icon = 'fab fa-playstation';
+                    else if (platformLower.includes('xbox')) icon = 'fab fa-xbox';
+                    else if (platformLower.includes('switch') || platformLower.includes('nintendo')) icon = 'fas fa-gamepad';
+                    else if (platformLower.includes('mobile') || platformLower.includes('ios') || platformLower.includes('android')) icon = 'fas fa-mobile-alt';
+
+                    col.innerHTML = `
+                        <div class="card platform-option-card h-100 shadow-sm border-0" 
+                             style="cursor: pointer; transition: all 0.3s ease; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-center text-white">
+                                <div class="mb-3">
+                                    <i class="${icon} fa-2x" style="opacity: 0.9;"></i>
+                                </div>
+                                <h6 class="card-title mb-2" style="font-size: 1.1rem; font-weight: 600;">${platform}</h6>
+                                <p class="card-text small mb-2" style="opacity: 0.95;">Opción ${index + 1} de ${availablePlatforms.length}</p>
+                                <p class="text-white-50 small mb-0 mt-2" style="font-size: 0.85rem;">Clic para continuar →</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Evento de clic para seleccionar esta plataforma
+                    col.querySelector('.platform-option-card').addEventListener('click', async function() {
+                        console.log(`✅ Usuario seleccionó: ${game.name} - ${platform}`);
+                        await loadGameDataForPlatform(game.name, platform, modal, resultsDiv);
+                    });
+
+                    // Hover effects mejorados
+                    col.querySelector('.platform-option-card').addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-8px)';
+                        this.style.boxShadow = '0 12px 24px rgba(102, 126, 234, 0.4)';
+                    });
+
+                    col.querySelector('.platform-option-card').addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                        this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    });
+
+                    resultsDiv.appendChild(col);
+                });
+
+            } else {
+                // Solo una plataforma, proceder directamente
+                console.log('✅ Una sola plataforma, cargando datos...');
+                await loadGameDataForPlatform(game.name, availablePlatforms[0], modal, resultsDiv);
+            }
+
+        } catch (error) {
+            console.error('Error obteniendo plataformas del juego:', error);
+
+            const resultsDiv = document.getElementById('gameSearchResults');
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <p class="text-muted"><strong>Error al obtener plataformas</strong></p>
+                    <p class="small text-muted">${error.message}</p>
+                    <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            `;
+        }
+    }
+
+    // Función para cargar los datos del juego para una plataforma específica
+    async function loadGameDataForPlatform(gameName, platform, modal, resultsDiv) {
+        try {
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                    <p class="text-muted">Cargando información completa de "${gameName}" para ${platform}...</p>
+                </div>
+            `;
+
+            // USAR AUTOCOMPLETE_GAME_INFO.PHP que tiene toda la lógica de traducción y mapeo al español
+            console.log(`📥 Obteniendo información en español para: ${gameName} - ${platform}`);
+
+            const url = `ajax/autocomplete_game_info.php?game_name=${encodeURIComponent(gameName)}&platform=${encodeURIComponent(platform)}`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.message || 'Error al obtener información del juego');
+            }
+
+            // Usar los datos ya traducidos y mapeados al español
+            const gameDetails = result.data;
+
+            console.log('✅ Datos recibidos de autocomplete_game_info.php:', gameDetails);
+
+            // Variable para almacenar imágenes descargadas
+            let downloadedImagesCount = 0;
+
+            // Descargar y subir imágenes si están disponibles
+            if (gameDetails.images && gameDetails.images.length > 0) {
+                console.log('📸 Descargando', gameDetails.images.length, 'imágenes del juego...');
+
+                const downloadedFiles = [];
+                let successCount = 0;
+
+                for (const imageUrl of gameDetails.images) {
+                    try {
+                        // Crear FormData para subir la imagen
+                        const formData = new FormData();
+                        formData.append('action', 'download_game_image');
+                        formData.append('image_url', imageUrl);
+                        formData.append('game_name', gameDetails.title);
+
+                        // Enviar solicitud para descargar y subir imagen
+                        const imageResponse = await fetch('ajax/upload_game_image.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const imageResult = await imageResponse.json();
+
+                        if (imageResult.success && imageResult.file_path) {
+                            console.log('✅ Imagen descargada:', imageResult.file_path);
+                            
+                            // Convertir la imagen descargada a un objeto File
+                            // Ajustar ruta relativa: estamos en admin/, necesitamos subir un nivel
+                            const imagePath = '../' + imageResult.file_path;
+                            console.log('📂 Ruta ajustada:', imagePath);
+                            
+                            const response = await fetch(imagePath);
+                            const blob = await response.blob();
+                            const file = new File([blob], imageResult.file_name, { type: imageResult.mime_type || 'image/jpeg' });
+                            
+                            console.log('📦 File object creado:', file.name, file.size, 'bytes');
+                            
+                            // Agregar al array de archivos seleccionados
+                            downloadedFiles.push(file);
+                            successCount++;
+                        }
+                    } catch (imageError) {
+                        console.error('❌ Error descargando imagen:', imageError);
+                    }
+                }
+
+                if (downloadedFiles.length > 0) {
+                    console.log(`✅ ${downloadedFiles.length} imágenes descargadas y convertidas`);
+                    
+                    console.log('🔍 Estado ANTES de agregar:');
+                    console.log('  - window.selectedFiles existe?', typeof window.selectedFiles);
+                    console.log('  - window.renderImagePreview existe?', typeof window.renderImagePreview);
+                    console.log('  - window.selectedFiles.length:', window.selectedFiles ? window.selectedFiles.length : 'undefined');
+                    
+                    // Agregar todas las imágenes al array global selectedFiles
+                    downloadedFiles.forEach(file => {
+                        console.log('  → Agregando:', file.name);
+                        window.selectedFiles.push(file);
+                    });
+                    
+                    console.log('🔍 Estado DESPUÉS de agregar:');
+                    console.log('  - window.selectedFiles.length:', window.selectedFiles.length);
+                    
+                    // Regenerar la vista previa para mostrar las imágenes
+                    console.log('🎨 Llamando a window.renderImagePreview()...');
+                    window.renderImagePreview();
+                    
+                    // Actualizar contador
+                    downloadedImagesCount = successCount;
+                    
+                    // Mostrar mensaje de éxito
+                    console.log(`🎉 ${successCount} imágenes agregadas al producto`);
+                }
+            }
+
+            // Rellenar nombre
+            const nameEl = document.getElementById('name');
+            if (nameEl && gameDetails.title) {
+                nameEl.value = gameDetails.title;
+                console.log('✓ Nombre rellenado:', gameDetails.title);
+            }
+
+            // Rellenar descripción (YA ESTÁ EN ESPAÑOL)
+            const descriptionEl = document.getElementById('description');
+            if (descriptionEl && gameDetails.description) {
+                descriptionEl.value = gameDetails.description;
+                console.log('✓ Descripción rellenada:', gameDetails.description.substring(0, 50) + '...');
+            } else {
+                console.warn('⚠️ No se pudo rellenar descripción:', {
+                    elementExists: !!descriptionEl,
+                    hasDescription: !!gameDetails.description,
+                    description: gameDetails.description
+                });
+            }
+
+            // Rellenar géneros (YA ESTÁN EN ESPAÑOL)
+            if (gameDetails.genres && gameDetails.genres.length > 0) {
+                console.log('🎮 Géneros en español:', gameDetails.genres);
+
+                // Los géneros ya están en español, buscar checkboxes que coincidan
+                const genreCheckboxes = document.querySelectorAll('input[name="genres[]"]');
+                genreCheckboxes.forEach(checkbox => {
+                    const label = checkbox.nextElementSibling.textContent.toLowerCase().trim();
+                    const isMatch = gameDetails.genres.some(genre =>
+                        genre.toLowerCase() === label || label.includes(genre.toLowerCase())
+                    );
+                    if (isMatch) {
+                        checkbox.checked = true;
+                        console.log('✓ Género seleccionado:', label);
+                    }
+                });
+            }
+
+            // Rellenar plataforma/consola basado en la plataforma seleccionada
+            console.log('🎮 Plataforma seleccionada:', platform);
+
+            const consoleSelect = document.getElementById('console_id');
+            if (consoleSelect && platform) {
+                const platformLower = platform.toLowerCase();
+
+                // Buscar coincidencia en el select
+                let found = false;
+                Array.from(consoleSelect.options).forEach(option => {
+                    const optionText = option.text.toLowerCase();
+                    if (optionText.includes(platformLower) || platformLower.includes(optionText)) {
+                        option.selected = true;
+                        found = true;
+                        console.log('✓ Consola seleccionada:', option.text);
+                    }
+                });
+
+                if (!found && gameDetails.platforms && gameDetails.platforms.length > 0) {
+                    // Si no encontró coincidencia exacta, intentar con la primera plataforma disponible
+                    const firstPlatform = gameDetails.platforms[0].toLowerCase();
+                    Array.from(consoleSelect.options).forEach(option => {
+                        const optionText = option.text.toLowerCase();
+                        if (optionText.includes(firstPlatform) || firstPlatform.includes(optionText)) {
+                            option.selected = true;
+                            console.log('✓ Consola (fallback) seleccionada:', option.text);
+                        }
+                    });
+                }
+            }
+
+            // Rellenar marca/brand (YA ESTÁ EN ESPAÑOL)
+            if (gameDetails.brand) {
+                console.log('🏢 Marca:', gameDetails.brand);
+
+                const brandSelect = document.getElementById('brand_id');
+                if (brandSelect) {
+                    const brandLower = gameDetails.brand.toLowerCase();
+
+                    // Buscar coincidencia exacta o parcial
+                    Array.from(brandSelect.options).forEach(option => {
+                        const optionText = option.text.toLowerCase();
+                        if (optionText.includes(brandLower) || brandLower.includes(optionText)) {
+                            option.selected = true;
+                            console.log('✓ Marca seleccionada:', option.text);
+                        }
+                    });
+                }
+            }
+
+            // Rellenar categoría (YA ESTÁ EN ESPAÑOL)
+            if (gameDetails.category) {
+                console.log('📁 Categoría:', gameDetails.category);
+
+                const categorySelect = document.getElementById('category_id');
+                if (categorySelect) {
+                    const categoryLower = gameDetails.category.toLowerCase();
+
+                    // Buscar coincidencia
+                    Array.from(categorySelect.options).forEach(option => {
+                        const optionText = option.text.toLowerCase();
+                        if (optionText.includes(categoryLower) || categoryLower.includes(optionText)) {
+                            option.selected = true;
+                            console.log('✓ Categoría seleccionada:', option.text);
+                        }
+                    });
+                }
+            }
+
+            // Rellenar meta título y descripción SEO
+            const metaTitleEl = document.getElementById('meta_title');
+            if (metaTitleEl && gameDetails.title) {
+                metaTitleEl.value = gameDetails.title;
+            }
+
+            const metaDescEl = document.getElementById('meta_description');
+            if (metaDescEl && gameDetails.short_description) {
+                metaDescEl.value = gameDetails.short_description;
+            }
+
+            // Actualizar contadores SEO
+            updateSEOCounters();
+
+            // Cerrar modal de búsqueda
+            modal.hide();
+
+            // Mostrar modal de éxito elegante
+            const successModal = new bootstrap.Modal(document.getElementById('successInfoModal'));
+            
+            // Actualizar contenido del modal
+            document.getElementById('successGameTitle').textContent = gameDetails.title || 'Juego';
+            document.getElementById('successPlatformInfo').innerHTML = platform 
+                ? `<i class="fas fa-gamepad me-1"></i>${platform}` 
+                : '<i class="fas fa-gamepad me-1"></i>Información cargada';
+            
+            // Actualizar contador de imágenes
+            const imageCountEl = document.getElementById('imageCount');
+            if (imageCountEl) {
+                if (downloadedImagesCount > 0) {
+                    imageCountEl.textContent = `(${downloadedImagesCount} ${downloadedImagesCount === 1 ? 'imagen descargada' : 'imágenes descargadas'})`;
+                    imageCountEl.className = 'text-success';
+                } else {
+                    imageCountEl.textContent = '(disponibles)';
+                }
+            }
+            
+            // Mostrar el modal de éxito
+            successModal.show();
+
+        } catch (error) {
+            console.error('Error cargando datos del juego:', error);
+
+            resultsDiv.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <p class="text-muted"><strong>Error al cargar datos del juego</strong></p>
+                    <p class="small text-muted">${error.message}</p>
+                    <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            `;
+        }
+    }
+
+    // Configurar el botón de auto-rellenar
+    const autoCompleteBtn = document.getElementById('autoCompleteBtn');
+    if (autoCompleteBtn) {
+        autoCompleteBtn.addEventListener('click', async function() {
+            const title = document.getElementById('name').value.trim();
+            
+            if (!title) {
+                alert('Por favor ingrese primero el nombre del producto');
+                document.getElementById('name').focus();
+                return;
+            }
+            
+            // Abrir modal y buscar juegos
+            const modal = new bootstrap.Modal(document.getElementById('gameSearchModal'));
+            const searchInput = document.getElementById('gameSearchInput');
+            const resultsDiv = document.getElementById('gameSearchResults');
+            
+            searchInput.value = title;
+            modal.show();
+            
+            // Buscar juegos en RAWG API
+            try {
+                resultsDiv.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                        <p class="text-muted">Buscando "${title}"...</p>
+                    </div>
+                `;
+                
+                console.log('Buscando:', title);
+                
+                // Intentar con el endpoint multi-fuente primero
+                let response = await fetch(`ajax/search_game_multi.php?action=search&query=${encodeURIComponent(title)}`);
+                
+                // Si falla, intentar con el endpoint principal
+                if (!response.ok) {
+                    console.warn('Multi-source failed, trying RAWG directly...');
+                    response = await fetch(`ajax/search_game_rawg.php?action=search&query=${encodeURIComponent(title)}`);
+                }
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Resultados:', result);
+                console.log('📊 Total de resultados recibidos de la API:', result.data?.results?.length || 0);
+                console.log('📍 Fuente de datos:', result.source);
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Error desconocido');
+                }
+                
+                const data = result.data;
+                
+                // Mostrar fuente en consola
+                if (result.source) {
+                    console.log('Fuente de datos:', result.source);
+                    console.log('Resultados encontrados:', data.results.length);
+                }
+                
+                if (data.results && data.results.length > 0) {
+                    await displayGameResults(data.results, resultsDiv, modal);
+                } else {
+                    // Sin resultados
+                    if (result.source === 'RAWG') {
+                        resultsDiv.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                <p class="text-muted">No se encontraron resultados para "${title}"</p>
+                                <p class="small text-muted">en la base de datos de RAWG</p>
+                                <p class="small text-muted mt-3">Intente con:</p>
+                                <ul class="small text-muted list-unstyled">
+                                    <li>• Otro nombre más conocido</li>
+                                    <li>• Solo el nombre sin la versión (ej: "Zelda" en lugar de "Zelda BOTW")</li>
+                                    <li>• El nombre en inglés</li>
+                                </ul>
+                                <button class="btn btn-outline-secondary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        `;
+                    } else if (result.source === 'MOCK') {
+                        // Si es MOCK, mostrar la opción mock para rellenar
+                        await displayGameResults(data.results, resultsDiv, modal);
+                    }
+                }
+            } catch (error) {
+                console.error('Error buscando juegos:', error);
+                resultsDiv.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                        <p class="text-muted"><strong>Error al buscar</strong></p>
+                        <p class="small text-muted">${error.message}</p>
+                        <p class="small text-muted mt-3">Puede:</p>
+                        <ul class="small text-muted list-unstyled">
+                            <li>✓ Rellenar los datos manualmente</li>
+                            <li>✓ Intentar más tarde</li>
+                            <li>✓ Contactar soporte si persiste</li>
+                        </ul>
+                        <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                `;
+            }
+        });
+    }
+    
+    // Mejorar área de drag & drop de imágenes
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imageInput = document.getElementById('images');
+    
+    if (imageUploadArea && imageInput) {
+        // Click en el área abre el selector de archivos
+        imageUploadArea.addEventListener('click', function() {
+            imageInput.click();
+        });
+        
+        // Drag & drop
+        imageUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('border-primary', 'bg-light');
+        });
+        
+        imageUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('border-primary', 'bg-light');
+        });
+        
+        imageUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('border-primary', 'bg-light');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                // Asignar archivos al input
+                imageInput.files = files;
+                // Disparar evento change
+                imageInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+});
+</script>
+
+<!-- ==========================================
+     FORMATO DE PRECIOS CON SEPARADOR DE MILES
+     Este script se ejecuta SIEMPRE (no depende de modal)
+     ========================================== -->
+<script>
+(function() {
 
 // Actualizar slug cuando cambia el nombre del producto
 const nameInput = document.getElementById('name');
@@ -1950,15 +3205,11 @@ updateSEOCounters();
 
 // Inicializar tooltips de Bootstrap
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl);
-});
-
-}); // Fin de DOMContentLoaded
-
-// ==========================================
-// FORMATO DE PRECIOS CON SEPARADOR DE MILES
-// ==========================================
+<!-- ==========================================
+     FORMATO DE PRECIOS CON SEPARADOR DE MILES
+     Este script se ejecuta SIEMPRE (no depende de modal)
+     ========================================== -->
+<script>
 (function() {
     'use strict';
     
@@ -2792,6 +4043,175 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 imageInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
+    }
+});
+</script>
+
+<!-- ==========================================
+     FORMATO DE PRECIOS CON SEPARADOR DE MILES
+     Este script se ejecuta SIEMPRE (no depende de modal)
+     ========================================== -->
+<script>
+(function() {
+    'use strict';
+    
+    function initPriceFormatting() {
+        // Función para formatear número con puntos de miles
+        function formatNumberWithThousands(value) {
+            // Remover todo excepto dígitos
+            const num = value.replace(/\D/g, '');
+            
+            // Si está vacío, retornar vacío
+            if (!num) return '';
+            
+            // Formatear con puntos de miles
+            return parseInt(num, 10).toLocaleString('es-AR').replace(/,/g, '.');
+        }
+        
+        // Función para obtener el valor sin formato
+        function getRawValue( formattedValue) {
+            return formattedValue.replace(/\./g, '');
+        }
+        
+        // Función para calcular nueva posición del cursor
+        function getNewCursorPosition(oldValue, newValue, oldPosition) {
+            const oldDots = (oldValue.substring(0, oldPosition).match(/\./g) || []).length;
+            const rawPosition = oldPosition - oldDots;
+            const newDots = (newValue.substring(0, rawPosition + Math.floor((newValue.length - rawPosition) / 4)).match(/\./g) || []).length;
+            return rawPosition + newDots;
+        }
+        
+        // Función UNIFICADA para actualizar preview de descuento (se llama desde precio Y descuento)
+        function updateDiscountPreview(currency) {
+            // currency = 'ars' o 'usd'
+            const priceId = currency === 'ars' ? 'price_pesos' : 'price_dollars';
+            const discountId = currency === 'ars' ? 'discount_percentage_ars' : 'discount_percentage_usd';
+            const previewId = currency === 'ars' ? 'discount-preview-ars' : 'discount-preview-usd';
+            
+            const priceEl = document.getElementById(priceId);
+            const discountEl = document.getElementById(discountId);
+            const previewEl = document.getElementById(previewId);
+            
+            if (!priceEl || !discountEl || !previewEl) return;
+            
+            // Obtener valores
+            const priceRaw = priceEl.getAttribute('data-raw-value') || '0';
+            const priceValue = parseInt(priceRaw);
+            const discountValue = parseInt(discountEl.value || '0');
+            
+            console.log(`🔄 updateDiscountPreview(${currency}): precio=${priceValue}, descuento=${discountValue}%`);
+            
+            // Actualizar preview
+            if (discountValue > 0 && priceValue > 0) {
+                const discountedPrice = priceValue * (1 - (discountValue / 100));
+                previewEl.innerHTML = `
+                    <span class="text-danger"><del>$${formatNumberWithThousands(String(priceValue))}</del></span> → 
+                    <span class="text-success fw-bold">$${formatNumberWithThousands(String(Math.round(discountedPrice)))}</span> 
+                    <span class="badge bg-success">-${discountValue}%</span>
+                `;
+                previewEl.classList.add('text-success');
+            } else {
+                previewEl.textContent = 'Sin descuento';
+                previewEl.classList.remove('text-success');
+            }
+        }
+        
+        // Manejar campos de precio
+        document.querySelectorAll('.price-input').forEach(input => {
+            // Inicializar data-raw-value desde el principio
+            const initialRawValue = getRawValue(input.value || '0');
+            input.setAttribute('data-raw-value', initialRawValue);
+            
+            // Formatear valor inicial si existe
+            if (input.value) {
+                input.value = formatNumberWithThousands(input.value);
+            }
+            
+            console.log(`📋 Campo inicializado: ${input.id} = "${input.value}" (raw: "${initialRawValue}")`);
+            
+            // Formatear en tiempo real mientras se escribe
+            input.addEventListener('input', function(e) {
+                const oldValue = this.value;
+                const cursorPosition = this.selectionStart;
+                
+                // Remover formato y obtener solo números
+                const rawValue = getRawValue(this.value);
+                this.setAttribute('data-raw-value', rawValue);
+                
+                // Aplicar formato
+                const formatted = formatNumberWithThousands(rawValue);
+                
+                // Solo actualizar si cambió
+                if (this.value !== formatted) {
+                    this.value = formatted;
+                    
+                    // Calcular nueva posición del cursor
+                    const dotsBeforeCursor = (oldValue.substring(0, cursorPosition).match(/\./g) || []).length;
+                    const digitsBeforeCursor = cursorPosition - dotsBeforeCursor;
+                    const formattedBeforeCursor = formatted.substring(0, digitsBeforeCursor + Math.floor((formatted.length - digitsBeforeCursor) / 4));
+                    const newCursorPosition = formattedBeforeCursor.length;
+                    
+                    // Ajustar cursor
+                    this.setSelectionRange(newCursorPosition, newCursorPosition);
+                }
+                
+                // Actualizar preview de descuento
+                const currency = this.id === 'price_pesos' ? 'ars' : 'usd';
+                updateDiscountPreview(currency);
+            });
+            
+            // Al perder el foco, asegurar formato correcto
+            input.addEventListener('blur', function() {
+                const rawValue = getRawValue(this.value) || '0';
+                this.setAttribute('data-raw-value', rawValue);
+                console.log(`📤 Blur en ${this.id}: data-raw-value = "${rawValue}"`);
+                
+                if (rawValue && rawValue !== '0') {
+                    this.value = formatNumberWithThousands(rawValue);
+                } else {
+                    this.value = ''; // Dejar vacío visualmente si es 0
+                    this.setAttribute('data-raw-value', '0');
+                }
+                // Actualizar preview de descuento
+                const currency = this.id === 'price_pesos' ? 'ars' : 'usd';
+                updateDiscountPreview(currency);
+            });
+            
+            // Al hacer focus, seleccionar todo para facilitar edición
+            input.addEventListener('focus', function() {
+                // Opcional: descomentar para seleccionar todo al hacer click
+                // this.select();
+            });
+        });
+        
+        // Manejar campos de descuento (solo enteros, sin decimales)
+        document.querySelectorAll('.discount-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                // Solo permitir números enteros hasta 100
+                let value = this.value.replace(/\D/g, ''); // Remover todo excepto dígitos
+                
+                if (value) {
+                    value = parseInt(value, 10);
+                    if (value > 100) value = 100; // Máximo 100%
+                }
+                
+                this.value = value || '';
+                this.setAttribute('data-raw-value', value || '0');
+                
+                // Actualizar preview de descuento usando función unificada
+                const currency = this.id.includes('ars') ? 'ars' : 'usd';
+                updateDiscountPreview(currency);
+            });
+        });
+        
+        console.log('✅ Price formatting system initialized - v2.32');
+    }
+    
+    // Ejecutar inmediatamente si el DOM está listo, o esperar al evento
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPriceFormatting);
+    } else {
+        initPriceFormatting();
     }
 })();
 </script>
