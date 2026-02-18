@@ -2621,6 +2621,22 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
 
 <?php require_once 'inc/footer.php'; ?>
 
+<script>
+    // ============================================
+    // REGENERAR SLUG
+    // ============================================
+const regenerateSlugBtn = document.getElementById('regenerate_slug');
+const slugPreview = document.getElementById('slug_preview');
+const nameInput = document.getElementById('name');
+
+if (regenerateSlugBtn && slugPreview && nameInput) {
+    regenerateSlugBtn.addEventListener('click', function() {
+        if (!nameInput.value) {
+            alert('Primero ingresa el nombre del producto');
+            nameInput.focus();
+            return;
+        }
+
         const slug = generateSlugFromName(nameInput.value);
         slugPreview.value = slug;
         
@@ -3357,6 +3373,11 @@ updateSEOCounters();
 
 // Inicializar tooltips de Bootstrap
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+</script>
+
 <!-- ==========================================
      FORMATO DE PRECIOS CON SEPARADOR DE MILES
      Este script se ejecuta SIEMPRE (no depende de modal)
