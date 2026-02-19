@@ -53,7 +53,7 @@ class AdminSecurityConfig {
     public static function getGetOnlyScripts() {
         return [
             'index.php', 'dashboard.php', 'products.php', 'orders.php', 
-            'users.php', 'categories.php', 'brands.php', 'inventory.php'
+            'users.php', 'inventory.php'
         ];
     }
     

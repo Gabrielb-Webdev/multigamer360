@@ -107,22 +107,6 @@ require_once 'auth.php';
                         </li>
                         <?php endif; ?>
                         
-                        <?php if (hasPermission('categories', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'categories.php' ? 'active' : ''; ?>" href="categories.php">
-                                <i class="fas fa-tags me-2"></i>Categorías
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <?php if (hasPermission('brands', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'brands.php' ? 'active' : ''; ?>" href="brands.php">
-                                <i class="fas fa-award me-2"></i>Marcas
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
                         <?php if (hasPermission('coupons', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'coupons.php' ? 'active' : ''; ?>" href="coupons.php">
@@ -136,14 +120,6 @@ require_once 'auth.php';
                         <span>Marketing</span>
                     </h6>
                     <ul class="nav flex-column mb-2">
-                        <?php if (hasPermission('reviews', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'reviews.php' ? 'active' : ''; ?>" href="reviews.php">
-                                <i class="fas fa-star me-2"></i>Reseñas
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
                         <?php if (hasPermission('newsletter', 'read')): ?>
                         <li class="nav-item">
                             <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'newsletter.php' ? 'active' : ''; ?>" href="newsletter.php">
@@ -157,13 +133,6 @@ require_once 'auth.php';
                         <span>Sistema</span>
                     </h6>
                     <ul class="nav flex-column mb-2">
-                        <?php if (hasPermission('settings', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>" href="settings.php">
-                                <i class="fas fa-cog me-2"></i>Configuración
-                            </a>
-                        </li>
-                        <?php endif; ?>
                     </ul>
                 </div>
             </nav>
