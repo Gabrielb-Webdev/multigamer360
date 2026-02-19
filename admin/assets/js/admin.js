@@ -316,6 +316,63 @@ document.addEventListener('DOMContentLoaded', function() {
             bsAlert.close();
         }, 5000);
     });
+    
+    // ===================================================================
+    // INICIALIZAR FLATPICKR - DATE PICKER PREMIUM
+    // ===================================================================
+    if (typeof flatpickr !== 'undefined') {
+        // Configurar inputs de fecha y hora
+        const dateTimeInputs = document.querySelectorAll('input[type="datetime-local"]');
+        dateTimeInputs.forEach(input => {
+            flatpickr(input, {
+                enableTime: true,
+                time_24hr: true,
+                dateFormat: "Y-m-d H:i",
+                altInput: true,
+                altFormat: "d/m/Y H:i",
+                locale: "es",
+                theme: "material_blue",
+                defaultDate: input.value || null,
+                minuteIncrement: 1,
+                allowInput: true,
+                onValueUpdate: function(selectedDates, dateStr, instance) {
+                    // Actualizar el input original con formato ISO
+                    const isoFormat = instance.formatDate(selectedDates[0], "Y-m-d\\TH:i");
+                    input.value = isoFormat;
+                }
+            });
+        });
+        
+        // Configurar inputs de fecha solamente
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            flatpickr(input, {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/Y",
+                locale: "es",
+                theme: "material_blue",
+                defaultDate: input.value || null,
+                allowInput: true
+            });
+        });
+        
+        // Configurar inputs de hora solamente
+        const timeInputs = document.querySelectorAll('input[type="time"]');
+        timeInputs.forEach(input => {
+            flatpickr(input, {
+                enableTime: true,
+                noCalendar: true,
+                time_24hr: true,
+                dateFormat: "H:i",
+                locale: "es",
+                theme: "material_blue",
+                defaultDate: input.value || null,
+                minuteIncrement: 1,
+                allowInput: true
+            });
+        });
+    }
 });
 
 // Hacer las utilidades disponibles globalmente

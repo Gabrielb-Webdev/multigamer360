@@ -1266,3 +1266,240 @@ input[type="time"]:valid {
     border-color: #198754 !important;
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
 }
+
+/* ===================================================================
+   FLATPICKR - CALENDARIO PREMIUM PERSONALIZADO
+   =================================================================== */
+
+/* Ocultar input original cuando Flatpickr está activo */
+input[type="datetime-local"].flatpickr-input,
+input[type="date"].flatpickr-input,
+input[type="time"].flatpickr-input {
+    display: none !important;
+}
+
+/* Input alternativo de Flatpickr */
+.flatpickr-input.form-control {
+    display: block !important;
+}
+
+/* Contenedor del calendario */
+.flatpickr-calendar {
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.25), 
+                0 0 0 1px rgba(102, 126, 234, 0.1) !important;
+    border-radius: 12px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    overflow: hidden !important;
+}
+
+/* Header del calendario */
+.flatpickr-months {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    padding: 10px 0 !important;
+}
+
+.flatpickr-month {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+.flatpickr-current-month {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-current-month input.cur-year {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    font-weight: 600 !important;
+}
+
+/* Flechas de navegación */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    transition: all 0.2s ease !important;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 50% !important;
+    transform: scale(1.1) !important;
+}
+
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+    fill: #ffffff !important;
+}
+
+/* Días de la semana */
+.flatpickr-weekdays {
+    background: #f8f9fa !important;
+    padding: 8px 0 !important;
+}
+
+span.flatpickr-weekday {
+    color: #667eea !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    text-transform: uppercase !important;
+}
+
+/* Grid de días */
+.flatpickr-days {
+    padding: 10px !important;
+}
+
+.dayContainer {
+    min-width: 280px !important;
+    max-width: 280px !important;
+}
+
+/* Días individuales */
+.flatpickr-day {
+    color: #2d3748 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    margin: 2px !important;
+}
+
+.flatpickr-day:hover {
+    background: rgba(102, 126, 234, 0.1) !important;
+    color: #667eea !important;
+    border-color: rgba(102, 126, 234, 0.2) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Día de hoy */
+.flatpickr-day.today {
+    border: 2px solid #667eea !important;
+    font-weight: 600 !important;
+    background: rgba(102, 126, 234, 0.05) !important;
+}
+
+.flatpickr-day.today:hover {
+    background: rgba(102, 126, 234, 0.15) !important;
+    color: #667eea !important;
+}
+
+/* Día seleccionado */
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Días deshabilitados */
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover {
+    color: #cbd5e1 !important;
+    background: transparent !important;
+    cursor: not-allowed !important;
+}
+
+/* Días fuera del mes actual */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #94a3b8 !important;
+}
+
+/* Selector de tiempo */
+.flatpickr-time {
+    border-top: 1px solid #e2e8f0 !important;
+    background: #f8f9fa !important;
+    padding: 10px !important;
+}
+
+.flatpickr-time-separator,
+.flatpickr-am-pm {
+    color: #667eea !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-time input {
+    background: #ffffff !important;
+    color: #667eea !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+}
+
+.flatpickr-time input:hover {
+    background: #f8f9fa !important;
+    border-color: #667eea !important;
+}
+
+.flatpickr-time input:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none !important;
+}
+
+/* Flechas del selector de tiempo */
+.flatpickr-time .arrowUp,
+.flatpickr-time .arrowDown {
+    border-color: #667eea transparent !important;
+}
+
+.flatpickr-time .arrowUp:hover,
+.flatpickr-time .arrowDown:hover {
+    border-color: #764ba2 transparent !important;
+}
+
+/* Animación de apertura */
+.flatpickr-calendar.animate {
+    animation: flatpickrFadeIn 0.2s ease-out !important;
+}
+
+@keyframes flatpickrFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .flatpickr-calendar {
+        font-size: 14px !important;
+    }
+    
+    .dayContainer {
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .flatpickr-day {
+        height: 40px !important;
+        line-height: 40px !important;
+    }
+}
