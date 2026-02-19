@@ -173,12 +173,15 @@ try {
     // Crear placeholders para la consulta
     $placeholders = implode(',', array_fill(0, count($ids_array), '?'));
     
-    // Preparar la consulta
-    $query = "UPDATE products SET status = ? WHERE id IN ($placeholders)";
+    // Determinar el valor de is_active basado en el estado
+    $is_active = ($new_status === 'active') ? 1 : 0;
+    
+    // Preparar la consulta - Actualizar AMBOS campos: status e is_active
+    $query = "UPDATE products SET status = ?, is_active = ? WHERE id IN ($placeholders)";
     $stmt = $pdo->prepare($query);
     
-    // Crear array de parámetros (estado + IDs)
-    $params = array_merge([$new_status], $ids_array);
+    // Crear array de parámetros (estado + is_active + IDs)
+    $params = array_merge([$new_status, $is_active], $ids_array);
     
     error_log("Query: " . $query);
     error_log("Params: " . print_r($params, true));
