@@ -34,7 +34,7 @@ try {
     // Verificar que el producto existe
     $productStmt = $pdo->prepare("
         SELECT id, name, 
-               COALESCE(price_pesos, price_dollars, price) as price, 
+               COALESCE(price_pesos, price_dollars, 0) as price, 
                COALESCE(main_image, '') as image_url 
         FROM products 
         WHERE id = ? AND is_active = 1
@@ -109,7 +109,7 @@ try {
     
     // Calcular el valor total de la wishlist
     $totalStmt = $pdo->prepare("
-        SELECT SUM(COALESCE(p.price_pesos, p.price_dollars, p.price)) as total
+        SELECT SUM(COALESCE(p.price_pesos, p.price_dollars, 0)) as total
         FROM user_favorites uf
         JOIN products p ON uf.product_id = p.id
         WHERE uf.user_id = ? AND p.is_active = 1

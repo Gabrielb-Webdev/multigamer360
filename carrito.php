@@ -103,7 +103,7 @@ function getCartProducts($pdo, $cart) {
             // Consulta CON product_images (sin usar is_active que no existe)
             $stmt = $pdo->prepare("
                 SELECT p.id, p.name, 
-                       COALESCE(p.price_pesos, p.price_dollars, p.price) as price, 
+                       COALESCE(p.price_pesos, p.price_dollars, 0) as price, 
                        p.main_image, p.stock_quantity,
                        COALESCE(
                            (SELECT pi.image_url 
@@ -135,7 +135,7 @@ function getCartProducts($pdo, $cart) {
             // Consulta SIN product_images (fallback)
             $stmt = $pdo->prepare("
                 SELECT id, name, 
-                       COALESCE(price_pesos, price_dollars, price) as price, 
+                       COALESCE(price_pesos, price_dollars, 0) as price, 
                        main_image, stock_quantity,
                        COALESCE(main_image, '') as primary_image,
                        CASE 
