@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'meta_title' => trim($_POST['meta_title'] ?? ''),
             'meta_description' => trim($_POST['meta_description'] ?? ''),
             'status' => $_POST['status'] ?? 'active',
-            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'is_active' => ($_POST['status'] ?? 'active') === 'active' ? 1 : 0,
             'updated_at' => date('Y-m-d H:i:s')
         ];
         
@@ -454,11 +454,22 @@ require_once 'inc/header.php';
                                     <div class="form-text">Dejar vacío para auto-generar</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label for="status" class="form-label">Estado *</label>
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-toggle-on me-1"></i>Estado *
+                                    </label>
                                     <select class="form-select" id="status" name="status" required>
-                                        <option value="active" <?php echo ($product['status'] ?? 'active') === 'active' ? 'selected' : ''; ?>>Activo</option>
-                                        <option value="inactive" <?php echo ($product['status'] ?? '') === 'inactive' ? 'selected' : ''; ?>>Inactivo</option>
+                                        <option value="active" <?php echo ($product['status'] ?? 'active') === 'active' ? 'selected' : ''; ?>>
+                                            ✓ Activo
+                                        </option>
+                                        <option value="inactive" <?php echo ($product['status'] ?? '') === 'inactive' ? 'selected' : ''; ?>>
+                                            ✗ Inactivo
+                                        </option>
                                     </select>
+                                    <div class="form-text">
+                                        <span id="status-indicator" class="badge bg-<?php echo ($product['status'] ?? 'active') === 'active' ? 'success' : 'danger'; ?>">
+                                            <?php echo ($product['status'] ?? 'active') === 'active' ? '● Producto Activo' : '● Producto Inactivo'; ?>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -765,18 +776,28 @@ require_once 'inc/header.php';
                     </div>
                     
                     <!-- Acciones -->
-                    <div class="card">
+                    <div class="card shadow-sm border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-check-circle me-2"></i>Guardar Cambios
+                            </h6>
+                        </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm" id="updateProductBtn">
                                     <i class="fas fa-save me-2"></i>
                                     Actualizar Producto
                                 </button>
                                 
                                 <a href="products.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-2"></i>
-                                    Cancelar
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Volver a Productos
                                 </a>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3 mb-0" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <small>Los cambios se aplicarán inmediatamente</small>
                             </div>
                         </div>
                     </div>
@@ -1072,6 +1093,44 @@ require_once 'inc/header.php';
 #autoCompleteBtn:hover {
     box-shadow: 0 6px 12px rgba(40, 167, 69, 0.35);
     transform: translateY(-3px);
+}
+
+/* Indicador de estado con animación */
+#status-indicator {
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Botón de actualizar producto mejorado */
+#updateProductBtn {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+#updateProductBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(40, 167, 69, 0.4);
+}
+
+#updateProductBtn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* Mejorar selects */
+.form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Inputs con mejor feedback visual */
+.form-control:focus,
+.price-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 </style>
 
@@ -2692,6 +2751,28 @@ if (regenerateSlugBtn && slugPreview && nameInput) {
             this.classList.remove('btn-success');
             this.classList.add('btn-outline-secondary');
         }, 1500);
+    });
+}
+
+    // ============================================
+    // ACTUALIZAR INDICADOR DE ESTADO DINÁMICAMENTE
+    // ============================================
+const statusSelect = document.getElementById('status');
+const statusIndicator = document.getElementById('status-indicator');
+
+if (statusSelect && statusIndicator) {
+    statusSelect.addEventListener('change', function() {
+        const isActive = this.value === 'active';
+        
+        // Actualizar badge
+        statusIndicator.className = 'badge bg-' + (isActive ? 'success' : 'danger');
+        statusIndicator.innerHTML = isActive ? '● Producto Activo' : '● Producto Inactivo';
+        
+        // Animación sutil
+        statusIndicator.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            statusIndicator.style.transform = 'scale(1)';
+        }, 200);
     });
 }
     
