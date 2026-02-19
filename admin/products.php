@@ -3765,6 +3765,12 @@ if (reviewModalElement) {
 
 
 </script>
+
+<!-- ===================================== -->
+<!-- PRODUCTOS DINÁMICOS SIN RECARGAS V1.0 -->
+<!-- ===================================== -->
+<script src="assets/js/products-dynamic.js"></script>
+
 <!-- Version: 2.1.1 - Eliminado modal de Auto-Completado Exitoso -->
 
 <?php require_once 'inc/footer.php'; ?>

@@ -20,6 +20,8 @@ require_once 'auth.php';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Admin CSS -->
     <link href="assets/css/admin.css?v=4.2" rel="stylesheet">
+    <!-- Products Dynamic CSS -->
+    <link href="assets/css/products-dynamic.css?v=1.0" rel="stylesheet">
     
     <meta name="csrf-token" content="<?php echo $csrf_token; ?>">
 </head>
