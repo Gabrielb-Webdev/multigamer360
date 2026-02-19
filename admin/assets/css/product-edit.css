@@ -1,0 +1,466 @@
+/* ============================================================================
+   ESTILOS ESPECÍFICOS PARA PRODUCT_EDIT.PHP
+   Version: 1.0 - Archivo CSS dedicado
+   Fecha: 19 Feb 2026
+   ============================================================================ */
+
+/* Área de carga de imágenes con drag & drop */
+.upload-area {
+    background-color: #f8f9fa !important;
+    transition: all 0.3s ease !important;
+    border: 2px dashed #dee2e6 !important;
+    border-radius: 0.375rem !important;
+    padding: 2rem !important;
+    text-align: center !important;
+}
+
+.upload-area:hover {
+    background-color: #e9ecef !important;
+    border-color: #0d6efd !important;
+    cursor: pointer !important;
+}
+
+.upload-area.border-primary {
+    background-color: #cfe2ff !important;
+    border-color: #0d6efd !important;
+}
+
+.upload-icon {
+    transition: transform 0.3s ease !important;
+}
+
+.upload-area:hover .upload-icon i {
+    transform: translateY(-5px) !important;
+}
+
+/* Tarjetas de resultados de búsqueda de juegos */
+.game-result-card {
+    transition: all 0.3s ease !important;
+    border: 2px solid transparent !important;
+    min-height: 200px !important;
+    cursor: pointer !important;
+}
+
+.game-result-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    border-color: #0d6efd !important;
+}
+
+.game-result-card img {
+    min-height: 120px !important;
+    max-height: 120px !important;
+    display: block !important;
+    width: 100% !important;
+    object-fit: cover !important;
+}
+
+.game-result-card .card-body {
+    padding: 0.75rem !important;
+}
+
+.game-result-card .card-title {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    max-height: 2.4em !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+}
+
+/* Estilos para imágenes ordenables (SortableJS) */
+.sortable-ghost {
+    opacity: 0.4 !important;
+    background: #f8f9fa !important;
+}
+
+.sortable-chosen {
+    transform: scale(1.05) !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2) !important;
+}
+
+.sortable-drag {
+    opacity: 0.8 !important;
+}
+
+.sortable-image-item {
+    transition: transform 0.2s !important;
+    border-radius: 0.375rem !important;
+    overflow: hidden !important;
+}
+
+.sortable-image-item:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Modal de éxito con animaciones */
+#successInfoModal .modal-content {
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+#successInfoModal .modal-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    padding: 1.5rem !important;
+    border: none !important;
+}
+
+#successInfoModal .success-animation {
+    animation: successPulse 1.5s ease-in-out !important;
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+#successInfoModal .alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+    border: none !important;
+}
+
+#successInfoModal .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    border: 1px solid rgba(0,0,0,0.125) !important;
+}
+
+#successInfoModal .list-unstyled li {
+    padding: 0.4rem 0 !important;
+    transition: all 0.3s ease !important;
+}
+
+#successInfoModal .list-unstyled li:hover {
+    padding-left: 5px !important;
+    background-color: rgba(40, 167, 69, 0.05) !important;
+    border-radius: 5px !important;
+}
+
+#successInfoModal .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border: none !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+#successInfoModal .btn-success:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Mejoras generales de cards para esta página */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    border: 1px solid rgba(0, 0, 0, 0.125) !important;
+    transition: all 0.3s ease !important;
+    border-radius: 0.375rem !important;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-header {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125) !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.25rem !important;
+}
+
+/* Labels de formulario mejorados */
+.form-label {
+    font-weight: 500 !important;
+    color: #495057 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Botones de éxito mejorados */
+.btn-success {
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2) !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
+}
+
+.btn-success:hover {
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+    transform: translateY(-2px) !important;
+}
+
+.btn-success:active {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2) !important;
+}
+
+/* Botón de auto-completar destacado */
+#autoCompleteBtn {
+    font-size: 1.1rem !important;
+    padding: 0.75rem 2rem !important;
+    box-shadow: 0 4px 6px rgba(40, 167, 69, 0.25) !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+}
+
+#autoCompleteBtn:hover {
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.35) !important;
+    transform: translateY(-3px) !important;
+}
+
+#autoCompleteBtn:active {
+    transform: translateY(-1px) !important;
+}
+
+/* Indicador de estado con animación */
+#status-indicator {
+    transition: all 0.3s ease !important;
+    font-size: 0.875rem !important;
+    padding: 0.375rem 0.75rem !important;
+    border-radius: 0.25rem !important;
+    font-weight: 500 !important;
+}
+
+/* Botón de actualizar producto mejorado */
+#updateProductBtn {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 0.5rem !important;
+}
+
+#updateProductBtn:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 16px rgba(40, 167, 69, 0.4) !important;
+}
+
+#updateProductBtn:active {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Selects mejorados */
+.form-select:focus {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Inputs con mejor feedback visual */
+.form-control:focus,
+.price-input:focus {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Inputs de precio específicos */
+.price-input {
+    font-weight: 500 !important;
+    font-size: 1rem !important;
+}
+
+/* Info de drag & drop */
+#drag-drop-info {
+    background-color: #cfe2ff !important;
+    border-left: 4px solid #0d6efd !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Vista previa de imágenes */
+#image-preview {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+}
+
+/* Textarea mejorado */
+textarea.form-control {
+    resize: vertical !important;
+    min-height: 120px !important;
+}
+
+textarea.form-control:focus {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Estilos para el campo de estado */
+#status {
+    font-weight: 500 !important;
+}
+
+/* Card de acciones mejorada */
+.card.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border: none !important;
+}
+
+.card.bg-success .card-header {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Mejoras para inputs numéricos */
+input[type="number"].form-control {
+    font-weight: 500 !important;
+}
+
+/* Grupos de input con iconos */
+.input-group-text {
+    font-weight: 600 !important;
+    background-color: #e9ecef !important;
+}
+
+/* Badges mejorados */
+.badge {
+    padding: 0.35em 0.65em !important;
+    font-weight: 600 !important;
+}
+
+/* Animación para cambios de estado */
+@keyframes statusChange {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.status-changed {
+    animation: statusChange 0.3s ease !important;
+}
+
+/* Estilos para el preview de slug */
+#slug_preview {
+    font-family: 'Courier New', monospace !important;
+    background-color: #f8f9fa !important;
+    font-size: 0.9rem !important;
+}
+
+/* Botones pequeños en modales */
+.modal .btn-sm {
+    font-size: 0.875rem !important;
+    padding: 0.375rem 0.75rem !important;
+}
+
+/* Mejoras para checkboxes y radios */
+.form-check-input:checked {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+/* Divisores visuales */
+hr {
+    opacity: 0.1 !important;
+}
+
+/* Tooltips personalizados (si se usan) */
+.tooltip-inner {
+    background-color: #343a40 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Scrollbar personalizado para textareas */
+textarea.form-control::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+textarea.form-control::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 4px !important;
+}
+
+textarea.form-control::-webkit-scrollbar-thumb {
+    background: #888 !important;
+    border-radius: 4px !important;
+}
+
+textarea.form-control::-webkit-scrollbar-thumb:hover {
+    background: #555 !important;
+}
+
+/* Mejoras para el campo de género (checkboxes) */
+.form-check {
+    padding-left: 1.5rem !important;
+}
+
+.form-check-label {
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+/* Efecto de hover en las opciones de formulario */
+.form-check:hover .form-check-label {
+    color: #0d6efd !important;
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+    #autoCompleteBtn {
+        font-size: 1rem !important;
+        padding: 0.5rem 1.5rem !important;
+        min-width: 100% !important;
+    }
+    
+    #updateProductBtn {
+        font-size: 1rem !important;
+        padding: 0.5rem 1rem !important;
+        width: 100% !important;
+    }
+    
+    .card-header {
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Animación de carga para imágenes */
+@keyframes imageLoad {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.sortable-image-item {
+    animation: imageLoad 0.3s ease !important;
+}
+
+/* Estilos para alertas personalizadas */
+.alert {
+    border-radius: 0.5rem !important;
+    border-left: 4px solid !important;
+}
+
+.alert-success {
+    border-left-color: #28a745 !important;
+}
+
+.alert-danger {
+    border-left-color: #dc3545 !important;
+}
+
+.alert-warning {
+    border-left-color: #ffc107 !important;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0 !important;
+}

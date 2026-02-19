@@ -395,6 +395,9 @@ $page_title = 'Editar Producto';
 require_once 'inc/header.php';
 ?>
 
+<!-- CSS específico para product_edit.php -->
+<link href="assets/css/product-edit.css?v=1.0" rel="stylesheet">
+
 <div class="row">
     <div class="col-12">
         <!-- Botón para auto-completar -->
