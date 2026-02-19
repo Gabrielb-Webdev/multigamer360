@@ -318,32 +318,127 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================================================
-    // INICIALIZAR FLATPICKR - DATE PICKER PREMIUM
+    // INICIALIZAR FLATPICKR - DATE PICKER PREMIUM CON MODAL
     // ===================================================================
     if (typeof flatpickr !== 'undefined') {
-        // Configurar inputs de fecha y hora
+        // Crear modal para el calendario si no existe
+        if (!document.getElementById('calendarModal')) {
+            const modalHTML = `
+                <div class="modal fade" id="calendarModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-gradient-purple text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Seleccionar Fecha y Hora
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <div id="inlineCalendar"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="confirmDateBtn">
+                                    <i class="fas fa-check me-2"></i>Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        let currentFlatpickrInstance = null;
+        let currentTargetInput = null;
+        const calendarModal = new bootstrap.Modal(document.getElementById('calendarModal'));
+        
+        // Configurar inputs de fecha y hora CON MODAL
         const dateTimeInputs = document.querySelectorAll('input[type="datetime-local"]');
         dateTimeInputs.forEach(input => {
-            flatpickr(input, {
-                enableTime: true,
-                time_24hr: true,
-                dateFormat: "Y-m-d H:i",
-                altInput: true,
-                altFormat: "d/m/Y H:i",
-                locale: "es",
-                theme: "material_blue",
-                defaultDate: input.value || null,
-                minuteIncrement: 1,
-                allowInput: true,
-                onValueUpdate: function(selectedDates, dateStr, instance) {
-                    // Actualizar el input original con formato ISO
-                    const isoFormat = instance.formatDate(selectedDates[0], "Y-m-d\\TH:i");
-                    input.value = isoFormat;
+            // Hacer readonly para evitar teclado y forzar uso del picker
+            input.setAttribute('readonly', 'readonly');
+            input.style.cursor = 'pointer';
+            
+            // Al hacer clic, abrir modal con calendario inline
+            input.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentTargetInput = input;
+                
+                // Destruir instancia anterior si existe
+                if (currentFlatpickrInstance) {
+                    currentFlatpickrInstance.destroy();
                 }
+                
+                // Crear nuevo calendario inline en el modal
+                currentFlatpickrInstance = flatpickr('#inlineCalendar', {
+                    inline: true,
+                    enableTime: true,
+                    time_24hr: true,
+                    dateFormat: "Y-m-d H:i",
+                    locale: "es",
+                    defaultDate: input.value || new Date(),
+                    minuteIncrement: 1
+                });
+                
+                // Mostrar modal
+                calendarModal.show();
+            });
+            
+            // Formatear valor mostrado en el input
+            if (input.value) {
+                const date = new Date(input.value);
+                input.setAttribute('data-value', input.value);
+                input.value = date.toLocaleString('es-AR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        });
+        
+        // Botón confirmar en modal
+        document.getElementById('confirmDateBtn').addEventListener('click', function() {
+            if (currentFlatpickrInstance && currentTargetInput) {
+                const selectedDates = currentFlatpickrInstance.selectedDates;
+                if (selectedDates.length > 0) {
+                    const date = selectedDates[0];
+                    const isoFormat = currentFlatpickrInstance.formatDate(date, "Y-m-d\\TH:i");
+                    
+                    // Guardar valor ISO en atributo data
+                    currentTargetInput.setAttribute('data-value', isoFormat);
+                    
+                    // Mostrar formato amigable en el input
+                    currentTargetInput.value = date.toLocaleString('es-AR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    // Cerrar modal
+                    calendarModal.hide();
+                }
+            }
+        });
+        
+        // Al enviar formulario, restaurar valores ISO
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                dateTimeInputs.forEach(input => {
+                    const isoValue = input.getAttribute('data-value');
+                    if (isoValue) {
+                        input.value = isoValue;
+                    }
+                });
             });
         });
         
-        // Configurar inputs de fecha solamente
+        // Configurar inputs de fecha solamente (sin cambios, sin modal)
         const dateInputs = document.querySelectorAll('input[type="date"]');
         dateInputs.forEach(input => {
             flatpickr(input, {
@@ -351,13 +446,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 altInput: true,
                 altFormat: "d/m/Y",
                 locale: "es",
-                theme: "material_blue",
                 defaultDate: input.value || null,
                 allowInput: true
             });
         });
         
-        // Configurar inputs de hora solamente
+        // Configurar inputs de hora solamente (sin cambios, sin modal)
         const timeInputs = document.querySelectorAll('input[type="time"]');
         timeInputs.forEach(input => {
             flatpickr(input, {
@@ -366,7 +460,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 time_24hr: true,
                 dateFormat: "H:i",
                 locale: "es",
-                theme: "material_blue",
                 defaultDate: input.value || null,
                 minuteIncrement: 1,
                 allowInput: true

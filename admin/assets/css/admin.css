@@ -1268,6 +1268,64 @@ input[type="time"]:valid {
 }
 
 /* ===================================================================
+   MODAL DE CALENDARIO - ESTILOS PREMIUM
+   =================================================================== */
+#calendarModal .modal-dialog {
+    max-width: 500px !important;
+}
+
+#calendarModal .modal-content {
+    border: none !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3) !important;
+}
+
+#calendarModal .modal-header.bg-gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-bottom: none !important;
+    padding: 20px 24px !important;
+}
+
+#calendarModal .modal-title {
+    font-weight: 700 !important;
+    font-size: 1.2rem !important;
+}
+
+#calendarModal .modal-body {
+    background: #f8f9fa !important;
+}
+
+#calendarModal .modal-footer {
+    border-top: 2px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+    background: #ffffff !important;
+}
+
+#calendarModal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+#calendarModal .btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+}
+
+#calendarModal .btn-secondary {
+    background: #6c757d !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+/* ===================================================================
    FLATPICKR - CALENDARIO PREMIUM ULTRA MEJORADO V3.0
    Diseño moderno profesional con gradientes vibrantes y UX superior
    =================================================================== */
@@ -1314,6 +1372,64 @@ input[type="time"].flatpickr-input {
     overflow: visible !important;
     padding: 0 !important;
     width: 350px !important;
+}
+
+/* CALENDARIO INLINE EN MODAL - TAMAÑO GRANDE */
+.flatpickr-calendar.inline {
+    width: 100% !important;
+    max-width: 450px !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-months {
+    padding: 20px 16px !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-current-month {
+    font-size: 1.3rem !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-weekdays {
+    padding: 16px 0 !important;
+}
+
+.flatpickr-calendar.inline span.flatpickr-weekday {
+    font-size: 0.75rem !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-days {
+    padding: 20px !important;
+}
+
+.flatpickr-calendar.inline .dayContainer {
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-day {
+    height: 48px !important;
+    line-height: 44px !important;
+    max-width: 48px !important;
+    font-size: 1.05rem !important;
+    margin: 3px !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-time {
+    padding: 18px 20px !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-time input {
+    font-size: 1.2rem !important;
+    width: 65px !important;
+    height: 40px !important;
+    padding: 8px 12px !important;
+}
+
+.flatpickr-calendar.inline .flatpickr-time-separator {
+    font-size: 1.2rem !important;
+    margin: 0 10px !important;
 }
 
 .flatpickr-calendar::before {
