@@ -35,8 +35,8 @@ function hasPermission($module, $action) {
         return false;
     }
     
-    // Admin tiene todos los permisos
-    if ($_SESSION['role'] === 'admin') {
+    // Admin o Administrador tienen todos los permisos
+    if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'administrador') {
         return true;
     }
     
@@ -74,22 +74,29 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Verificar permisos (Admin o permiso de editar productos)
-if (!hasPermission('products', 'edit') && !hasPermission('products', 'update')) {
-    error_log("Permission denied for user_id: " . $_SESSION['user_id']);
-    error_log("User role: " . ($_SESSION['role'] ?? 'not set'));
-    error_log("Permissions: " . print_r($_SESSION['permissions'] ?? [], true));
-    
-    // Si es admin, permitir de todas formas
-    if ($_SESSION['role'] !== 'admin') {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false, 
-            'message' => 'No tienes permisos para editar productos',
-            'debug' => 'Permission denied - role: ' . ($_SESSION['role'] ?? 'unknown')
-        ]);
-        exit;
-    }
+// Verificar permisos - Simplificado para permitir a admins
+$is_admin = isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'administrador');
+$has_edit_permission = hasPermission('products', 'edit') || hasPermission('products', 'update');
+
+error_log("User ID: " . $_SESSION['user_id']);
+error_log("Is Admin: " . ($is_admin ? 'yes' : 'no'));
+error_log("Has Edit Permission: " . ($has_edit_permission ? 'yes' : 'no'));
+error_log("User Role: " . ($_SESSION['role'] ?? 'not set'));
+
+// Si NO es admin Y NO tiene permisos, denegar
+if (!$is_admin && !$has_edit_permission) {
+    error_log("Permission denied - Not admin and no edit permissions");
+    http_response_code(403);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'No tienes permisos para editar productos',
+        'debug' => [
+            'role' => $_SESSION['role'] ?? 'unknown',
+            'is_admin' => $is_admin,
+            'has_permission' => $has_edit_permission
+        ]
+    ]);
+    exit;
 }
 
 // Solo aceptar POST
