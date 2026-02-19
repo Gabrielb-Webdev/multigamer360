@@ -602,7 +602,7 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Monto Mínimo</label>
-                                    <input type="number" class="form-control" name="minimum_amount" min="0" step="0.01" value="0" placeholder="$0.00">
+                                    <input type="number" class="form-control" name="minimum_amount" min="0" step="0.01" placeholder="$0.00">
                                     <div class="form-text">Monto mínimo de compra requerido</div>
                                 </div>
                             </div>
@@ -616,7 +616,7 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Usos por Usuario</label>
-                                    <input type="number" class="form-control" name="per_user_limit" min="1" value="1" placeholder="1">
+                                    <input type="number" class="form-control" name="per_user_limit" min="1" placeholder="1">
                                     <div class="form-text">Máximo usos por usuario</div>
                                 </div>
                             </div>
