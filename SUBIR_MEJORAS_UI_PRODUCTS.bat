@@ -1,51 +1,55 @@
 @echo off
+chcp 65001 > nul
 echo ========================================
-echo  SUBIR MEJORAS UI/UX PRODUCTS.PHP
-echo  Version 4.0 - Premium UI
+echo 🎨 SUBIENDO MEJORAS UI FILTROS PRODUCTOS
 echo ========================================
 echo.
 
-echo [1/3] Agregando archivos al staging...
-git add admin/api/bulk_update_status.php
-git add admin/inc/header.php
-git add admin/assets/css/admin.css
-git add SUBIR_MEJORAS_UI_PRODUCTS.bat
-echo     OK - Archivos agregados
+cd /d "%~dp0"
+
+echo 📝 Agregando cambios...
+git add productos.php
+
 echo.
+echo 💾 Creando commit...
+git commit -m "UX MEJORA: Sistema de filtros moderno con tarjetas visuales
 
-echo [2/3] Creando commit...
-git commit -m "MEJORA: UI/UX Premium para products.php v4.0
+✨ NUEVAS FUNCIONALIDADES:
+- Filtro principal destacado 'TIPO DE PRODUCTO' con tarjetas visuales
+- Tarjetas grandes con iconos personalizados por categoría:
+  * Videojuegos (gamepad) - rojo
+  * Consolas (TV) - azul
+  * Accesorios (headphones) - amarillo
+  * Coleccionables (star) - morado
+- Cards interactivas con efectos hover y selección
+- Animación de check al seleccionar
+- Diseño glassmorphism coherente con el tema
+- Toggle intuitivo con un solo click
+- Contador de productos por categoría visible
 
-- Fix: bulk_update_status ahora sincroniza campo is_active
-- Fix: Productos ahora se actualizan correctamente (0 -> N productos)
-- Mejora: Cards de estadisticas con gradientes y animaciones
-- Mejora: Filtros modernos con efectos hover
-- Mejora: Tabla de productos con efectos 3D
-- Mejora: Badges con gradientes y sombras
-- Mejora: Modales embellecidos
-- Mejora: Paginacion moderna
-- Mejora: Botones con animaciones suaves
-- Mejora: Checkboxes mejorados
-- Mejora: Sistema de acciones en masa embellecido
-- Version CSS: v4.0 (cache busting)"
-echo     OK - Commit creado
+🎨 MEJORAS UI:
+- Mejor jerarquía visual de filtros
+- Iconos más grandes y claros
+- Bordes y sombras sutiles
+- Animaciones suaves
+- Estados activos bien diferenciados
+
+💡 BENEFICIOS:
+- Mucho más fácil filtrar por tipo de producto
+- UI más moderna y profesional
+- Mejor experiencia de usuario
+- Filtros más visibles y accesibles"
+
 echo.
-
-echo [3/3] Subiendo a GitHub (se sincroniza automaticamente con Hostinger)...
+echo 🌐 Subiendo a GitHub...
 git push origin main
-echo     OK - Cambios subidos
-echo.
 
+echo.
 echo ========================================
-echo  COMPLETADO
+echo ✅ MEJORAS DESPLEGADAS
 echo ========================================
 echo.
-echo Los cambios se han subido correctamente.
-echo GitHub sincronizara automaticamente con Hostinger.
-echo.
-echo IMPORTANTE:
-echo - Recarga la pagina con Ctrl+F5 para ver los cambios
-echo - Los estilos CSS v4.0 se cargaran automaticamente
-echo - El bug de bulk_update_status esta corregido
+echo Presiona Ctrl+Shift+F5 en el navegador
+echo para ver los filtros con tarjetas modernas
 echo.
 pause
