@@ -115,36 +115,6 @@ require_once 'auth.php';
                         </li>
                         <?php endif; ?>
                     </ul>
-                    
-                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>Marketing</span>
-                    </h6>
-                    <ul class="nav flex-column mb-2">
-                        <?php if (hasPermission('newsletter', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'newsletter.php' ? 'active' : ''; ?>" href="newsletter.php">
-                                <i class="fas fa-envelope me-2"></i>Newsletter
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                    </ul>
-                    
-                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>Sistema</span>
-                    </h6>
-                    <ul class="nav flex-column mb-2">
-                    </ul>
-                </div>
-            </nav>
-                        
-                        <?php if (hasPermission('settings', 'read')): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>" href="settings.php">
-                                <i class="fas fa-cog"></i> Configuración
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                    </ul>
                 </div>
             </nav>
 
