@@ -280,7 +280,7 @@ require_once 'includes/header.php';
                     <!-- Header del drawer -->
                     <div class="drawer-header">
                         <h5 class="drawer-title">
-                            <i class="fas fa-filter"></i> FILTROS
+                            <i class="fas fa-sliders-h"></i> FILTROS
                         </h5>
                         <button class="btn-close-drawer" onclick="closeMobileFilters()">
                             <i class="fas fa-times"></i>
@@ -301,29 +301,49 @@ require_once 'includes/header.php';
                     <?php endif; ?>
                     
                     <!-- =====================================================
-                         FILTRO 1: CATEGORÍAS
+                         FILTRO PRINCIPAL: TIPO DE PRODUCTO
                          ===================================================== -->
                     <?php if (!empty($availableFilters['categories'])): ?>
-                    <div class="filter-section">
-                        <h5 class="filter-title collapsible-filter" data-target="categories-filter">
-                            <i class="fas fa-th-large"></i> Categorías
-                            <i class="fas fa-chevron-down toggle-icon"></i>
+                    <div class="filter-section filter-section-primary">
+                        <h5 class="filter-title filter-title-primary">
+                            <i class="fas fa-th-large"></i> TIPO DE PRODUCTO
                         </h5>
-                        <div class="filter-options collapse-content" id="categories-filter">
+                        <div class="filter-options filter-options-cards">
                             <?php 
                             $selectedCategories = $appliedFilters['categories'] ?? [];
+                            
+                            // Definir iconos y colores para categorías principales
+                            $categoryStyles = [
+                                'videojuegos' => ['icon' => 'fa-gamepad', 'color' => '#8B0000'],
+                                'consolas' => ['icon' => 'fa-tv', 'color' => '#1a73e8'],
+                                'accesorios' => ['icon' => 'fa-headphones', 'color' => '#f4b400'],
+                                'coleccionables' => ['icon' => 'fa-star', 'color' => '#9333ea'],
+                                'default' => ['icon' => 'fa-box', 'color' => '#666']
+                            ];
+                            
                             foreach ($availableFilters['categories'] as $category): 
+                                $slug = strtolower($category['slug'] ?? $category['name']);
+                                $style = $categoryStyles[$slug] ?? $categoryStyles['default'];
+                                $isSelected = in_array($category['id'], $selectedCategories);
                             ?>
-                            <div class="filter-option">
+                            <div class="filter-card <?php echo $isSelected ? 'active' : ''; ?>" 
+                                 data-color="<?php echo $style['color']; ?>"
+                                 onclick="toggleCategoryCard(this, <?php echo $category['id']; ?>)">
                                 <input type="checkbox" 
                                        id="cat_<?php echo $category['id']; ?>" 
-                                       class="filter-checkbox category-filter"
+                                       class="filter-checkbox category-filter d-none"
                                        value="<?php echo $category['id']; ?>"
-                                       <?php echo in_array($category['id'], $selectedCategories) ? 'checked' : ''; ?>>
-                                <label for="cat_<?php echo $category['id']; ?>">
-                                    <?php echo htmlspecialchars($category['name']); ?>
-                                    <span class="filter-count">(<?php echo $category['product_count']; ?>)</span>
-                                </label>
+                                       <?php echo $isSelected ? 'checked' : ''; ?>>
+                                <div class="filter-card-icon">
+                                    <i class="fas <?php echo $style['icon']; ?>"></i>
+                                </div>
+                                <div class="filter-card-content">
+                                    <div class="filter-card-name"><?php echo htmlspecialchars($category['name']); ?></div>
+                                    <div class="filter-card-count"><?php echo $category['product_count']; ?> productos</div>
+                                </div>
+                                <div class="filter-card-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
                             </div>
                             <?php endforeach; ?>
                         </div>
@@ -1768,6 +1788,171 @@ require_once 'includes/header.php';
     background: rgba(139, 0, 0, 0.1);
 }
 
+/* ===================================================
+   FILTROS CON TARJETAS MODERNAS (Tipo de Producto)
+   =================================================== */
+
+.filter-section-primary {
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.1), rgba(160, 0, 0, 0.08)) !important;
+    border: 1px solid rgba(139, 0, 0, 0.3) !important;
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.15) !important;
+}
+
+.filter-title-primary {
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    margin-bottom: 20px !important;
+    border-bottom: 2px solid rgba(139, 0, 0, 0.5) !important;
+    padding-bottom: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.filter-title-primary i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+    color: #8B0000;
+}
+
+.filter-options-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.filter-card {
+    position: relative;
+    background: rgba(30, 30, 30, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.filter-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.03));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.filter-card:hover {
+    border-color: rgba(139, 0, 0, 0.4);
+    background: rgba(40, 40, 40, 0.7);
+    transform: translateX(4px);
+}
+
+.filter-card:hover::before {
+    opacity: 1;
+}
+
+.filter-card.active {
+    border-color: #8B0000;
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(160, 0, 0, 0.15));
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3), inset 0 0 20px rgba(139, 0, 0, 0.1);
+}
+
+.filter-card.active::before {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.1), transparent);
+}
+
+.filter-card-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.filter-card.active .filter-card-icon {
+    background: #8B0000;
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.4);
+}
+
+.filter-card-icon i {
+    font-size: 1.4rem;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
+}
+
+.filter-card.active .filter-card-icon i {
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+.filter-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-card-name {
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.filter-card-count {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.filter-card.active .filter-card-count {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.filter-card-check {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.filter-card.active .filter-card-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.filter-card-check i {
+    font-size: 1.3rem;
+    color: #8B0000;
+}
+
+/* Animación de pulso al seleccionar */
+@keyframes cardPulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
+    }
+}
+
+.filter-card.active {
+    animation: cardPulse 2s infinite;
+}
+
 #filter-count {
     animation: pulse 1s infinite;
 }
@@ -2946,6 +3131,47 @@ function enableAllFilters() {
         }
     });
 }
+
+/**
+ * Toggle de tarjeta de categoría (nuevo diseño)
+ */
+function toggleCategoryCard(cardElement, categoryId) {
+    try {
+        // Obtener el checkbox asociado
+        const checkbox = document.getElementById(`cat_${categoryId}`);
+        if (!checkbox) {
+            console.error(`No se encontró checkbox para categoría ${categoryId}`);
+            return;
+        }
+        
+        // Toggle del checkbox
+        checkbox.checked = !checkbox.checked;
+        
+        // Toggle de la clase activa
+        cardElement.classList.toggle('active', checkbox.checked);
+        
+        // Actualizar pendingFilters
+        const categoryIdStr = categoryId.toString();
+        const index = pendingFilters.categories.indexOf(categoryIdStr);
+        
+        if (checkbox.checked && index === -1) {
+            pendingFilters.categories.push(categoryIdStr);
+        } else if (!checkbox.checked && index !== -1) {
+            pendingFilters.categories.splice(index, 1);
+        }
+        
+        // Actualizar contador de filtros
+        updateFiltersCount();
+        
+        console.log('🎯 Categoría toggled:', categoryId, checkbox.checked);
+        
+    } catch (error) {
+        console.error('❌ Error en toggleCategoryCard:', error);
+    }
+}
+
+// Make function globally accessible
+window.toggleCategoryCard = toggleCategoryCard;
 
 /**
  * Aplicar todos los filtros seleccionados
