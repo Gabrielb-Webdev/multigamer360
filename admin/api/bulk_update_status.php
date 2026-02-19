@@ -74,16 +74,22 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Verificar permisos
-if (!hasPermission('products', 'edit')) {
+// Verificar permisos (Admin o permiso de editar productos)
+if (!hasPermission('products', 'edit') && !hasPermission('products', 'update')) {
     error_log("Permission denied for user_id: " . $_SESSION['user_id']);
-    http_response_code(403);
-    echo json_encode([
-        'success' => false, 
-        'message' => 'No tienes permisos para editar productos',
-        'debug' => 'Permission denied'
-    ]);
-    exit;
+    error_log("User role: " . ($_SESSION['role'] ?? 'not set'));
+    error_log("Permissions: " . print_r($_SESSION['permissions'] ?? [], true));
+    
+    // Si es admin, permitir de todas formas
+    if ($_SESSION['role'] !== 'admin') {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'No tienes permisos para editar productos',
+            'debug' => 'Permission denied - role: ' . ($_SESSION['role'] ?? 'unknown')
+        ]);
+        exit;
+    }
 }
 
 // Solo aceptar POST

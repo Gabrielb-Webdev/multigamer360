@@ -78,12 +78,10 @@ if ($status) {
 }
 
 // Filtro por estado de stock
-if ($stock_status === 'low') {
-    $where_conditions[] = "p.stock_quantity <= 10 AND p.stock_quantity > 0";
-} elseif ($stock_status === 'out') {
+if ($stock_status === 'out') {
     $where_conditions[] = "p.stock_quantity = 0";
-} elseif ($stock_status === 'good') {
-    $where_conditions[] = "p.stock_quantity > 10";
+} elseif ($stock_status === 'available') {
+    $where_conditions[] = "p.stock_quantity > 0";
 }
 
 $where_clause = implode(' AND ', $where_conditions);
@@ -95,14 +93,13 @@ try {
     $count_stmt->execute($params);
     $total_products = $count_stmt->fetch()['total'];
     
-    // Estadísticas de inventario (usando 10 como nivel mínimo de stock)
+    // Estadísticas de inventario
     $stats = $pdo->query("
         SELECT 
             COUNT(*) as total_products,
             SUM(stock_quantity) as total_stock,
             COUNT(CASE WHEN stock_quantity = 0 THEN 1 END) as out_of_stock,
-            COUNT(CASE WHEN stock_quantity <= 10 AND stock_quantity > 0 THEN 1 END) as low_stock,
-            COUNT(CASE WHEN stock_quantity > 10 THEN 1 END) as good_stock
+            COUNT(CASE WHEN stock_quantity > 0 THEN 1 END) as available_stock
         FROM products 
         WHERE is_active = 1
     ")->fetch();
@@ -135,12 +132,10 @@ try {
                pi.image_url as main_image,
                CASE 
                    WHEN p.stock_quantity = 0 THEN 'Agotado'
-                   WHEN p.stock_quantity <= 10 THEN 'Stock Bajo'
-                   ELSE 'Stock Normal'
+                   ELSE 'Stock Disponible'
                END as stock_status,
                CASE 
                    WHEN p.stock_quantity = 0 THEN 'danger'
-                   WHEN p.stock_quantity <= 10 THEN 'warning'
                    ELSE 'success'
                END as stock_color
         FROM products p
@@ -213,15 +208,15 @@ try {
     </div>
     
     <div class="col-md-2">
-        <div class="card border-warning">
+        <div class="card border-success">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title text-muted mb-2">Stock Bajo</h6>
-                        <h4 class="mb-0 text-warning"><?php echo number_format($stats['low_stock']); ?></h4>
+                        <h6 class="card-title text-muted mb-2">Stock Disponible</h6>
+                        <h4 class="mb-0 text-success"><?php echo number_format($stats['available_stock']); ?></h4>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
                     </div>
                 </div>
             </div>
@@ -327,8 +322,7 @@ try {
                 <label for="stock_status" class="form-label">Estado Stock</label>
                 <select class="form-select" id="stock_status" name="stock_status">
                     <option value="">Todos</option>
-                    <option value="good" <?php echo $stock_status === 'good' ? 'selected' : ''; ?>>Stock Normal</option>
-                    <option value="low" <?php echo $stock_status === 'low' ? 'selected' : ''; ?>>Stock Bajo</option>
+                    <option value="available" <?php echo $stock_status === 'available' ? 'selected' : ''; ?>>Stock Disponible</option>
                     <option value="out" <?php echo $stock_status === 'out' ? 'selected' : ''; ?>>Agotado</option>
                 </select>
             </div>
