@@ -81,6 +81,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['error'] = "Error al crear cupón: " . $e->getMessage();
             error_log("Error al crear cupón: " . $e->getMessage());
         }
+    } elseif ($action === 'update') {
+        try {
+            $coupon_id = $_POST['coupon_id'];
+            $notification_type = $_POST['notification_type'] ?? 'private';
+            
+            // Validación: Si es porcentaje, no puede ser mayor a 100
+            if ($_POST['type'] === 'percentage' && (float)$_POST['value'] > 100) {
+                $_SESSION['error'] = "⚠️ El porcentaje de descuento no puede ser mayor a 100%";
+                header('Location: coupons.php');
+                exit;
+            }
+            
+            // Convertir formato datetime-local a MySQL DATETIME
+            $start_date = str_replace('T', ' ', $_POST['start_date']) . ':00';
+            $end_date = !empty($_POST['end_date']) ? str_replace('T', ' ', $_POST['end_date']) . ':00' : null;
+            
+            $stmt = $pdo->prepare("
+                UPDATE coupons 
+                SET code = ?, name = ?, description = ?, type = ?, value = ?, 
+                    minimum_amount = ?, maximum_discount = ?, usage_limit = ?, 
+                    per_user_limit = ?, start_date = ?, end_date = ?, 
+                    is_active = ?, notification_type = ?
+                WHERE id = ?
+            ");
+            
+            $stmt->execute([
+                strtoupper($_POST['code']),
+                $_POST['name'],
+                $_POST['description'],
+                $_POST['type'],
+                $_POST['value'],
+                $_POST['minimum_amount'] ?: 0,
+                $_POST['maximum_discount'] ?: null,
+                $_POST['usage_limit'] ?: null,
+                $_POST['per_user_limit'] ?: 1,
+                $start_date,
+                $end_date,
+                isset($_POST['is_active']) ? 1 : 0,
+                $notification_type,
+                $coupon_id
+            ]);
+            
+            $_SESSION['success'] = "Cupón actualizado exitosamente";
+            header('Location: coupons.php');
+            exit;
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Error al actualizar cupón: " . $e->getMessage();
+            error_log("Error al actualizar cupón: " . $e->getMessage());
+        }
     } elseif ($action === 'toggle_status') {
         $coupon_id = $_POST['coupon_id'];
         $stmt = $pdo->prepare("UPDATE coupons SET is_active = NOT is_active WHERE id = ?");
@@ -555,39 +604,40 @@ require_once 'inc/header.php';
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Crear Nuevo Cupón</h5>
+                    <h5 class="modal-title" id="modalTitle">Crear Nuevo Cupón</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST">
+                <form method="POST" id="couponForm">
                     <div class="modal-body">
-                        <input type="hidden" name="action" value="create">
+                        <input type="hidden" name="action" value="create" id="formAction">
+                        <input type="hidden" name="coupon_id" id="couponId">
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Código del Cupón *</label>
-                                    <input type="text" class="form-control" name="code" required maxlength="50" style="text-transform: uppercase;">
+                                    <input type="text" class="form-control" name="code" id="codeField" required maxlength="50" style="text-transform: uppercase;">
                                     <div class="form-text">Solo letras, números y guiones. Se convertirá automáticamente a mayúsculas.</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Nombre del Cupón *</label>
-                                    <input type="text" class="form-control" name="name" required maxlength="255">
+                                    <input type="text" class="form-control" name="name" id="nameField" required maxlength="255">
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Descripción</label>
-                            <textarea class="form-control" name="description" rows="2"></textarea>
+                            <textarea class="form-control" name="description" id="descriptionField" rows="2"></textarea>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Tipo de Descuento *</label>
-                                    <select class="form-select" name="type" required onchange="toggleDiscountFields()">
+                                    <select class="form-select" name="type" id="typeField" required onchange="toggleDiscountFields()">
                                         <option value="percentage">Porcentaje</option>
                                         <option value="fixed">Monto Fijo</option>
                                     </select>
@@ -613,21 +663,21 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Monto Mínimo</label>
-                                    <input type="number" class="form-control" name="minimum_amount" min="0" step="0.01" placeholder="$0.00">
+                                    <input type="number" class="form-control" name="minimum_amount" id="minimumAmountField" min="0" step="0.01" placeholder="$0.00">
                                     <div class="form-text">Monto mínimo de compra requerido</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Límite de Usos</label>
-                                    <input type="number" class="form-control" name="usage_limit" min="1" placeholder="Ilimitado">
+                                    <input type="number" class="form-control" name="usage_limit" id="usageLimitField" min="1" placeholder="Ilimitado">
                                     <div class="form-text">Vacío = ilimitado</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Usos por Usuario</label>
-                                    <input type="number" class="form-control" name="per_user_limit" min="1" placeholder="1">
+                                    <input type="number" class="form-control" name="per_user_limit" id="perUserLimitField" min="1" placeholder="1">
                                     <div class="form-text">Máximo usos por usuario</div>
                                 </div>
                             </div>
@@ -637,13 +687,13 @@ require_once 'inc/header.php';
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Fecha de Inicio *</label>
-                                    <input type="datetime-local" class="form-control" name="start_date" required value="<?php echo date('Y-m-d\TH:i'); ?>">
+                                    <input type="datetime-local" class="form-control" name="start_date" id="startDateField" required value="<?php echo date('Y-m-d\TH:i'); ?>">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Fecha de Fin</label>
-                                    <input type="datetime-local" class="form-control" name="end_date">
+                                    <input type="datetime-local" class="form-control" name="end_date" id="endDateField">
                                     <div class="form-text">Vacío = sin fecha de expiración</div>
                                 </div>
                             </div>
@@ -671,7 +721,7 @@ require_once 'inc/header.php';
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Crear Cupón</button>
+                        <button type="submit" class="btn btn-primary" id="submitButton">Crear Cupón</button>
                     </div>
                 </form>
             </div>
@@ -835,14 +885,88 @@ require_once 'inc/header.php';
         }
         
         function editCoupon(id) {
-            // Implementar modal de edición
-            alert('Función de editar en desarrollo');
+            // Buscar el cupón en la lista
+            const coupons = <?php echo json_encode($coupons); ?>;
+            const coupon = coupons.find(c => c.id == id);
+            
+            if (!coupon) {
+                alert('Cupón no encontrado');
+                return;
+            }
+            
+            // Cambiar título y botón del modal
+            document.getElementById('modalTitle').textContent = 'Editar Cupón';
+            document.getElementById('submitButton').textContent = 'Actualizar Cupón';
+            document.getElementById('formAction').value = 'update';
+            document.getElementById('couponId').value = coupon.id;
+            
+            // Rellenar campos
+            document.getElementById('codeField').value = coupon.code;
+            document.getElementById('nameField').value = coupon.name;
+            document.getElementById('descriptionField').value = coupon.description || '';
+            document.getElementById('typeField').value = coupon.type;
+            document.getElementById('valueField').value = coupon.value;
+            document.getElementById('minimumAmountField').value = coupon.minimum_amount || '';
+            document.getElementById('maxDiscountField').value = coupon.maximum_discount || '';
+            document.getElementById('usageLimitField').value = coupon.usage_limit || '';
+            document.getElementById('perUserLimitField').value = coupon.per_user_limit || '';
+            
+            // Convertir fechas de MySQL (YYYY-MM-DD HH:MM:SS) a datetime-local (YYYY-MM-DDTHH:MM)
+            if (coupon.start_date) {
+                const startDate = coupon.start_date.substring(0, 16).replace(' ', 'T');
+                document.getElementById('startDateField').value = startDate;
+            }
+            if (coupon.end_date) {
+                const endDate = coupon.end_date.substring(0, 16).replace(' ', 'T');
+                document.getElementById('endDateField').value = endDate;
+            }
+            
+            document.getElementById('notificationType').value = coupon.notification_type || 'private';
+            document.getElementById('isActiveCheck').checked = coupon.is_active == 1;
+            
+            // Actualizar campos dinámicos
+            toggleDiscountFields();
+            updateNotificationHelp();
+            
+            // Abrir modal
+            const modal = new bootstrap.Modal(document.getElementById('createCouponModal'));
+            modal.show();
         }
         
         // Inicializar campos al cargar
         document.addEventListener('DOMContentLoaded', function() {
             toggleDiscountFields();
             updateNotificationHelp();
+            
+            // Resetear formulario cuando se abre el modal para crear (no editar)
+            const createCouponModal = document.getElementById('createCouponModal');
+            createCouponModal.addEventListener('show.bs.modal', function (event) {
+                // Si el modal se abre desde el botón "Crear Cupón" (no desde editCoupon)
+                if (!event.relatedTarget || event.relatedTarget.getAttribute('data-bs-target') === '#createCouponModal') {
+                    // Resetear formulario
+                    document.getElementById('modalTitle').textContent = 'Crear Nuevo Cupón';
+                    document.getElementById('submitButton').textContent = 'Crear Cupón';
+                    document.getElementById('formAction').value = 'create';
+                    document.getElementById('couponId').value = '';
+                    document.getElementById('couponForm').reset();
+                    
+                    // Establecer valor por defecto de fecha de inicio
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    document.getElementById('startDateField').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    
+                    // Restaurar valores por defecto
+                    document.getElementById('typeField').value = 'percentage';
+                    document.getElementById('isActiveCheck').checked = true;
+                    
+                    toggleDiscountFields();
+                    updateNotificationHelp();
+                }
+            });
             
             // Inicializar tooltips de Bootstrap
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
