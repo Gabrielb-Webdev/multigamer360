@@ -318,28 +318,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================================================
-    // INICIALIZAR FLATPICKR - DATE PICKER PREMIUM CON MODAL
+    // FLATPICKR - CALENDARIO MODERNO MINIMALISTA
     // ===================================================================
     if (typeof flatpickr !== 'undefined') {
-        // Crear modal para el calendario si no existe
+        // Crear modal limpio para calendario inline
         if (!document.getElementById('calendarModal')) {
             const modalHTML = `
                 <div class="modal fade" id="calendarModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header bg-gradient-purple text-white">
-                                <h5 class="modal-title">
-                                    <i class="fas fa-calendar-alt me-2"></i>
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-semibold text-dark">
+                                    <i class="far fa-calendar-alt me-2 text-primary"></i>
                                     Seleccionar Fecha y Hora
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-0">
-                                <div id="inlineCalendar"></div>
+                            <div class="modal-body p-4">
+                                <div id="inlineCalendar" class="mx-auto"></div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="confirmDateBtn">
+                            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </button>
+                                <button type="button" class="btn btn-primary px-4" id="confirmDateBtn">
                                     <i class="fas fa-check me-2"></i>Confirmar
                                 </button>
                             </div>
@@ -354,39 +356,33 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentTargetInput = null;
         const calendarModal = new bootstrap.Modal(document.getElementById('calendarModal'));
         
-        // Configurar inputs de fecha y hora CON MODAL
+        // Configurar inputs datetime-local
         const dateTimeInputs = document.querySelectorAll('input[type="datetime-local"]');
         dateTimeInputs.forEach(input => {
-            // Hacer readonly para evitar teclado y forzar uso del picker
             input.setAttribute('readonly', 'readonly');
             input.style.cursor = 'pointer';
             
-            // Al hacer clic, abrir modal con calendario inline
             input.addEventListener('click', function(e) {
                 e.preventDefault();
                 currentTargetInput = input;
                 
-                // Destruir instancia anterior si existe
                 if (currentFlatpickrInstance) {
                     currentFlatpickrInstance.destroy();
                 }
                 
-                // Crear nuevo calendario inline en el modal
                 currentFlatpickrInstance = flatpickr('#inlineCalendar', {
                     inline: true,
                     enableTime: true,
                     time_24hr: true,
                     dateFormat: "Y-m-d H:i",
                     locale: "es",
-                    defaultDate: input.value || new Date(),
+                    defaultDate: input.getAttribute('data-value') || input.value || new Date(),
                     minuteIncrement: 1
                 });
                 
-                // Mostrar modal
                 calendarModal.show();
             });
             
-            // Formatear valor mostrado en el input
             if (input.value) {
                 const date = new Date(input.value);
                 input.setAttribute('data-value', input.value);
@@ -400,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Botón confirmar en modal
+        // Confirmar selección
         document.getElementById('confirmDateBtn').addEventListener('click', function() {
             if (currentFlatpickrInstance && currentTargetInput) {
                 const selectedDates = currentFlatpickrInstance.selectedDates;
@@ -408,10 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const date = selectedDates[0];
                     const isoFormat = currentFlatpickrInstance.formatDate(date, "Y-m-d\\TH:i");
                     
-                    // Guardar valor ISO en atributo data
                     currentTargetInput.setAttribute('data-value', isoFormat);
-                    
-                    // Mostrar formato amigable en el input
                     currentTargetInput.value = date.toLocaleString('es-AR', {
                         year: 'numeric',
                         month: '2-digit',
@@ -420,13 +413,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         minute: '2-digit'
                     });
                     
-                    // Cerrar modal
                     calendarModal.hide();
                 }
             }
         });
         
-        // Al enviar formulario, restaurar valores ISO
+        // Restaurar valores ISO al submit
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 dateTimeInputs.forEach(input => {
@@ -438,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Configurar inputs de fecha solamente (sin cambios, sin modal)
+        // Inputs de fecha simple
         const dateInputs = document.querySelectorAll('input[type="date"]');
         dateInputs.forEach(input => {
             flatpickr(input, {
@@ -451,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Configurar inputs de hora solamente (sin cambios, sin modal)
+        // Inputs de hora simple
         const timeInputs = document.querySelectorAll('input[type="time"]');
         timeInputs.forEach(input => {
             flatpickr(input, {

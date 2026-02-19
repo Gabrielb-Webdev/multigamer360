@@ -1267,129 +1267,318 @@ input[type="time"]:valid {
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
 }
 
-/* ===================================================================
-   MODAL DE CALENDARIO - ESTILOS PREMIUM
-   =================================================================== */
-#calendarModal .modal-dialog {
-    max-width: 500px !important;
-}
-
+/* ====================================================================
+   MODAL CALENDARIO - DISEÑO LIMPIO Y MODERNO
+   ==================================================================== */
 #calendarModal .modal-content {
-    border: none !important;
-    border-radius: 16px !important;
-    overflow: hidden !important;
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3) !important;
-}
-
-#calendarModal .modal-header.bg-gradient-purple {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border-bottom: none !important;
-    padding: 20px 24px !important;
-}
-
-#calendarModal .modal-title {
-    font-weight: 700 !important;
-    font-size: 1.2rem !important;
+    border-radius: 12px;
+    border: none;
 }
 
 #calendarModal .modal-body {
-    background: #f8f9fa !important;
+    background: #fafbfc;
 }
 
-#calendarModal .modal-footer {
-    border-top: 2px solid #e2e8f0 !important;
-    padding: 16px 24px !important;
-    background: #ffffff !important;
+#calendarModal #inlineCalendar {
+    max-width: 100%;
 }
 
-#calendarModal .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border: none !important;
-    padding: 10px 24px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-    transition: all 0.3s ease !important;
+/* ====================================================================
+   FLATPICKR CALENDARIO - DISEÑO MINIMALISTA Y MODERNO
+   ==================================================================== */
+
+/* Input alternativo */
+.flatpickr-input.form-control {
+    display: block !important;
 }
 
-#calendarModal .btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
-}
-
-#calendarModal .btn-secondary {
-    background: #6c757d !important;
-    border: none !important;
-    padding: 10px 24px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-}
-
-/* ===================================================================
-   FLATPICKR - CALENDARIO PREMIUM ULTRA MEJORADO V3.0
-   Diseño moderno profesional con gradientes vibrantes y UX superior
-   =================================================================== */
-
-/* Ocultar input original cuando Flatpickr está activo */
 input[type="datetime-local"].flatpickr-input,
 input[type="date"].flatpickr-input,
 input[type="time"].flatpickr-input {
     display: none !important;
 }
 
-/* Input alternativo de Flatpickr mejorado */
-.flatpickr-input.form-control {
-    display: block !important;
-    background: #ffffff !important;
-    border: 2px solid #e2e8f0 !important;
-    transition: all 0.3s ease !important;
-    font-weight: 500 !important;
-    color: #1a202c !important;
-}
-
-.flatpickr-input.form-control:hover {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12) !important;
-}
-
-.flatpickr-input.form-control:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2) !important;
-    outline: none !important;
-}
-
-/* ============================
-   CONTENEDOR PRINCIPAL
-   ============================ */
-.flatpickr-calendar {
-    background: #ffffff !important;
-    border: none !important;
-    box-shadow: 0 25px 70px rgba(102, 126, 234, 0.4), 
-                0 10px 30px rgba(118, 75, 162, 0.25),
-                0 0 0 1px rgba(102, 126, 234, 0.08) !important;
-    border-radius: 20px !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    width: 350px !important;
-}
-
-/* CALENDARIO INLINE EN MODAL - TAMAÑO GRANDE */
+/* Contenedor calendario inline */
 .flatpickr-calendar.inline {
-    width: 100% !important;
-    max-width: 450px !important;
-    margin: 0 auto !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    background: white;
+    border: none;
+    box-shadow: none;
+    border-radius: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+.flatpickr-calendar {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Header */
+.flatpickr-months {
+    background: #0ea5e9;
+    padding: 16px;
+    border-radius: 12px 12px 0 0;
+}
+
+.flatpickr-month {
+    color: white;
+    fill: white;
+}
+
+.flatpickr-current-month {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    padding: 0;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-weight: 600;
+}
+
+.flatpickr-current-month input.cur-year {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-weight: 600;
+}
+
+/* Flechas navegación */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    color: white;
+    fill: white;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+    width: 14px;
+    height: 14px;
+    fill: white;
+}
+
+/* Días de la semana */
+.flatpickr-weekdays {
+    background: #f9fafb;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+span.flatpickr-weekday {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+/*Grid días */
+.flatpickr-days {
+    padding: 16px;
+    background: white;
+}
+
+.dayContainer {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+/* Días individuales */
+.flatpickr-day {
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9375rem;
+    height: 40px;
+    line-height: 40px;
+    max-width: 40px;
+    margin: 2px;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.flatpickr-day:hover:not(.disabled):not(.selected) {
+    background: #eff6ff;
+    color: #0ea5e9;
+    border-radius: 8px;
+}
+
+.flatpickr-day.today {
+    background: #e0f2fe;
+    color: #0ea5e9;
+    font-weight: 600;
+}
+
+.flatpickr-day.today:hover {
+    background: #bae6fd;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #0ea5e9;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover {
+    color: #d1d5db;
+    cursor: not-allowed;
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #9ca3af;
+}
+
+/* Selector de tiempo */
+.flatpickr-time {
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 0 0 12px 12px;
+}
+
+.flatpickr-time-separator {
+    color: #374151;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0 8px;
+}
+
+.flatpickr-time input {
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px;
+    text-align: center;
+    width: 60px;
+    height: auto;
+    transition: all 0.2s;
+}
+
+.flatpickr-time input:hover {
+    border-color: #0ea5e9;
+    background: #eff6ff;
+}
+
+.flatpickr-time input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    outline: none;
+}
+
+/* Flechas selector tiempo */
+.flatpickr-time .arrowUp,
+.flatpickr-time .arrowDown {
+    border: solid #6b7280;
+    border-width: 0 2px 2px 0;
+    padding: 3px;
+}
+
+.flatpickr-time .arrowUp {
+    transform: rotate(-135deg);
+}
+
+.flatpickr-time .arrowDown {
+    transform: rotate(45deg);
+}
+
+.flatpickr-time .arrowUp:hover,
+.flatpickr-time .arrowDown:hover {
+    border-color: #0ea5e9;
+}
+
+/* Calendar inline específico para modal */
 .flatpickr-calendar.inline .flatpickr-months {
-    padding: 20px 16px !important;
+    padding: 20px;
 }
 
 .flatpickr-calendar.inline .flatpickr-current-month {
-    font-size: 1.3rem !important;
+    font-size: 1.25rem;
 }
+
+.flatpickr-calendar.inline .flatpickr-weekdays {
+    padding: 16px 0;
+}
+
+.flatpickr-calendar.inline .flatpickr-days {
+    padding: 20px;
+}
+
+.flatpickr-calendar.inline .flatpickr-day {
+    height: 44px;
+    line-height: 44px;
+    max-width: 44px;
+    font-size: 1rem;
+    margin: 3px;
+}
+
+.flatpickr-calendar.inline .flatpickr-time {
+    padding: 20px;
+}
+
+.flatpickr-calendar.inline .flatpickr-time input {
+    width: 70px;
+    font-size: 1.125rem;
+    padding: 10px;
+}
+
+.flatpickr-calendar.inline .flatpickr-time-separator {
+    font-size: 1.5rem;
+    margin: 0 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .flatpickr-calendar {
+        font-size: 14px;
+    }
+    
+    .flatpickr-day {
+        height: 36px;
+        line-height: 36px;
+        max-width: 36px;
+    }
+    
+    .flatpickr-calendar.inline .flatpickr-day {
+        height: 40px;
+        line-height: 40px;
+        max-width: 40px;
+    }
+    
+    .flatpickr-time input {
+        width: 55px;
+        font-size: 0.9375rem;
+    }
+}
+
 
 .flatpickr-calendar.inline .flatpickr-weekdays {
     padding: 16px 0 !important;

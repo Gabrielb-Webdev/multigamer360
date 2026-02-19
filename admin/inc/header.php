@@ -21,7 +21,7 @@ require_once 'auth.php';
     <!-- Flatpickr CSS - Date Picker Premium -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <!-- Admin CSS -->
-    <link href="assets/css/admin.css?v=6.0" rel="stylesheet">
+    <link href="assets/css/admin.css?v=7.0" rel="stylesheet">
     <!-- Products Dynamic CSS -->
     <link href="assets/css/products-dynamic.css?v=1.0" rel="stylesheet">
     
