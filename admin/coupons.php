@@ -585,7 +585,7 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Valor del Descuento *</label>
-                                    <input type="number" class="form-control" name="value" required min="0" step="0.01">
+                                    <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="0.01" placeholder="10">
                                     <div class="form-text" id="valueHelp">Porcentaje de descuento (ej: 10 para 10%)</div>
                                 </div>
                             </div>
@@ -602,21 +602,21 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Monto Mínimo</label>
-                                    <input type="number" class="form-control" name="minimum_amount" min="0" step="0.01" value="0">
+                                    <input type="number" class="form-control" name="minimum_amount" min="0" step="0.01" value="0" placeholder="$0.00">
                                     <div class="form-text">Monto mínimo de compra requerido</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Límite de Usos</label>
-                                    <input type="number" class="form-control" name="usage_limit" min="1">
+                                    <input type="number" class="form-control" name="usage_limit" min="1" placeholder="Ilimitado">
                                     <div class="form-text">Vacío = ilimitado</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Usos por Usuario</label>
-                                    <input type="number" class="form-control" name="per_user_limit" min="1" value="1">
+                                    <input type="number" class="form-control" name="per_user_limit" min="1" value="1" placeholder="1">
                                     <div class="form-text">Máximo usos por usuario</div>
                                 </div>
                             </div>
@@ -671,13 +671,18 @@ require_once 'inc/header.php';
         function toggleDiscountFields() {
             const type = document.querySelector('select[name="type"]').value;
             const maxDiscountField = document.getElementById('maxDiscountField');
+            const valueField = document.getElementById('valueField');
             const valueHelp = document.getElementById('valueHelp');
             
             if (type === 'percentage') {
                 maxDiscountField.style.display = 'block';
+                valueField.setAttribute('max', '100');
+                valueField.setAttribute('placeholder', '10');
                 valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%)';
             } else {
                 maxDiscountField.style.display = 'none';
+                valueField.removeAttribute('max');
+                valueField.setAttribute('placeholder', '500.00');
                 valueHelp.textContent = 'Monto fijo de descuento en pesos';
             }
         }
