@@ -44,6 +44,17 @@ try {
         header('Location: products.php');
         exit;
     }
+    
+    // IMPORTANTE: Sincronizar status e is_active al cargar
+    // Si status está vacío, usar is_active como referencia
+    if (empty($product['status']) && isset($product['is_active'])) {
+        $product['status'] = ($product['is_active'] == 1) ? 'active' : 'inactive';
+    }
+    // Si status existe, asegurar que is_active esté sincronizado
+    if (!empty($product['status'])) {
+        $product['is_active'] = ($product['status'] === 'active') ? 1 : 0;
+    }
+    
 } catch (PDOException $e) {
     $_SESSION['error'] = 'Error al cargar producto: ' . $e->getMessage();
     header('Location: products.php');
