@@ -58,23 +58,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Marcar como notificado
                 $pdo->prepare("UPDATE coupons SET notified_at = NOW() WHERE id = ?")->execute([$coupon_id]);
                 
-                $success_msg = "Cupón creado exitosamente. Se notificó a {$notified_count} usuarios.";
+                $_SESSION['success'] = "Cupón creado exitosamente. Se notificó a {$notified_count} usuarios.";
             } else {
-                $success_msg = "Cupón creado exitosamente";
+                $_SESSION['success'] = "Cupón creado exitosamente";
             }
+            
+            // Redirigir para evitar reenvío de formulario
+            header('Location: coupons.php');
+            exit;
         } catch (PDOException $e) {
-            $error_msg = "Error al crear cupón: " . $e->getMessage();
+            $_SESSION['error'] = "Error al crear cupón: " . $e->getMessage();
+            error_log("Error al crear cupón: " . $e->getMessage());
         }
     } elseif ($action === 'toggle_status') {
         $coupon_id = $_POST['coupon_id'];
         $stmt = $pdo->prepare("UPDATE coupons SET is_active = NOT is_active WHERE id = ?");
         $stmt->execute([$coupon_id]);
-        $success_msg = "Estado del cupón actualizado";
+        $_SESSION['success'] = "Estado del cupón actualizado";
+        header('Location: coupons.php');
+        exit;
     } elseif ($action === 'delete') {
         $coupon_id = $_POST['coupon_id'];
         $stmt = $pdo->prepare("DELETE FROM coupons WHERE id = ?");
         $stmt->execute([$coupon_id]);
-        $success_msg = "Cupón eliminado exitosamente";
+        $_SESSION['success'] = "Cupón eliminado exitosamente";
+        header('Location: coupons.php');
+        exit;
     }
 }
 
@@ -121,7 +130,7 @@ try {
 } catch (PDOException $e) {
     error_log("Error en coupons.php: " . $e->getMessage());
     $coupons = [];
-    $error_msg = "Error al cargar los cupones. Por favor, contacta al administrador.";
+    $_SESSION['error'] = "Error al cargar los cupones. Por favor, contacta al administrador.";
 }
 
 $page_title = "Gestión de Cupones";
