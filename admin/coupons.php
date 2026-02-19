@@ -684,20 +684,90 @@ require_once 'inc/header.php';
                 maxDiscountField.closest('.col-md-4').style.display = 'block';
                 valueField.setAttribute('max', '100');
                 valueField.setAttribute('placeholder', '10');
+                valueField.dataset.type = 'percentage';
                 valueSymbol.textContent = '%';
                 valueSymbol.style.display = 'inline-flex';
                 valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) - Máximo 100%';
+                
+                // Validar valor actual
+                validatePercentageValue();
             } else {
                 // Modo Monto Fijo
                 maxDiscountField.style.display = 'none';
                 maxDiscountField.closest('.col-md-4').style.display = 'none';
                 valueField.removeAttribute('max');
                 valueField.setAttribute('placeholder', '500.00');
+                valueField.dataset.type = 'fixed';
                 valueSymbol.textContent = '$';
                 valueSymbol.style.display = 'inline-flex';
                 valueHelp.textContent = 'Monto fijo de descuento en pesos - Sin límite';
+                
+                // Remover estilos de error
+                valueField.classList.remove('is-invalid');
+                valueHelp.classList.remove('text-danger');
             }
         }
+        
+        function validatePercentageValue() {
+            const valueField = document.getElementById('valueField');
+            const valueHelp = document.getElementById('valueHelp');
+            const type = document.querySelector('select[name="type"]').value;
+            
+            if (type === 'percentage') {
+                const value = parseFloat(valueField.value);
+                
+                if (value > 100) {
+                    valueField.classList.add('is-invalid');
+                    valueHelp.textContent = '⚠️ El porcentaje no puede ser mayor a 100%';
+                    valueHelp.classList.add('text-danger');
+                    valueField.value = 100;
+                } else if (value < 0) {
+                    valueField.value = 0;
+                } else {
+                    valueField.classList.remove('is-invalid');
+                    valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) - Máximo 100%';
+                    valueHelp.classList.remove('text-danger');
+                }
+            }
+        }
+        
+        // Event listeners cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const valueField = document.getElementById('valueField');
+            const typeSelect = document.querySelector('select[name="type"]');
+            
+            if (valueField) {
+                // Validar mientras escribe
+                valueField.addEventListener('input', function() {
+                    if (typeSelect.value === 'percentage') {
+                        validatePercentageValue();
+                    }
+                });
+                
+                // Validar al perder foco
+                valueField.addEventListener('blur', function() {
+                    if (typeSelect.value === 'percentage') {
+                        validatePercentageValue();
+                    }
+                });
+            }
+            
+            // Validar antes de submit
+            const form = document.querySelector('form[method="POST"]');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const type = document.querySelector('select[name="type"]').value;
+                    const value = parseFloat(valueField.value);
+                    
+                    if (type === 'percentage' && value > 100) {
+                        e.preventDefault();
+                        alert('⚠️ El porcentaje de descuento no puede ser mayor a 100%');
+                        valueField.focus();
+                        return false;
+                    }
+                });
+            }
+        });
         
         function updateNotificationHelp() {
             const notificationType = document.getElementById('notificationType')?.value;
