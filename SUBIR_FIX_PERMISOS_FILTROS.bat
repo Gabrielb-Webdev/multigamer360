@@ -15,7 +15,7 @@ git add admin/verificar_productos_incompletos.php
 git add verificar_productos_incompletos.sql
 
 REM Hacer commit
-git commit -m "FIX: Mejorar permisos bulk update y simplificar filtros de stock - Solo Stock Disponible y Agotado"
+git commit -m "FIX CRITICO: Corregir permisos bulk update - Soportar roles 'admin' y 'administrador'"
 
 REM Hacer push
 git push origin main
