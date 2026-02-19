@@ -5,7 +5,11 @@ ini_set('display_errors', 0); // No mostrar en pantalla
 ini_set('log_errors', 1); // Guardar en log
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
+// Configurar timezone de Argentina
+date_default_timezone_set('America/Argentina/Buenos_Aires');
+
 require_once 'inc/auth.php';
+require_once __DIR__ . '/../includes/notification_manager.php';
 
 // $userManager ya está disponible desde auth.php
 
@@ -15,9 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($action === 'create') {
         try {
+            $notification_type = $_POST['notification_type'] ?? 'private';
+            
             $stmt = $pdo->prepare("
-                INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active, notification_type) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
             $stmt->execute([
@@ -32,10 +38,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['per_user_limit'] ?: 1,
                 $_POST['start_date'],
                 $_POST['end_date'] ?: null,
-                isset($_POST['is_active']) ? 1 : 0
+                isset($_POST['is_active']) ? 1 : 0,
+                $notification_type
             ]);
             
-            $success_msg = "Cupón creado exitosamente";
+            $coupon_id = $pdo->lastInsertId();
+            
+            // Enviar notificaciones si es necesario
+            if ($notification_type === 'all_users' && isset($_POST['is_active'])) {
+                $notified_count = $notificationManager->notifyNewCoupon(
+                    $coupon_id,
+                    strtoupper($_POST['code']),
+                    $_POST['name'],
+                    $_POST['value'],
+                    $_POST['type'],
+                    $notification_type
+                );
+                
+                // Marcar como notificado
+                $pdo->prepare("UPDATE coupons SET notified_at = NOW() WHERE id = ?")->execute([$coupon_id]);
+                
+                $success_msg = "Cupón creado exitosamente. Se notificó a {$notified_count} usuarios.";
+            } else {
+                $success_msg = "Cupón creado exitosamente";
+            }
         } catch (PDOException $e) {
             $error_msg = "Error al crear cupón: " . $e->getMessage();
         }
@@ -298,6 +324,7 @@ require_once 'inc/header.php';
                                         <th>Nombre</th>
                                         <th style="width: 100px;">Tipo</th>
                                         <th style="width: 120px;">Valor</th>
+                                        <th style="width: 130px;">Alcance</th>
                                         <th style="width: 100px;">Usos</th>
                                         <th style="width: 100px;">Estado</th>
                                         <th style="width: 140px;">Vigencia</th>
@@ -343,6 +370,41 @@ require_once 'inc/header.php';
                                                         <br><small class="text-muted">Mín: $<?php echo number_format($coupon['minimum_amount'], 2); ?></small>
                                                     <?php endif; ?>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                <?php 
+                                                $notif_type = $coupon['notification_type'] ?? 'private';
+                                                $notif_class = '';
+                                                $notif_icon = '';
+                                                $notif_text = '';
+                                                
+                                                switch($notif_type) {
+                                                    case 'private':
+                                                        $notif_class = 'secondary';
+                                                        $notif_icon = 'lock';
+                                                        $notif_text = 'Privado';
+                                                        break;
+                                                    case 'public':
+                                                        $notif_class = 'primary';
+                                                        $notif_icon = 'globe';
+                                                        $notif_text = 'Público';
+                                                        break;
+                                                    case 'all_users':
+                                                        $notif_class = 'warning';
+                                                        $notif_icon = 'bell';
+                                                        $notif_text = 'Notificado';
+                                                        break;
+                                                }
+                                                ?>
+                                                <span class="badge bg-<?php echo $notif_class; ?> d-inline-flex align-items-center">
+                                                    <i class="fas fa-<?php echo $notif_icon; ?> me-1"></i>
+                                                    <?php echo $notif_text; ?>
+                                                </span>
+                                                <?php if ($notif_type === 'all_users' && $coupon['notified_at']): ?>
+                                                    <br><small class="text-muted" style="font-size: 0.7rem;">
+                                                        <?php echo date('d/m H:i', strtotime($coupon['notified_at'])); ?>
+                                                    </small>
+                                                <?php endif; ?>
                                             </td>
                                             <td>
                                                 <div>
@@ -453,7 +515,7 @@ require_once 'inc/header.php';
                                     
                                     <?php if (empty($coupons)): ?>
                                         <tr>
-                                            <td colspan="8" class="text-center py-5">
+                                            <td colspan="9" class="text-center py-5">
                                                 <div class="py-4">
                                                     <i class="fas fa-ticket-alt fa-4x text-muted mb-3 d-block"></i>
                                                     <h5 class="text-muted">No se encontraron cupones</h5>
@@ -567,8 +629,21 @@ require_once 'inc/header.php';
                             </div>
                         </div>
                         
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Cupón *</label>
+                            <select class="form-select" name="notification_type" id="notificationType" required onchange="updateNotificationHelp()">
+                                <option value="private">Privado - Solo generar código (copiar y pegar manualmente)</option>
+                                <option value="public">Público - Disponible sin notificar usuarios</option>
+                                <option value="all_users">Notificar a todos los usuarios registrados</option>
+                            </select>
+                            <div class="alert alert-info mt-2" id="notificationHelp">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Privado:</strong> Solo se generará el código. Deberás copiarlo y enviarlo manualmente a quien desees.
+                            </div>
+                        </div>
+                        
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="is_active" checked>
+                            <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck" checked>
                             <label class="form-check-label">
                                 Activar cupón inmediatamente
                             </label>
@@ -598,6 +673,34 @@ require_once 'inc/header.php';
             }
         }
         
+        function updateNotificationHelp() {
+            const notificationType = document.getElementById('notificationType')?.value;
+            const helpDiv = document.getElementById('notificationHelp');
+            
+            if (!helpDiv) return;
+            
+            let helpText = '';
+            let alertClass = 'alert-info';
+            
+            switch(notificationType) {
+                case 'private':
+                    alertClass = 'alert-info';
+                    helpText = '<i class="fas fa-info-circle me-2"></i><strong>Privado:</strong> Solo se generará el código. Deberás copiarlo y enviarlo manualmente a quien desees.';
+                    break;
+                case 'public':
+                    alertClass = 'alert-primary';
+                    helpText = '<i class="fas fa-globe me-2"></i><strong>Público:</strong> El cupón estará disponible para usar, pero no se notificará automáticamente a los usuarios.';
+                    break;
+                case 'all_users':
+                    alertClass = 'alert-warning';
+                    helpText = '<i class="fas fa-bell me-2"></i><strong>Notificar a todos:</strong> Se enviará una notificación a TODOS los usuarios registrados cuando se active el cupón. Los límites de uso se respetarán (primeros en llegar).';
+                    break;
+            }
+            
+            helpDiv.className = 'alert mt-2 ' + alertClass;
+            helpDiv.innerHTML = helpText;
+        }
+        
         function deleteCoupon(id, code) {
             if (confirm(`¿Estás seguro de que quieres eliminar el cupón "${code}"?`)) {
                 const form = document.createElement('form');
@@ -624,6 +727,7 @@ require_once 'inc/header.php';
         // Inicializar campos al cargar
         document.addEventListener('DOMContentLoaded', function() {
             toggleDiscountFields();
+            updateNotificationHelp();
             
             // Inicializar tooltips de Bootstrap
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

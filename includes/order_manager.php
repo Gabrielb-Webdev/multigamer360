@@ -93,9 +93,9 @@ class OrderManager {
                 $this->updateProductStock($item['product_id'], $item['quantity']);
             }
             
-            // Si se usó un cupón, incrementar contador
+            // Si se usó un cupón, incrementar contador y registrar uso
             if (!empty($orderData['coupon_code'])) {
-                $this->incrementCouponUsage($orderData['coupon_code']);
+                $this->incrementCouponUsage($orderData['coupon_code'], $orderData['user_id'], $orderId, $orderData['discount_amount']);
             }
             
             $this->pdo->commit();
@@ -142,12 +142,28 @@ class OrderManager {
         return $stmt->execute();
     }
     
-    // Incrementar uso de cupón
-    private function incrementCouponUsage($couponCode) {
+    // Incrementar uso de cupón y registrar en historial
+    private function incrementCouponUsage($couponCode, $userId, $orderId, $discountAmount) {
+        // Incrementar contador global
         $sql = "UPDATE coupons SET used_count = used_count + 1 WHERE code = :code";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':code', $couponCode);
-        return $stmt->execute();
+        $stmt->execute();
+        
+        // Obtener ID del cupón
+        $stmt = $this->pdo->prepare("SELECT id FROM coupons WHERE code = ?");
+        $stmt->execute([$couponCode]);
+        $coupon = $stmt->fetch();
+        
+        if ($coupon) {
+            // Registrar uso por usuario en coupon_usage
+            $sql = "INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount) 
+                    VALUES (?, ?, ?, ?)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$coupon['id'], $userId, $orderId, $discountAmount]);
+        }
+        
+        return true;
     }
     
     // Obtener pedido por ID
