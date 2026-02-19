@@ -1313,7 +1313,7 @@ input[type="time"].flatpickr-input {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     overflow: visible !important;
     padding: 0 !important;
-    width: 360px !important;
+    width: 350px !important;
 }
 
 .flatpickr-calendar::before {
@@ -1448,8 +1448,8 @@ span.flatpickr-weekday {
 }
 
 .dayContainer {
-    min-width: 328px !important;
-    max-width: 328px !important;
+    min-width: 318px !important;
+    max-width: 318px !important;
     padding: 0 !important;
 }
 
@@ -1582,56 +1582,58 @@ span.flatpickr-weekday {
 .flatpickr-time {
     border-top: 2px solid #e2e8f0 !important;
     background: linear-gradient(to bottom, #fafbfc 0%, #ffffff 100%) !important;
-    padding: 20px 16px !important;
-    margin-top: 8px !important;
+    padding: 16px 14px !important;
+    margin-top: 6px !important;
 }
 
 .flatpickr-time-separator {
     color: #667eea !important;
     font-weight: 800 !important;
-    font-size: 1.4rem !important;
-    margin: 0 8px !important;
+    font-size: 1.1rem !important;
+    margin: 0 6px !important;
     text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2) !important;
 }
 
 .flatpickr-am-pm {
     color: #667eea !important;
     font-weight: 700 !important;
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
 }
 
 .flatpickr-time .numInputWrapper {
     position: relative !important;
+    width: auto !important;
 }
 
 .flatpickr-time input {
     background: #ffffff !important;
     color: #667eea !important;
-    border: 3px solid #e2e8f0 !important;
-    border-radius: 12px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 10px !important;
     font-weight: 800 !important;
-    font-size: 1.4rem !important;
+    font-size: 1.1rem !important;
     transition: all 0.3s ease !important;
-    padding: 8px 12px !important;
+    padding: 6px 10px !important;
     text-align: center !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+    width: 60px !important;
 }
 
 .flatpickr-time input:hover {
     background: #f8f9fa !important;
     border-color: #667eea !important;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12),
-                0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1),
+                0 3px 10px rgba(0, 0, 0, 0.06) !important;
     transform: translateY(-1px) !important;
 }
 
 .flatpickr-time input:focus {
     border-color: #667eea !important;
-    box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.25),
-                0 6px 16px rgba(102, 126, 234, 0.15) !important;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2),
+                0 4px 12px rgba(102, 126, 234, 0.12) !important;
     outline: none !important;
     background: #ffffff !important;
-    transform: translateY(-2px) !important;
+    transform: translateY(-1px) !important;
 }
 
 /* ============================
@@ -1720,13 +1722,13 @@ span.flatpickr-weekday {
     .flatpickr-calendar {
         font-size: 14px !important;
         border-radius: 16px !important;
-        width: 340px !important;
+        width: 330px !important;
         overflow: visible !important;
     }
     
     .dayContainer {
-        min-width: 308px !important;
-        max-width: 308px !important;
+        min-width: 298px !important;
+        max-width: 298px !important;
     }
     
     .flatpickr-day {
@@ -1742,19 +1744,23 @@ span.flatpickr-weekday {
     }
     
     .flatpickr-current-month {
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
     }
     
     .flatpickr-time {
-        padding: 16px 12px !important;
+        padding: 14px 12px !important;
     }
     
     .flatpickr-time input {
-        font-size: 1.2rem !important;
-        padding: 6px 10px !important;
+        font-size: 1rem !important;
+        padding: 5px 8px !important;
+        width: 55px !important;
     }
     
     .flatpickr-time-separator {
-        font-size: 1.2rem !important;
+        font-size: 1rem !important;
+        margin: 0 4px !important;
+    }
+}
     }
 }
