@@ -911,7 +911,7 @@ require_once 'inc/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-<style>
+<!-- <style>
 /* Estilos para drag & drop de imágenes */
 .upload-area {
     background-color: #f8f9fa;
@@ -1132,7 +1132,7 @@ require_once 'inc/header.php';
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
-</style>
+</style> -->
 
 <!-- Modal: Búsqueda de Juegos -->
 <div class="modal fade" id="gameSearchModal" tabindex="-1">
