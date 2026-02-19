@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <!-- Admin JS -->
-    <script src="assets/js/admin.js?v=3.0"></script>
+    <script src="assets/js/admin.js?v=4.0"></script>
     
     <!-- CSRF Token para AJAX -->
     <script>

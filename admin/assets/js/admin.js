@@ -318,32 +318,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================================================
-    // FLATPICKR - CALENDARIO MODERNO MINIMALISTA
+    // FLATPICKR SIMPLE
     // ===================================================================
     if (typeof flatpickr !== 'undefined') {
-        // Crear modal limpio para calendario inline
+        // Modal simple
         if (!document.getElementById('calendarModal')) {
             const modalHTML = `
-                <div class="modal fade" id="calendarModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content border-0 shadow">
-                            <div class="modal-header border-0 pb-0">
-                                <h5 class="modal-title fw-semibold text-dark">
-                                    <i class="far fa-calendar-alt me-2 text-primary"></i>
-                                    Seleccionar Fecha y Hora
-                                </h5>
+                <div class="modal fade" id="calendarModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Seleccionar Fecha y Hora</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-4">
-                                <div id="inlineCalendar" class="mx-auto"></div>
+                            <div class="modal-body">
+                                <div id="inlineCalendar"></div>
                             </div>
-                            <div class="modal-footer border-0 pt-0 pb-4 px-4">
-                                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">
-                                    <i class="fas fa-times me-2"></i>Cancelar
-                                </button>
-                                <button type="button" class="btn btn-primary px-4" id="confirmDateBtn">
-                                    <i class="fas fa-check me-2"></i>Confirmar
-                                </button>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="confirmDateBtn">Confirmar</button>
                             </div>
                         </div>
                     </div>
@@ -356,14 +349,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentTargetInput = null;
         const calendarModal = new bootstrap.Modal(document.getElementById('calendarModal'));
         
-        // Configurar inputs datetime-local
         const dateTimeInputs = document.querySelectorAll('input[type="datetime-local"]');
         dateTimeInputs.forEach(input => {
-            input.setAttribute('readonly', 'readonly');
-            input.style.cursor = 'pointer';
-            
-            input.addEventListener('click', function(e) {
-                e.preventDefault();
+            input.addEventListener('click', function() {
                 currentTargetInput = input;
                 
                 if (currentFlatpickrInstance) {
@@ -374,60 +362,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     inline: true,
                     enableTime: true,
                     time_24hr: true,
-                    dateFormat: "Y-m-d H:i",
+                    dateFormat: "Y-m-d\\TH:i",
                     locale: "es",
-                    defaultDate: input.getAttribute('data-value') || input.value || new Date(),
-                    minuteIncrement: 1
+                    defaultDate: input.value || new Date()
                 });
                 
                 calendarModal.show();
             });
-            
-            if (input.value) {
-                const date = new Date(input.value);
-                input.setAttribute('data-value', input.value);
-                input.value = date.toLocaleString('es-AR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
         });
         
-        // Confirmar selección
         document.getElementById('confirmDateBtn').addEventListener('click', function() {
             if (currentFlatpickrInstance && currentTargetInput) {
                 const selectedDates = currentFlatpickrInstance.selectedDates;
                 if (selectedDates.length > 0) {
-                    const date = selectedDates[0];
-                    const isoFormat = currentFlatpickrInstance.formatDate(date, "Y-m-d\\TH:i");
-                    
-                    currentTargetInput.setAttribute('data-value', isoFormat);
-                    currentTargetInput.value = date.toLocaleString('es-AR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
+                    currentTargetInput.value = currentFlatpickrInstance.formatDate(selectedDates[0], "Y-m-d\\TH:i");
                     calendarModal.hide();
                 }
             }
-        });
-        
-        // Restaurar valores ISO al submit
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                dateTimeInputs.forEach(input => {
-                    const isoValue = input.getAttribute('data-value');
-                    if (isoValue) {
-                        input.value = isoValue;
-                    }
-                });
-            });
         });
         
         // Inputs de fecha simple
