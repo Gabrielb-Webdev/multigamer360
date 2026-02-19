@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $notification_type = $_POST['notification_type'] ?? 'private';
             
+            // Validación: Si es porcentaje, no puede ser mayor a 100
+            if ($_POST['type'] === 'percentage' && (float)$_POST['value'] > 100) {
+                $_SESSION['error'] = "⚠️ El porcentaje de descuento no puede ser mayor a 100%";
+                header('Location: coupons.php');
+                exit;
+            }
+            
             $stmt = $pdo->prepare("
                 INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active, notification_type) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -476,13 +483,13 @@ require_once 'inc/header.php';
                                                     <div>
                                                         <i class="fas fa-play text-success me-1"></i>
                                                         <strong>Inicio:</strong> 
-                                                        <span class="text-muted"><?php echo date('d/m/Y', strtotime($coupon['start_date'])); ?></span>
+                                                        <span class="text-muted"><?php echo date('d/m/Y H:i', strtotime($coupon['start_date'])); ?></span>
                                                     </div>
                                                     <div class="mt-1">
                                                         <i class="fas fa-stop text-danger me-1"></i>
                                                         <strong>Fin:</strong> 
                                                         <span class="text-muted">
-                                                            <?php echo $coupon['end_date'] ? date('d/m/Y', strtotime($coupon['end_date'])) : 'Sin límite'; ?>
+                                                            <?php echo $coupon['end_date'] ? date('d/m/Y H:i', strtotime($coupon['end_date'])) : 'Sin límite'; ?>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -585,10 +592,7 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Valor del Descuento *</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="0.01" placeholder="10">
-                                        <span class="input-group-text" id="valueSymbol">%</span>
-                                    </div>
+                                    <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="0.01" placeholder="10">
                                     <div class="form-text" id="valueHelp">Porcentaje de descuento (ej: 10 para 10%)</div>
                                 </div>
                             </div>
@@ -675,7 +679,6 @@ require_once 'inc/header.php';
             const type = document.querySelector('select[name="type"]').value;
             const maxDiscountField = document.getElementById('maxDiscountField');
             const valueField = document.getElementById('valueField');
-            const valueSymbol = document.getElementById('valueSymbol');
             const valueHelp = document.getElementById('valueHelp');
             
             if (type === 'percentage') {
@@ -685,8 +688,6 @@ require_once 'inc/header.php';
                 valueField.setAttribute('max', '100');
                 valueField.setAttribute('placeholder', '10');
                 valueField.dataset.type = 'percentage';
-                valueSymbol.textContent = '%';
-                valueSymbol.style.display = 'inline-flex';
                 valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) - Máximo 100%';
                 
                 // Validar valor actual
@@ -698,8 +699,6 @@ require_once 'inc/header.php';
                 valueField.removeAttribute('max');
                 valueField.setAttribute('placeholder', '500.00');
                 valueField.dataset.type = 'fixed';
-                valueSymbol.textContent = '$';
-                valueSymbol.style.display = 'inline-flex';
                 valueHelp.textContent = 'Monto fijo de descuento en pesos - Sin límite';
                 
                 // Remover estilos de error
@@ -749,6 +748,22 @@ require_once 'inc/header.php';
                     if (typeSelect.value === 'percentage') {
                         validatePercentageValue();
                     }
+                });
+                
+                // Validar al cambiar
+                valueField.addEventListener('change', function() {
+                    if (typeSelect.value === 'percentage') {
+                        validatePercentageValue();
+                    }
+                });
+                
+                // Validar al pegar
+                valueField.addEventListener('paste', function() {
+                    setTimeout(function() {
+                        if (typeSelect.value === 'percentage') {
+                            validatePercentageValue();
+                        }
+                    }, 10);
                 });
             }
             
