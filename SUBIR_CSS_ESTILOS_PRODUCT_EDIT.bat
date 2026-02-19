@@ -43,3 +43,4 @@ echo 3. Limpia cache del navegador si es necesario
 echo 4. Verifica que los estilos se apliquen correctamente
 echo ========================================
 pause
+SUBIR_CSS_ESTILOS_PRODUCT_EDIT.bat
