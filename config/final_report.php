@@ -56,7 +56,7 @@ try {
     echo "═══════════════════════════════════════════" . PHP_EOL;
     
     // Valor del inventario
-    $stmt = $pdo->query("SELECT SUM(price * stock_quantity) as inventory_value FROM products WHERE stock_quantity > 0");
+    $stmt = $pdo->query("SELECT SUM(COALESCE(price_pesos, price_dollars, 0) * stock_quantity) as inventory_value FROM products WHERE stock_quantity > 0");
     $inventory_value = $stmt->fetch()['inventory_value'] ?? 0;
     echo "💎 Valor del inventario: $" . number_format($inventory_value, 2) . PHP_EOL;
     

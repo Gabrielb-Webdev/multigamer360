@@ -50,7 +50,7 @@ try {
     
     // Valor total del inventario
     echo PHP_EOL . "3. Calculando valor del inventario..." . PHP_EOL;
-    $stmt = $pdo->query("SELECT SUM(price * stock_quantity) as total_value FROM products WHERE stock_quantity > 0");
+    $stmt = $pdo->query("SELECT SUM(COALESCE(price_pesos, price_dollars, 0) * stock_quantity) as total_value FROM products WHERE stock_quantity > 0");
     $total_value = $stmt->fetch()['total_value'] ?? 0;
     echo "   💰 Valor total del inventario: $" . number_format($total_value, 2) . PHP_EOL;
     
