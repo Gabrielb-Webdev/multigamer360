@@ -3413,11 +3413,7 @@ if (metaDescInput) {
 // Inicializar contadores al cargar la página
 updateSEOCounters();
 
-// Inicializar tooltips de Bootstrap
-const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl);
-});
+// Nota: Los tooltips de Bootstrap se inicializan al final del documento
 </script>
 
 <!-- ==========================================
@@ -4432,3 +4428,16 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 </script>
 
 <?php require_once 'inc/footer.php'; ?>
+
+<script>
+// Inicializar tooltips de Bootstrap después de que la biblioteca esté cargada
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        console.log('✅ Tooltips de Bootstrap inicializados:', tooltipTriggerList.length);
+    }
+});
+</script>
