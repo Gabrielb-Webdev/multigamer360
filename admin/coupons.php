@@ -28,6 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             
+            // Convertir formato datetime-local (2026-02-19T20:33) a MySQL DATETIME (2026-02-19 20:33:00)
+            $start_date = str_replace('T', ' ', $_POST['start_date']) . ':00';
+            $end_date = !empty($_POST['end_date']) ? str_replace('T', ' ', $_POST['end_date']) . ':00' : null;
+            
             $stmt = $pdo->prepare("
                 INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active, notification_type) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -43,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['maximum_discount'] ?: null,
                 $_POST['usage_limit'] ?: null,
                 $_POST['per_user_limit'] ?: 1,
-                $_POST['start_date'],
-                $_POST['end_date'] ?: null,
+                $start_date,
+                $end_date,
                 isset($_POST['is_active']) ? 1 : 0,
                 $notification_type
             ]);
