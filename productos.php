@@ -1658,22 +1658,24 @@ require_once 'includes/header.php';
 
 /* Estilo para el rango de precio */
 .price-range-info {
-    background-color: #ffffff !important; /* Fondo blanco */
+    background: rgba(255, 255, 255, 0.05);
     padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .price-range-info small {
-    color: #000000 !important; /* Letras negras */
+    color: #999 !important;
     font-weight: 500;
+    font-size: 0.85rem;
 }
 
 /* Estilos mejorados para inputs de precio */
 .price-inputs {
     display: flex;
     align-items: center;
-    gap: 8px; /* Reducir gap para más espacio */
+    gap: 10px;
     margin-bottom: 15px;
     width: 100%;
     box-sizing: border-box;
@@ -1681,33 +1683,41 @@ require_once 'includes/header.php';
 
 .price-input {
     flex: 1;
-    padding: 8px 6px; /* Reducir padding horizontal */
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #ffffff; /* Fondo blanco */
-    color: #000000; /* Letras negras */
-    font-size: 0.85rem; /* Reducir tamaño de fuente */
-    width: 0; /* Forzar que respete flex: 1 */
-    min-width: 0; /* Permitir que se comprima si es necesario */
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(30, 30, 30, 0.6);
+    color: #ffffff;
+    font-size: 0.9rem;
+    width: 0;
+    min-width: 0;
     box-sizing: border-box;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
 }
 
 .price-input::placeholder {
-    font-size: 0.8rem;
-    color: #666; /* Placeholder más oscuro para mejor contraste */
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .price-input:focus {
     outline: none;
-    border-color: #8B0000; /* Borde rojo al hacer foco */
-    box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.1);
+    border-color: #8B0000;
+    background: rgba(30, 30, 30, 0.8);
+    box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
+}
+
+.price-input:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(30, 30, 30, 0.7);
 }
 
 .price-separator {
-    color: #000; /* Separador negro para mejor contraste */
-    font-weight: bold;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
     font-size: 0.9rem;
-    flex-shrink: 0; /* No permitir que se comprima */
+    flex-shrink: 0;
 }
 
 /* Botón aplicar precio */
