@@ -58,6 +58,23 @@ try {
     $_SESSION['first_name'] = $user['first_name'];
     $_SESSION['last_name'] = $user['last_name'];
     
+    // IMPORTANTE: Dar todos los permisos a administradores automáticamente
+    if ($user['role'] === 'admin' || $user['role'] === 'administrador') {
+        $_SESSION['is_admin'] = true;
+        $_SESSION['permissions'] = [
+            'products' => ['view', 'create', 'edit', 'update', 'delete'],
+            'categories' => ['view', 'create', 'edit', 'update', 'delete'],
+            'brands' => ['view', 'create', 'edit', 'update', 'delete'],
+            'orders' => ['view', 'create', 'edit', 'update', 'delete'],
+            'users' => ['view', 'create', 'edit', 'update', 'delete'],
+            'settings' => ['view', 'edit', 'update']
+        ];
+    } else {
+        $_SESSION['is_admin'] = false;
+        // Aquí se cargarían los permisos específicos del rol desde la BD
+        $_SESSION['permissions'] = [];
+    }
+    
 } catch (PDOException $e) {
     error_log("Error en auth.php: " . $e->getMessage());
     session_destroy();
@@ -67,10 +84,16 @@ try {
 
 // Función para verificar permisos específicos
 function hasPermission($resource, $action) {
-    // En el sistema simplificado, los administradores tienen todos los permisos
+    // Administradores tienen todos los permisos
     if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
         return true;
     }
+    
+    // Verificar permisos específicos en la sesión
+    if (isset($_SESSION['permissions'][$resource])) {
+        return in_array($action, $_SESSION['permissions'][$resource]);
+    }
+    
     return false;
 }
 
