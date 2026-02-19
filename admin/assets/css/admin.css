@@ -1267,19 +1267,6 @@ input[type="time"]:valid {
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
 }
 
-/* ====================================================================
-   CALENDARIO SIMPLE
-   ==================================================================== */
-#calendarModal #inlineCalendar {
-    display: flex;
-    justify-content: center;
-}
-
-.flatpickr-calendar.inline {
-    box-shadow: none;
-    border: none;
-}
-
 .flatpickr-calendar.inline span.flatpickr-weekday {
     font-size: 0.75rem !important;
 }
