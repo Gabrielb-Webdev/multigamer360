@@ -585,7 +585,10 @@ require_once 'inc/header.php';
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">Valor del Descuento *</label>
-                                    <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="0.01" placeholder="10">
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="0.01" placeholder="10">
+                                        <span class="input-group-text" id="valueSymbol">%</span>
+                                    </div>
                                     <div class="form-text" id="valueHelp">Porcentaje de descuento (ej: 10 para 10%)</div>
                                 </div>
                             </div>
@@ -672,18 +675,27 @@ require_once 'inc/header.php';
             const type = document.querySelector('select[name="type"]').value;
             const maxDiscountField = document.getElementById('maxDiscountField');
             const valueField = document.getElementById('valueField');
+            const valueSymbol = document.getElementById('valueSymbol');
             const valueHelp = document.getElementById('valueHelp');
             
             if (type === 'percentage') {
+                // Modo Porcentaje
                 maxDiscountField.style.display = 'block';
+                maxDiscountField.closest('.col-md-4').style.display = 'block';
                 valueField.setAttribute('max', '100');
                 valueField.setAttribute('placeholder', '10');
-                valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%)';
+                valueSymbol.textContent = '%';
+                valueSymbol.style.display = 'inline-flex';
+                valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) - Máximo 100%';
             } else {
+                // Modo Monto Fijo
                 maxDiscountField.style.display = 'none';
+                maxDiscountField.closest('.col-md-4').style.display = 'none';
                 valueField.removeAttribute('max');
                 valueField.setAttribute('placeholder', '500.00');
-                valueHelp.textContent = 'Monto fijo de descuento en pesos';
+                valueSymbol.textContent = '$';
+                valueSymbol.style.display = 'inline-flex';
+                valueHelp.textContent = 'Monto fijo de descuento en pesos - Sin límite';
             }
         }
         
