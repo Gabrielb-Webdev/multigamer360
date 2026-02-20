@@ -24,6 +24,9 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     
+    // Configurar zona horaria de MySQL para que coincida con PHP
+    $pdo->exec("SET time_zone = '-03:00'"); // Argentina (UTC-3)
+    
     // Mensaje de depuración (solo en desarrollo)
     if ($is_local) {
         // echo "Conectado a base de datos LOCAL: $dbname";
