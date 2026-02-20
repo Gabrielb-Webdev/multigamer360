@@ -236,9 +236,9 @@ if ($cartCount > 0) {
                 
                 if (currentCurrency === 'USD') {
                     if (!isNaN(priceUSD) && priceUSD > 0) {
-                        element.textContent = '$' + priceUSD.toFixed(2);
+                        element.textContent = '$' + Math.round(priceUSD).toLocaleString('en-US');
                     } else {
-                        element.textContent = '$0.00';
+                        element.textContent = '$0';
                     }
                 } else {
                     if (!isNaN(priceARS) && priceARS > 0) {
