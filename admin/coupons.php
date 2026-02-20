@@ -729,6 +729,9 @@ require_once 'inc/header.php';
     </div>
 
     <script>
+        // Variable global para indicar modo edición
+        let isEditMode = false;
+        
         function toggleDiscountFields() {
             const type = document.querySelector('select[name="type"]').value;
             const maxDiscountField = document.getElementById('maxDiscountField');
@@ -885,6 +888,9 @@ require_once 'inc/header.php';
         }
         
         function editCoupon(id) {
+            // Activar modo edición
+            isEditMode = true;
+            
             // Buscar el cupón en la lista
             const coupons = <?php echo json_encode($coupons); ?>;
             const coupon = coupons.find(c => c.id == id);
@@ -941,8 +947,8 @@ require_once 'inc/header.php';
             // Resetear formulario cuando se abre el modal para crear (no editar)
             const createCouponModal = document.getElementById('createCouponModal');
             createCouponModal.addEventListener('show.bs.modal', function (event) {
-                // Si el modal se abre desde el botón "Crear Cupón" (no desde editCoupon)
-                if (!event.relatedTarget || event.relatedTarget.getAttribute('data-bs-target') === '#createCouponModal') {
+                // Si NO estamos en modo edición, resetear el formulario
+                if (!isEditMode) {
                     // Resetear formulario
                     document.getElementById('modalTitle').textContent = 'Crear Nuevo Cupón';
                     document.getElementById('submitButton').textContent = 'Crear Cupón';
@@ -966,6 +972,11 @@ require_once 'inc/header.php';
                     toggleDiscountFields();
                     updateNotificationHelp();
                 }
+            });
+            
+            // Resetear la bandera cuando se cierra el modal
+            createCouponModal.addEventListener('hidden.bs.modal', function () {
+                isEditMode = false;
             });
             
             // Inicializar tooltips de Bootstrap
