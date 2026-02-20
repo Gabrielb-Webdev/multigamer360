@@ -983,28 +983,23 @@ require_once 'includes/header.php';
     font-size: 1.3rem;
     font-weight: 700;
     color: #fff;
-    text-align: center;
+    text-align: left;
     margin-top: auto;
     padding: 0.5rem 0;
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-/* Contenedor de precio con descuento - MEJORADO UX v2.35 */
+/* Contenedor de precio con descuento - Sutil */
 .product-price-container {
     position: relative;
-    text-align: center;
+    text-align: left;
     margin-top: auto;
-    padding: 1rem 0.75rem;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.5rem 0;
 }
 
 /* Badge de descuento - Sutil */
 .discount-badge {
-    position: absolute;
-    top: -10px;
-    right: 12px;
+    display: inline-block;
     background: #e53935;
     color: #fff;
     font-size: 0.75rem;
@@ -1012,9 +1007,9 @@ require_once 'includes/header.php';
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 10;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    margin-bottom: 0.3rem;
 }
 
 /* Precio original tachado - Sutil */
@@ -1043,8 +1038,6 @@ require_once 'includes/header.php';
 
 /* Efecto hover en el contenedor de precio */
 .product-card:hover .product-price-container {
-    background: rgba(0, 0, 0, 0.4);
-    border-color: rgba(16, 185, 129, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;
 }
@@ -2182,7 +2175,7 @@ require_once 'includes/header.php';
     
     /* Ajustes de precios para móvil - Sutil */
     .product-price-container {
-        padding: 0.6rem 0.5rem;
+        padding: 0.5rem 0;
     }
     
     .product-price-discount {
@@ -2192,8 +2185,8 @@ require_once 'includes/header.php';
     
     .product-price-simple {
         font-size: 1.2rem;
-        padding: 0.6rem;
-        margin: 0.6rem 0;
+        padding: 0.5rem 0;
+        margin: 0.5rem 0;
     }
     
     .product-price-original {
@@ -2204,8 +2197,7 @@ require_once 'includes/header.php';
     .discount-badge {
         font-size: 0.65rem;
         padding: 0.2rem 0.4rem;
-        top: -8px;
-        right: 8px;
+        margin-bottom: 0.2rem;
     }
     
     .savings-badge {
