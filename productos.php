@@ -1000,53 +1000,44 @@ require_once 'includes/header.php';
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Badge de descuento - MEJORADO */
+/* Badge de descuento - Sutil */
 .discount-badge {
     position: absolute;
-    top: -12px;
+    top: -10px;
     right: 12px;
-    background: linear-gradient(135deg, #ff1744, #d50000);
+    background: #e53935;
     color: #fff;
-    font-size: 0.8rem;
-    font-weight: 900;
-    padding: 0.35rem 0.65rem;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(255, 23, 68, 0.5),
-                0 0 20px rgba(255, 23, 68, 0.3);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     z-index: 10;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    animation: pulse-badge 2s ease-in-out infinite;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.3px;
 }
 
-@keyframes pulse-badge {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-/* Precio original tachado - MEJORADO */
+/* Precio original tachado - Sutil */
 .product-price-original {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #999;
     text-decoration: line-through;
-    text-decoration-color: #ff4444;
-    text-decoration-thickness: 2px;
-    margin-bottom: 0.5rem;
-    opacity: 0.75;
-    font-weight: 500;
-    letter-spacing: 0.5px;
+    text-decoration-color: #999;
+    text-decoration-thickness: 1px;
+    margin-bottom: 0.4rem;
+    opacity: 0.7;
+    font-weight: 400;
+    letter-spacing: 0px;
 }
 
-/* Precio con descuento - MEJORADO */
+/* Precio con descuento - Sutil */
 .product-price-discount {
-    font-size: 1.75rem;
-    font-weight: 900;
-    color: #10b981;
-    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5),
-                 0 2px 8px rgba(0, 0, 0, 0.5);
-    letter-spacing: -0.5px;
-    line-height: 1.2;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #22c55e;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0px;
+    line-height: 1.3;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -1058,31 +1049,19 @@ require_once 'includes/header.php';
     transition: all 0.3s ease;
 }
 
-/* Badge de ahorro - NUEVO UX v2.35 */
+/* Badge de ahorro - Sutil */
 .savings-badge {
-    margin-top: 0.5rem;
-    padding: 0.35rem 0.75rem;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    border-radius: 6px;
-    color: #10b981;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin-top: 0.4rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 4px;
+    color: #22c55e;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0px;
     display: inline-block;
-    animation: fade-in-up 0.5s ease-out;
-}
-
-@keyframes fade-in-up {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .product-price-usd {
@@ -2201,37 +2180,37 @@ require_once 'includes/header.php';
         height: 250px; /* Altura reducida en móvil */
     }
     
-    /* Ajustes de precios para móvil - UX v2.35 */
+    /* Ajustes de precios para móvil - Sutil */
     .product-price-container {
         padding: 0.6rem 0.5rem;
     }
     
     .product-price-discount {
-        font-size: 1.3rem;
-        letter-spacing: -0.3px;
+        font-size: 1.2rem;
+        letter-spacing: 0px;
     }
     
     .product-price-simple {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         padding: 0.6rem;
         margin: 0.6rem 0;
     }
     
     .product-price-original {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         margin-bottom: 0.3rem;
     }
     
     .discount-badge {
         font-size: 0.65rem;
-        padding: 0.25rem 0.45rem;
-        top: -10px;
+        padding: 0.2rem 0.4rem;
+        top: -8px;
         right: 8px;
     }
     
     .savings-badge {
         font-size: 0.65rem;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         margin-top: 0.3rem;
     }
     

@@ -428,15 +428,15 @@ require_once 'inc/header.php';
                                             <td>
                                                 <div>
                                                     <?php if ($coupon['type'] === 'percentage'): ?>
-                                                        <strong class="text-info"><?php echo number_format($coupon['value'], 0); ?>%</strong>
+                                                        <strong class="text-info"><?php echo number_format($coupon['value'], 0, ',', '.'); ?>%</strong>
                                                         <?php if ($coupon['maximum_discount']): ?>
-                                                            <br><small class="text-muted">Máx: $<?php echo number_format($coupon['maximum_discount'], 2); ?></small>
+                                                            <br><small class="text-muted">Máx: $<?php echo number_format($coupon['maximum_discount'], 0, ',', '.'); ?></small>
                                                         <?php endif; ?>
                                                     <?php else: ?>
-                                                        <strong class="text-success">$<?php echo number_format($coupon['value'], 2); ?></strong>
+                                                        <strong class="text-success">$<?php echo number_format($coupon['value'], 0, ',', '.'); ?></strong>
                                                     <?php endif; ?>
                                                     <?php if ($coupon['minimum_amount'] > 0): ?>
-                                                        <br><small class="text-muted">Mín: $<?php echo number_format($coupon['minimum_amount'], 2); ?></small>
+                                                        <br><small class="text-muted">Mín: $<?php echo number_format($coupon['minimum_amount'], 0, ',', '.'); ?></small>
                                                     <?php endif; ?>
                                                 </div>
                                             </td>

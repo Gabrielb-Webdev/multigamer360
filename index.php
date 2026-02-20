@@ -509,7 +509,7 @@ include 'includes/header.php';
 </section>
 
 <script>
-// Estilos para descuentos en index.php
+// Estilos para descuentos en index.php - Sutil
 const discountStyles = document.createElement('style');
 discountStyles.textContent = `
     .price-with-discount {
@@ -520,30 +520,32 @@ discountStyles.textContent = `
     
     .discount-badge-home {
         display: inline-block;
-        background: linear-gradient(135deg, #ff4444, #cc0000);
+        background: #e53935;
         color: #fff;
-        font-size: 0.75rem;
-        font-weight: 700;
-        padding: 0.25rem 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.5rem;
         border-radius: 4px;
         margin-bottom: 5px;
-        box-shadow: 0 2px 6px rgba(204, 0, 0, 0.4);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
     }
     
     .product-price-original-home {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: #999;
         text-decoration: line-through;
         margin: 5px 0 2px 0;
+        opacity: 0.7;
     }
     
     .product-price-discount-home {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 700;
-        color: #4ade80;
+        color: #22c55e;
         margin: 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 `;
 document.head.appendChild(discountStyles);
