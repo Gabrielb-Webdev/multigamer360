@@ -1125,22 +1125,27 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
         if (dragInfo) dragInfo.style.display = 'block';
         
         window.selectedFiles.forEach((file, index) => {
+            // Capturar el índice antes del callback asíncrono
+            const imageIndex = index;
+            const isFirstImage = index === 0;
+            const isLastImage = index === window.selectedFiles.length - 1;
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const col = document.createElement('div');
                 col.className = 'col-md-3 sortable-image-item';
-                col.dataset.index = index;
+                col.dataset.index = imageIndex;
                 
                 const cardHTML = '<div class="card border-success h-100" style="cursor: move;">' +
                     '<div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">' +
-                        '<small><i class="fas fa-grip-vertical"></i> #' + (index + 1) + '</small>' +
+                        '<small><i class="fas fa-grip-vertical"></i> #' + (imageIndex + 1) + '</small>' +
                         '<button type="button" class="btn btn-sm btn-close btn-close-white" ' +
-                            'onclick="removePreviewImage(' + index + ')" aria-label="Eliminar"></button>' +
+                            'onclick="removePreviewImage(' + imageIndex + ')" aria-label="Eliminar"></button>' +
                     '</div>' +
                     '<img src="' + e.target.result + '" class="card-img-top" ' +
                          'style="height: 150px; object-fit: cover;" alt="Vista previa">' +
                     '<div class="card-body p-2 text-center">' +
-                        (index === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Extra</span>') +
+                        (isFirstImage ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Extra</span>') +
                     '</div>' +
                 '</div>';
                 
@@ -1148,7 +1153,7 @@ if (regenerateSlugBtn && nameInput && slugPreview) {
                 preview.appendChild(col);
                 
                 // Inicializar SortableJS después de agregar todas las imágenes
-                if (index === window.selectedFiles.length - 1) {
+                if (isLastImage) {
                     initSortable();
                 }
             };
@@ -2651,32 +2656,38 @@ if (statusSelect && statusIndicator) {
         
         // Renderizar imágenes nuevas
         selectedFiles.forEach((file, index) => {
+            // Capturar valores antes del callback asíncrono
+            const displayIndex = currentIndex;  // Para mostrar el número correcto
+            const arrayIndex = index;  // Para eliminar del array correcto
+            const isFirstImage = currentIndex === 0;
+            
+            currentIndex++;  // Incrementar inmediatamente
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const col = document.createElement('div');
                 col.className = 'col-md-3 sortable-image-item';
-                col.dataset.index = currentIndex;
+                col.dataset.index = displayIndex;
                 col.dataset.isExisting = 'false';
                 
                 const cardHTML = '<div class="card border-success h-100" style="cursor: move;">' +
                     '<div class="card-header bg-success text-white py-1 d-flex justify-content-between align-items-center">' +
-                        '<small><i class="fas fa-grip-vertical"></i> #' + (currentIndex + 1) + '</small>' +
+                        '<small><i class="fas fa-grip-vertical"></i> #' + (displayIndex + 1) + '</small>' +
                         '<button type="button" class="btn btn-sm btn-close btn-close-white" ' +
-                            'onclick="removeNewImage(' + index + ')" aria-label="Eliminar"></button>' +
+                            'onclick="removeNewImage(' + arrayIndex + ')" aria-label="Eliminar"></button>' +
                     '</div>' +
                     '<img src="' + e.target.result + '" class="card-img-top" ' +
                          'style="height: 150px; object-fit: cover;" alt="Nueva imagen">' +
                     '<div class="card-body p-2 text-center">' +
-                        (currentIndex === 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Nueva</span>') +
+                        (isFirstImage ? '<span class="badge bg-warning text-dark"><i class="fas fa-star"></i> PORTADA</span>' : '<span class="badge bg-secondary">Nueva</span>') +
                     '</div>' +
                 '</div>';
                 
                 col.innerHTML = cardHTML;
                 preview.appendChild(col);
-                currentIndex++;
                 
                 // Inicializar Sortable después de agregar la última imagen
-                if (currentIndex === totalImages) {
+                if (displayIndex + 1 === totalImages) {
                     initSortable();
                 }
             };
