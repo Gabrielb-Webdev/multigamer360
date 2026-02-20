@@ -245,7 +245,7 @@ try {
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="card-title mb-2 opacity-75">Valor Total ARS</h6>
-                        <h4 class="mb-0">$<?php echo number_format($stats['inventory_value_ars'], 0); ?></h4>
+                        <h4 class="mb-0">$<?php echo number_format($stats['inventory_value_ars'], 0, ',', '.'); ?></h4>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
@@ -261,7 +261,7 @@ try {
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="card-title mb-2 opacity-75">Valor Total USD</h6>
-                        <h4 class="mb-0">$<?php echo number_format($stats['inventory_value_usd'], 2); ?></h4>
+                        <h4 class="mb-0">$<?php echo number_format($stats['inventory_value_usd'], 0, ',', '.'); ?></h4>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
@@ -479,10 +479,10 @@ try {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <strong class="text-primary">$<?php echo number_format($product['price_pesos'] ?? 0, 0); ?></strong>
+                                <strong class="text-primary">$<?php echo number_format($product['price_pesos'] ?? 0, 0, ',', '.'); ?></strong>
                             </td>
                             <td>
-                                <strong class="text-success">$<?php echo number_format($product['price_dollars'], 2); ?></strong>
+                                <strong class="text-success">$<?php echo number_format($product['price_dollars'], 0, ',', '.'); ?></strong>
                             </td>
                             <td>
                                 <span class="badge bg-<?php echo $product['stock_color']; ?>">
