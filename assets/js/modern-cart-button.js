@@ -352,7 +352,7 @@
             // 1. El valor realmente cambió
             // 2. O si el valor actual es NaN/inválido
             if (isNaN(currentValue) || currentValue !== newValue) {
-                const formattedTotal = newValue > 0 ? `$${Math.round(newValue).toLocaleString('en-US')}` : '$0';
+                const formattedTotal = newValue > 0 ? `$${Math.round(newValue).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}` : '$0';
                 cartDisplay.textContent = formattedTotal;
                 console.log(`ModernCartButton: Display actualizado de "${currentText}" a "${formattedTotal}"`);
                 // Solo forzar sync si hubo un cambio real
@@ -406,11 +406,11 @@
             if (cartDisplay && data.cart_total !== undefined) {
                 // Solo actualizar si el valor cambió
                 const currentText = cartDisplay.textContent.trim();
-                const currentValue = parseFloat(currentText.replace('$', '').replace(',', ''));
+                const currentValue = parseFloat(currentText.replace('$', '').replace('.', ''));
                 const newValue = parseFloat(data.cart_total);
                 
                 if (currentValue !== newValue) {
-                    const formattedTotal = newValue > 0 ? `$${Math.round(newValue).toLocaleString('en-US')}` : '$0';
+                    const formattedTotal = newValue > 0 ? `$${Math.round(newValue).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}` : '$0';
                     cartDisplay.textContent = formattedTotal;
                     console.log('ModernCartButton: Sync updated from', currentText, 'to', formattedTotal);
                 } else {

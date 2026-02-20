@@ -131,7 +131,7 @@ if ($cartCount > 0) {
                 
                 let formattedText;
                 if (count > 0) {
-                    formattedText = `${count} - $${Math.round(total).toLocaleString('en-US')}`;
+                    formattedText = `${count} - $${Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                 } else {
                     formattedText = '$0';
                 }
@@ -236,7 +236,7 @@ if ($cartCount > 0) {
                 
                 if (currentCurrency === 'USD') {
                     if (!isNaN(priceUSD) && priceUSD > 0) {
-                        element.textContent = '$' + Math.round(priceUSD).toLocaleString('en-US');
+                        element.textContent = '$' + Math.round(priceUSD).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                     } else {
                         element.textContent = '$0';
                     }

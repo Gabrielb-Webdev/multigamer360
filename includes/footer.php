@@ -206,7 +206,7 @@ if (file_exists(__DIR__ . '/../config/asset_versions.php')) {
                     
                     let formattedText;
                     if (count > 0) {
-                        formattedText = `${count} - $${Math.round(total).toLocaleString('en-US')}`;
+                        formattedText = `${count} - $${Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                     } else {
                         formattedText = '$0';
                     }

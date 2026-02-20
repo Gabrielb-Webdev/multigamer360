@@ -1080,27 +1080,23 @@ require_once 'includes/header.php';
     display: inline-block;
 }
 
-/* Precio simple sin descuento - MEJORADO UX v2.35 */
+/* Precio simple sin descuento - Sutil igual que con descuento */
 .product-price-simple {
-    font-size: 1.75rem;
-    font-weight: 900;
-    color: #10b981;
-    margin: 1rem 0;
-    padding: 0.75rem;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5),
-                 0 2px 8px rgba(0, 0, 0, 0.5);
-    letter-spacing: -0.5px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #22c55e;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0px;
+    line-height: 1.3;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    transition: all 0.3s ease;
+    text-align: left;
+    margin-top: auto;
+    padding: 0.5rem 0;
 }
 
 .product-card:hover .product-price-simple {
-    background: rgba(0, 0, 0, 0.4);
-    border-color: rgba(16, 185, 129, 0.4);
-    transform: scale(1.02);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
 }
 
 /* Botón wishlist fijo siempre visible */

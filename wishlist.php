@@ -585,21 +585,21 @@ function removeFromWishlist(productId, button) {
                 if (data.new_total !== undefined) {
                     const totalElement = document.getElementById('wishlist-total');
                     if (totalElement) {
-                        totalElement.textContent = '$' + Math.round(parseFloat(data.new_total)).toLocaleString('en-US');
+                        totalElement.textContent = '$' + Math.round(parseFloat(data.new_total)).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                     }
                 } else {
                     // Calcular total manualmente sumando los precios restantes
                     let total = 0;
                     remainingProducts.forEach(prod => {
                         const priceText = prod.querySelector('.wishlist-price')?.textContent || '0';
-                        const price = parseFloat(priceText.replace('$', '').replace(',', ''));
+                        const price = parseFloat(priceText.replace('$', '').replace('.', ''));
                         if (!isNaN(price)) {
                             total += price;
                         }
                     });
                     const totalElement = document.getElementById('wishlist-total');
                     if (totalElement) {
-                        totalElement.textContent = '$' + Math.round(total).toLocaleString('en-US');
+                        totalElement.textContent = '$' + Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                     }
                 }
                 
