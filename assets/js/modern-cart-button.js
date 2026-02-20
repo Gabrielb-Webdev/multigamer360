@@ -352,7 +352,7 @@
             // 1. El valor realmente cambió
             // 2. O si el valor actual es NaN/inválido
             if (isNaN(currentValue) || currentValue !== newValue) {
-                const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
+                const formattedTotal = newValue > 0 ? `$${Math.round(newValue).toLocaleString('en-US')}` : '$0';
                 cartDisplay.textContent = formattedTotal;
                 console.log(`ModernCartButton: Display actualizado de "${currentText}" a "${formattedTotal}"`);
                 // Solo forzar sync si hubo un cambio real
@@ -410,7 +410,7 @@
                 const newValue = parseFloat(data.cart_total);
                 
                 if (currentValue !== newValue) {
-                    const formattedTotal = newValue > 0 ? `$${newValue.toFixed(2)}` : '$0';
+                    const formattedTotal = newValue > 0 ? `$${Math.round(newValue).toLocaleString('en-US')}` : '$0';
                     cartDisplay.textContent = formattedTotal;
                     console.log('ModernCartButton: Sync updated from', currentText, 'to', formattedTotal);
                 } else {

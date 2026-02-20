@@ -300,7 +300,7 @@ class AdvancedCartSystem {
         const cartDisplay = document.getElementById('cart-display');
         if (cartDisplay) {
             if (this.cartData.count > 0) {
-                cartDisplay.textContent = `${this.cartData.count} - $${this.cartData.total.toFixed(2)}`;
+                cartDisplay.textContent = `${this.cartData.count} - $${Math.round(this.cartData.total).toLocaleString('en-US')}`;
             } else {
                 cartDisplay.textContent = '$0';
             }

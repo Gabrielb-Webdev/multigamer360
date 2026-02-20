@@ -585,7 +585,7 @@ function removeFromWishlist(productId, button) {
                 if (data.new_total !== undefined) {
                     const totalElement = document.getElementById('wishlist-total');
                     if (totalElement) {
-                        totalElement.textContent = '$' + parseFloat(data.new_total).toFixed(2);
+                        totalElement.textContent = '$' + Math.round(parseFloat(data.new_total)).toLocaleString('en-US');
                     }
                 } else {
                     // Calcular total manualmente sumando los precios restantes
@@ -599,7 +599,7 @@ function removeFromWishlist(productId, button) {
                     });
                     const totalElement = document.getElementById('wishlist-total');
                     if (totalElement) {
-                        totalElement.textContent = '$' + total.toFixed(2);
+                        totalElement.textContent = '$' + Math.round(total).toLocaleString('en-US');
                     }
                 }
                 
