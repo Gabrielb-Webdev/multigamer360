@@ -7,6 +7,11 @@ if (session_status() === PHP_SESSION_NONE) {
 // Incluir dependencias
 require_once 'config/database.php';
 require_once 'includes/cart_manager.php';
+require_once 'config/payment_config.php';
+require_once 'includes/payment_helper.php';
+
+// Inicializar helper de pagos
+$paymentHelper = new PaymentHelper($pdo);
 
 // Verificar si hay productos en el carrito
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
@@ -81,21 +86,31 @@ if (in_array($shippingMethod, $delivery_methods)) {
     $zipCode = trim($_POST['zipCode']);
 }
 
-// Validar método de pago según tipo de envío
+// =====================================================
+// VALIDAR MÉTODO DE PAGO ARGENTINA
+// =====================================================
 $pickup_methods = ['0', '2207']; // multigamer360, puntoRetiro
-$valid_payment_methods = [];
+$delivery_type = in_array($shippingMethod, $pickup_methods) ? 'pickup_store' : 'shipping';
 
-if (in_array($shippingMethod, $pickup_methods)) {
-    $valid_payment_methods = ['local', 'online'];
-} else {
-    $valid_payment_methods = ['online', 'cod'];
-}
+// Obtener métodos válidos desde configuración
+$availableMethods = $paymentHelper->getAvailablePaymentMethods($delivery_type);
+$validMethodKeys = array_column($availableMethods, 'method_key');
 
-if (!in_array($paymentMethod, $valid_payment_methods)) {
+if (!in_array($paymentMethod, $validMethodKeys)) {
     $_SESSION['checkout_error'] = "Método de pago no válido para el tipo de envío seleccionado.";
     header('Location: checkout.php');
     exit();
 }
+
+// Obtener nombre del método seleccionado
+$selectedMethod = null;
+foreach ($availableMethods as $method) {
+    if ($method['method_key'] === $paymentMethod) {
+        $selectedMethod = $method;
+        break;
+    }
+}
+$payment_name = $selectedMethod ? $selectedMethod['method_name'] : 'Desconocido';
 
 // =====================================================
 // OBTENER PRODUCTOS DE LA BASE DE DATOS
@@ -191,16 +206,18 @@ if (isset($_SESSION['applied_coupon'])) {
 }
 
 $subtotal_with_discount = $subtotal - $coupon_discount;
-$total = $subtotal_with_discount + $shippingCost;
 
-// Obtener nombres de métodos
-$payment_names = [
-    'local' => 'Pagar en el Local',
-    'online' => 'Pago Online',
-    'cod' => 'Contra Entrega'
-];
+// Aplicar descuento por transferencia bancaria (5% OFF)
+$transfer_discount = 0;
+if ($paymentMethod === 'bank_transfer') {
+    $methodConfig = json_decode($selectedMethod['config_json'], true);
+    if (isset($methodConfig['discount_percentage'])) {
+        $transfer_discount = ($subtotal_with_discount * $methodConfig['discount_percentage']) / 100;
+    }
+}
 
-$payment_name = $payment_names[$paymentMethod] ?? 'Desconocido';
+$subtotal_after_all_discounts = $subtotal_with_discount - $transfer_discount;
+$total = $subtotal_after_all_discounts + $shippingCost;
 
 // Generar ID de orden único
 $order_id = 'MG360-' . date('Ymd') . '-' . rand(1000, 9999);
@@ -209,23 +226,58 @@ $order_id = 'MG360-' . date('Ymd') . '-' . rand(1000, 9999);
 $user_id = $_SESSION['user_id'] ?? null;
 
 // =====================================================
-// GUARDAR ORDEN EN LA BASE DE DATOS
+// GUARDAR ORDEN EN LA BASE DE DATOS (ARGENTINA)
 // =====================================================
 try {
     // Iniciar transacción
     $pdo->beginTransaction();
     
-    // Insertar orden principal
+    // Generar código de reserva si es pago presencial
+    $reservation_code = null;
+    $reservation_expires = null;
+    if (strpos($paymentMethod, 'presential') !== false) {
+        $reservation_code = $paymentHelper->generateReservationCode();
+        $reservation_expires = $paymentHelper->calculateReservationExpiry();
+    }
+    
+    // Calcular deadline de pago para transferencia
+    $payment_deadline = null;
+    if ($paymentMethod === 'bank_transfer') {
+        $methodConfig = json_decode($selectedMethod['config_json'], true);
+        $hours = $methodConfig['deadline_hours'] ?? 48;
+        $payment_deadline = date('Y-m-d H:i:s', strtotime("+{$hours} hours"));
+    }
+    
+    // Determinar payment_type y payment_gateway
+    $payment_type = 'pending';
+    $payment_gateway = null;
+    
+    if ($paymentMethod === 'mercadopago_online') {
+        $payment_type = 'online';
+        $payment_gateway = 'mercadopago';
+    } elseif ($paymentMethod === 'bank_transfer') {
+        $payment_type = 'bank_transfer';
+        $payment_gateway = 'manual';
+    } elseif (strpos($paymentMethod, 'presential') !== false) {
+        $payment_type = 'presential';
+        $payment_gateway = 'store';
+    } elseif ($paymentMethod === 'cash_on_delivery') {
+        $payment_type = 'cod';
+        $payment_gateway = 'manual';
+    }
+    
+    // Insertar orden principal con campos de Argentina
     $stmt = $pdo->prepare("
         INSERT INTO orders (
             order_number, user_id, 
             customer_first_name, customer_last_name, customer_email, customer_phone,
             shipping_address, shipping_city, shipping_province, shipping_postal_code,
             shipping_method, shipping_cost,
-            payment_method, payment_status,
+            delivery_type, payment_type, payment_gateway, payment_method, payment_status,
             subtotal, discount_amount, total_amount,
+            reservation_code, reservation_expires, payment_deadline,
             status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
     
     $stmt->execute([
@@ -241,11 +293,17 @@ try {
         $postalCode,
         $shippingName,
         $shippingCost,
+        $delivery_type,
+        $payment_type,
+        $payment_gateway,
         $payment_name,
         'pending',
         $subtotal,
-        $coupon_discount,
+        $coupon_discount + $transfer_discount,
         $total,
+        $reservation_code,
+        $reservation_expires,
+        $payment_deadline,
         'pending'
     ]);
     
@@ -333,9 +391,24 @@ try {
     // Confirmar transacción
     $pdo->commit();
     
+    // Guardar transacción en tabla payment_transactions
+    $paymentHelper->saveTransaction([
+        'order_id' => $inserted_order_id,
+        'gateway' => $payment_gateway,
+        'amount' => $total,
+        'status' => 'pending',
+        'payment_method' => $paymentMethod,
+        'payer_email' => $email,
+        'payer_name' => $firstName . ' ' . $lastName,
+        'transaction_id' => null,
+        'currency' => 'ARS',
+        'installments' => 1
+    ]);
+    
     // Crear datos de la orden para mostrar en confirmación
     $order_data = [
         'order_id' => $order_id,
+        'db_id' => $inserted_order_id,
         'date' => date('Y-m-d H:i:s'),
         'customer' => [
             'first_name' => $firstName,
@@ -355,7 +428,9 @@ try {
         ],
         'payment' => [
             'method' => $paymentMethod,
-            'name' => $payment_name
+            'name' => $payment_name,
+            'type' => $payment_type,
+            'gateway' => $payment_gateway
         ],
         'coupon' => $coupon_data ? [
             'code' => $coupon_data['code'],
@@ -367,19 +442,71 @@ try {
         'totals' => [
             'subtotal' => $subtotal,
             'coupon_discount' => $coupon_discount,
-            'subtotal_with_discount' => $subtotal_with_discount,
+            'transfer_discount' => $transfer_discount,
+            'subtotal_with_discount' => $subtotal_after_all_discounts,
             'shipping' => $shippingCost,
             'total' => $total
-        ]
+        ],
+        'reservation_code' => $reservation_code,
+        'reservation_expires' => $reservation_expires,
+        'payment_deadline' => $payment_deadline
     ];
     
     // Guardar en sesión para mostrar confirmación
     $_SESSION['completed_order'] = $order_data;
     
+    // =====================================================
+    // PROCESAR SEGÚN MÉTODO DE PAGO ARGENTINA
+    // =====================================================
+    
+    // 1️⃣ MERCADO PAGO - Redirigir a proceso de pago online
+    if ($paymentMethod === 'mercadopago_online') {
+        // Limpiar carrito ANTES de ir a Mercado Pago
+        $_SESSION['cart'] = [];
+        if ($user_id) {
+            $stmt_delete_cart = $pdo->prepare("DELETE FROM cart_sessions WHERE user_id = ?");
+            $stmt_delete_cart->execute([$user_id]);
+        }
+        
+        // Limpiar cupones y envío
+        unset($_SESSION['applied_coupon']);
+        unset($_SESSION['shipping_method']);
+        unset($_SESSION['shipping_cost']);
+        unset($_SESSION['shipping_name']);
+        unset($_SESSION['postal_code']);
+        
+        // Redirigir a proceso Mercado Pago
+        header('Location: api/payment/process-mercadopago.php?order_id=' . $inserted_order_id);
+        exit();
+    }
+    
+    // 2️⃣ TRANSFERENCIA BANCARIA - Enviar email con datos bancarios
+    if ($paymentMethod === 'bank_transfer') {
+        $paymentHelper->sendPaymentEmail('bank_transfer', [
+            'order_id' => $order_id,
+            'customer_name' => $firstName . ' ' . $lastName,
+            'customer_email' => $email,
+            'total_amount' => $total,
+            'payment_deadline' => $payment_deadline
+        ]);
+    }
+    
+    // 3️⃣ PAGO PRESENCIAL - Enviar email con código de reserva
+    if (strpos($paymentMethod, 'presential') !== false && $reservation_code) {
+        $paymentHelper->sendPaymentEmail('reservation', [
+            'order_id' => $order_id,
+            'customer_name' => $firstName . ' ' . $lastName,
+            'customer_email' => $email,
+            'reservation_code' => $reservation_code,
+            'reservation_expires' => $reservation_expires,
+            'total_amount' => $total
+        ]);
+    }
+    
     // Limpiar carrito de la sesión
     $_SESSION['cart'] = [];
     
-    // IMPORTANTE: Eliminar el carrito de la BASE DE DATOS también
+    // Eliminar el carrito de la BASE DE DATOS también
     if ($user_id) {
         $stmt_delete_cart = $pdo->prepare("DELETE FROM cart_sessions WHERE user_id = ?");
         $stmt_delete_cart->execute([$user_id]);

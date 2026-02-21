@@ -31,6 +31,11 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once 'config/database.php';
 require_once 'includes/cart_manager.php';
 require_once 'includes/auth.php';
+require_once 'includes/payment_helper.php';
+
+// Cargar configuración de pagos
+$paymentConfig = require 'config/payment_config.php';
+$paymentHelper = new PaymentHelper($pdo);
 
 // =====================================================
 // OBTENER INFORMACIÓN DEL USUARIO
