@@ -234,11 +234,28 @@ if ($cartCount > 0) {
                 const priceARS = parseFloat(element.dataset.priceArs);
                 const priceUSD = parseFloat(element.dataset.priceUsd);
                 
+                // Detectar si este elemento tiene descuentos por moneda
+                const hasDiscountARS = element.dataset.hasDiscountArs === '1';
+                const hasDiscountUSD = element.dataset.hasDiscountUsd === '1';
+                
                 if (currentCurrency === 'USD') {
                     if (!isNaN(priceUSD) && priceUSD > 0) {
                         element.textContent = '$' + Math.round(priceUSD).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
                     } else {
                         element.textContent = '$0';
+                    }
+                    
+                    // Si este precio NO tiene descuento en USD, ocultar el precio tachado
+                    if (element.classList.contains('product-price-original') && !hasDiscountUSD) {
+                        element.style.textDecoration = 'none';
+                        element.style.opacity = '0';
+                        element.style.maxHeight = '0';
+                        element.style.marginBottom = '0';
+                    } else if (element.classList.contains('product-price-original') && hasDiscountUSD) {
+                        element.style.textDecoration = 'line-through';
+                        element.style.opacity = '1';
+                        element.style.maxHeight = '50px';
+                        element.style.marginBottom = '';
                     }
                 } else {
                     if (!isNaN(priceARS) && priceARS > 0) {
@@ -246,6 +263,29 @@ if ($cartCount > 0) {
                     } else {
                         element.textContent = '$0';
                     }
+                    
+                    // Si este precio NO tiene descuento en ARS, ocultar el precio tachado
+                    if (element.classList.contains('product-price-original') && !hasDiscountARS) {
+                        element.style.textDecoration = 'none';
+                        element.style.opacity = '0';
+                        element.style.maxHeight = '0';
+                        element.style.marginBottom = '0';
+                    } else if (element.classList.contains('product-price-original') && hasDiscountARS) {
+                        element.style.textDecoration = 'line-through';
+                        element.style.opacity = '1';
+                        element.style.maxHeight = '50px';
+                        element.style.marginBottom = '';
+                    }
+                }
+            });
+            
+            // Mostrar/ocultar badges de descuento según moneda
+            document.querySelectorAll('.discount-badge[data-currency], .savings-badge[data-currency]').forEach(badge => {
+                const badgeCurrency = badge.dataset.currency;
+                if (badgeCurrency === currentCurrency.toLowerCase()) {
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
                 }
             });
             

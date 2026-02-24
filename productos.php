@@ -625,25 +625,40 @@ require_once 'includes/header.php';
                                         if ($isOnSale && $discountUSD > 0) {
                                             $finalPriceUSD = $priceUSD * (1 - ($discountUSD / 100));
                                         }
+                                        
+                                        // Determinar si hay descuento en ALGUNA moneda
+                                        $hasAnyDiscount = $isOnSale && ($discountARS > 0 || $discountUSD > 0);
                                         ?>
                                         
-                                        <?php if ($isOnSale && $discountARS > 0): ?>
+                                        <?php if ($hasAnyDiscount): ?>
                                             <!-- Producto con descuento - MEJORADO UX v2.35 -->
                                             <div class="product-price-container">
-                                                <div class="discount-badge"><?php echo intval($discountARS); ?>% OFF</div>
-                                                <div class="product-price-original" data-price-ars="<?php echo $priceARS; ?>" data-price-usd="<?php echo $priceUSD; ?>">
+                                                <!-- Badge de descuento: mostrar ambos si existen, ocultar dinámicamente según moneda -->
+                                                <?php if ($discountARS > 0): ?>
+                                                <div class="discount-badge discount-badge-ars" data-currency="ars"><?php echo intval($discountARS); ?>% OFF</div>
+                                                <?php endif; ?>
+                                                <?php if ($discountUSD > 0): ?>
+                                                <div class="discount-badge discount-badge-usd" data-currency="usd" style="display: none;"><?php echo intval($discountUSD); ?>% OFF</div>
+                                                <?php endif; ?>
+                                                <div class="product-price-original" data-price-ars="<?php echo $priceARS; ?>" data-price-usd="<?php echo $priceUSD; ?>" data-has-discount-ars="<?php echo $discountARS > 0 ? '1' : '0'; ?>" data-has-discount-usd="<?php echo $discountUSD > 0 ? '1' : '0'; ?>">
                                                     $<?php echo number_format($priceARS, 0, ',', '.'); ?>
                                                 </div>
                                                 <div class="product-price-discount" data-price-ars="<?php echo intval($finalPriceARS); ?>" data-price-usd="<?php echo intval($finalPriceUSD); ?>">
                                                     $<?php echo number_format(intval($finalPriceARS), 0, ',', '.'); ?>
                                                 </div>
                                                 <?php 
-                                                // Calcular ahorro
-                                                $savings = $priceARS - $finalPriceARS;
-                                                if ($savings > 0): 
+                                                // Calcular ahorro para ambas monedas
+                                                $savingsARS = $priceARS - $finalPriceARS;
+                                                $savingsUSD = $priceUSD - $finalPriceUSD;
                                                 ?>
-                                                <div class="savings-badge">
-                                                    Ahorrás $<?php echo number_format(intval($savings), 0, ',', '.'); ?>
+                                                <?php if ($savingsARS > 0): ?>
+                                                <div class="savings-badge savings-badge-ars" data-currency="ars">
+                                                    Ahorrás $<?php echo number_format(intval($savingsARS), 0, ',', '.'); ?>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($savingsUSD > 0): ?>
+                                                <div class="savings-badge savings-badge-usd" data-currency="usd" style="display: none;">
+                                                    Ahorrás $<?php echo number_format(intval($savingsUSD), 0, ',', '.'); ?>
                                                 </div>
                                                 <?php endif; ?>
                                             </div>

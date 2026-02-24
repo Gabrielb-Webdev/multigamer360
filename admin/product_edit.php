@@ -144,8 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'price_dollars' => !empty($_POST['price_dollars']) ? intval($_POST['price_dollars']) : null, // Sin decimales
             'is_on_sale' => isset($_POST['is_on_sale']) ? 1 : 0,
             'discount_percentage' => !empty($_POST['discount_percentage']) ? intval($_POST['discount_percentage']) : 0, // Sin decimales
-            'discount_percentage_ars' => !empty($_POST['discount_percentage_ars']) ? intval($_POST['discount_percentage_ars']) : 0, // Sin decimales
-            'discount_percentage_usd' => !empty($_POST['discount_percentage_usd']) ? intval($_POST['discount_percentage_usd']) : 0, // Sin decimales
+            'discount_percentage_ars' => isset($_POST['discount_percentage_ars']) ? intval($_POST['discount_percentage_ars']) : 0, // Sin decimales, permite 0
+            'discount_percentage_usd' => isset($_POST['discount_percentage_usd']) ? intval($_POST['discount_percentage_usd']) : 0, // Sin decimales, permite 0
             'stock_quantity' => intval($_POST['stock_quantity']),
             'category_id' => intval($_POST['category_id']),
             'brand_id' => !empty($_POST['brand_id']) ? intval($_POST['brand_id']) : null,
