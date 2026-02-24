@@ -15,9 +15,9 @@ class ShippingCalculator {
     public function __construct($pdo) {
         $this->pdo = $pdo;
         
-        // 📍 Punto de origen: Gaboto 893-801, Rosario, Santa Fe
-        $this->originZip = 'S2000';
-        $this->originAddress = 'Gaboto 893-801, S2000 Rosario, Santa Fe, Argentina';
+        // 📍 Punto de origen: Fitz Roy 1906, CABA
+        $this->originZip = 'C1414';
+        $this->originAddress = 'Fitz Roy 1906, C1414 Cdad. Autónoma de Buenos Aires, Argentina';
     }
     
     /**
@@ -255,7 +255,9 @@ class ShippingCalculator {
     
     /**
      * Determinar zona de envío según CP
-     */// Limpiar CP (puede venir con letras como C1426 o S2000)
+     */
+    private function getShippingZone($zipCode) {
+        // Limpiar CP (puede venir con letras como C1426 o S2000)
         $zipClean = preg_replace('/[^0-9]/', '', $zipCode);
         $zip = intval($zipClean);
         
@@ -269,8 +271,6 @@ class ShippingCalculator {
         if ($zip >= 6000 && $zip <= 6999) return 'centro';        // Mendoza, San Juan
         if ($zip >= 8000 && $zip <= 8999) return 'patagonia';     // Neuquén, Río Negro
         if ($zip >= 9000 && $zip <= 9999) return 'patagonia';     // Chubut, Santa Cruz
-        if ($zip >= 4000 && $zip <= 4999) return 'norte';
-        if ($zip >= 8000 && $zip <= 9999) return 'patagonia';
         
         return 'centro'; // Default
     }
@@ -284,7 +284,15 @@ class ShippingCalculator {
             'gba' => 'Gran Buenos Aires',
             'bs_as' => 'Prov. Buenos Aires',
             'centro' => 'Zona Centro',
-            'norte' => 'Zonatomensajería (solo Buenos Aires)
+            'norte' => 'Zona Norte',
+            'patagonia' => 'Patagonia'
+        ];
+        
+        return $names[$zone] ?? 'Zona desconocida';
+    }
+    
+    /**
+     * Calcular envío con Motomensajería (solo CABA y GBA)
      */
     private function calculateMoova($provider, $destinationZip, $weightKg, $declaredValue) {
         // Motomensajería solo para CABA y GBA
@@ -292,26 +300,21 @@ class ShippingCalculator {
         $zip = intval($zipClean);
         
         if (($zip >= 1000 && $zip <= 1439) || ($zip >= 1600 && $zip <= 1900)) {
-            // Precio base + por kg
-            $basePrice = 4500; // Desde Rosario a Buenos Aires
-            $extraPerKg = ($weightKg > 2) ? (($weightKg - 2) * 1000) : 0;
+            // Precio base por zona + por kg extra
+            $isCABA = ($zip >= 1000 && $zip <= 1439);
+            $basePrice = $isCABA ? 3500 : 4200; // CABA más barato que GBA
+            $extraPerKg = ($weightKg > 1) ? (($weightKg - 1) * 800) : 0;
             $total = $basePrice + $extraPerKg;
+            
+            $zoneName = $isCABA ? 'CABA' : 'GBA';
             
             return [
                 'provider' => 'moova',
-                'service_name' => 'Motomensajería Buenos Aires',
+                'service_name' => "Motomensajería {$zoneName}",
                 'price' => $total,
-                'delivery_days' => 2,
-                'description' => 'Envío rápido en moto',
-                'estimated' => tru= 1439) || ($zip >= 1600 && $zip <= 1900)) {
-            // Precio fijo para zona metropolitana
-            return [
-                'provider' => 'moova',
-                'service_name' => 'Moova Mensajería',
-                'price' => 3500,
                 'delivery_days' => 1,
-                'description' => 'Entrega en moto - Mismo día',
-                'estimated' => false
+                'description' => 'Envío rápido en moto - Mismo día o próximo día',
+                'estimated' => true
             ];
         }
         
