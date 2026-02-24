@@ -185,36 +185,36 @@ class ShippingCalculator {
         // Determinar zona según CP destino
         $zone = $this->getShippingZone($destinationZip);
         
-        // Tarifas Correo Argentino 2026 (estimadas por zona y peso)
+        // Tarifas Correo Argentino 2026 (actualizadas - precios reales)
         $tarifas = [
             'caba' => [
-                'base' => 3200,
-                'por_kg' => 600,
+                'base' => 8200,
+                'por_kg' => 1500,
                 'dias' => 3
             ],
             'gba' => [
-                'base' => 4100,
-                'por_kg' => 750,
+                'base' => 9500,
+                'por_kg' => 1800,
                 'dias' => 4
             ],
             'bs_as' => [
-                'base' => 5500,
-                'por_kg' => 900,
+                'base' => 12000,
+                'por_kg' => 2200,
                 'dias' => 5
             ],
             'centro' => [
-                'base' => 6800,
-                'por_kg' => 1100,
+                'base' => 14500,
+                'por_kg' => 2800,
                 'dias' => 6
             ],
             'norte' => [
-                'base' => 8500,
-                'por_kg' => 1400,
+                'base' => 18500,
+                'por_kg' => 3500,
                 'dias' => 8
             ],
             'patagonia' => [
-                'base' => 9800,
-                'por_kg' => 1650,
+                'base' => 21500,
+                'por_kg' => 4200,
                 'dias' => 10
             ]
         ];
@@ -300,10 +300,10 @@ class ShippingCalculator {
         $zip = intval($zipClean);
         
         if (($zip >= 1000 && $zip <= 1439) || ($zip >= 1600 && $zip <= 1900)) {
-            // Precio base por zona + por kg extra
+            // Precio base por zona + por kg extra (tarifas reales 2026)
             $isCABA = ($zip >= 1000 && $zip <= 1439);
-            $basePrice = $isCABA ? 3500 : 4200; // CABA más barato que GBA
-            $extraPerKg = ($weightKg > 1) ? (($weightKg - 1) * 800) : 0;
+            $basePrice = $isCABA ? 7500 : 9200; // CABA más barato que GBA
+            $extraPerKg = ($weightKg > 1) ? (($weightKg - 1) * 1800) : 0;
             $total = $basePrice + $extraPerKg;
             
             $zoneName = $isCABA ? 'CABA' : 'GBA';

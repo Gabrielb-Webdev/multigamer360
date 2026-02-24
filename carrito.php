@@ -877,12 +877,12 @@ async function mostrarConfirmacionCP(codigoPostal) {
                         <label class="form-check-label text-white w-100" for="shipping_${option.id}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold">${option.name}</div>
-                                    ${option.description ? `<div class="text-muted small">${option.description}</div>` : ''}
+                                    <div class="fw-bold text-white">${option.name}</div>
+                                    ${option.description ? `<div class="text-white-50 small">${option.description}</div>` : ''}
                                     <div class="text-success small">
                                         <i class="fas fa-clock me-1"></i>${option.delivery_text}
                                     </div>
-                                    ${option.is_estimated ? '<span class="badge bg-secondary mt-1">Estimado</span>' : ''}
+                                    ${option.is_estimated ? '<span class="badge bg-info text-dark mt-1">Estimado</span>' : ''}
                                 </div>
                                 <div class="text-end">
                                     <span class="text-danger fw-bold fs-5">${option.price_formatted}</span>
