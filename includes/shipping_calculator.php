@@ -15,9 +15,9 @@ class ShippingCalculator {
     public function __construct($pdo) {
         $this->pdo = $pdo;
         
-        // 📍 Punto de origen: Fitz Roy 1906, CABA
-        $this->originZip = '1414';
-        $this->originAddress = 'Fitz Roy 1906, C1414 CABA, Argentina';
+        // 📍 Punto de origen: Gaboto 893-801, Rosario, Santa Fe
+        $this->originZip = 'S2000';
+        $this->originAddress = 'Gaboto 893-801, S2000 Rosario, Santa Fe, Argentina';
     }
     
     /**
@@ -91,9 +91,11 @@ class ShippingCalculator {
         }
         
         if ($coverage === 'caba_gba') {
-            // CPs de CABA: 1000-1439
-            // CPs de GBA: 1600-1900 (aprox)
-            $zip = intval($destinationZip);
+            // Motomensajería solo para Buenos Aires
+            // CPs de CABA: 1000-1439 (C1xxx)
+            // CPs de GBA: 1600-1900 (B1xxx)
+            $zipClean = preg_replace('/[^0-9]/', '', $destinationZip);
+            $zip = intval($zipClean);
             return ($zip >= 1000 && $zip <= 1439) || ($zip >= 1600 && $zip <= 1900);
         }
         
@@ -253,14 +255,20 @@ class ShippingCalculator {
     
     /**
      * Determinar zona de envío según CP
-     */
-    private function getShippingZone($zipCode) {
-        $zip = intval($zipCode);
+     */// Limpiar CP (puede venir con letras como C1426 o S2000)
+        $zipClean = preg_replace('/[^0-9]/', '', $zipCode);
+        $zip = intval($zipClean);
         
-        if ($zip >= 1000 && $zip <= 1439) return 'caba';
-        if ($zip >= 1600 && $zip <= 1900) return 'gba';
-        if ($zip >= 2000 && $zip <= 2999) return 'bs_as';
-        if ($zip >= 3000 && $zip <= 5999) return 'centro';
+        // Zonas de Argentina por rangos de CP
+        if ($zip >= 1000 && $zip <= 1439) return 'caba';          // Capital Federal
+        if ($zip >= 1600 && $zip <= 1900) return 'gba';           // Gran Buenos Aires
+        if ($zip >= 2000 && $zip <= 2999) return 'bs_as';         // Prov. Buenos Aires
+        if ($zip >= 3000 && $zip <= 3999) return 'centro';        // Santa Fe, Entre Ríos, Corrientes
+        if ($zip >= 4000 && $zip <= 4999) return 'norte';         // Salta, Jujuy, Tucumán
+        if ($zip >= 5000 && $zip <= 5999) return 'centro';        // Córdoba, La Rioja
+        if ($zip >= 6000 && $zip <= 6999) return 'centro';        // Mendoza, San Juan
+        if ($zip >= 8000 && $zip <= 8999) return 'patagonia';     // Neuquén, Río Negro
+        if ($zip >= 9000 && $zip <= 9999) return 'patagonia';     // Chubut, Santa Cruz
         if ($zip >= 4000 && $zip <= 4999) return 'norte';
         if ($zip >= 8000 && $zip <= 9999) return 'patagonia';
         
@@ -276,21 +284,26 @@ class ShippingCalculator {
             'gba' => 'Gran Buenos Aires',
             'bs_as' => 'Prov. Buenos Aires',
             'centro' => 'Zona Centro',
-            'norte' => 'Zona Norte',
-            'patagonia' => 'Patagonia'
-        ];
-        
-        return $names[$zone] ?? 'Interior';
-    }
-    
-    /**
-     * Calcular envío con Moova (solo CABA/GBA)
+            'norte' => 'Zonatomensajería (solo Buenos Aires)
      */
     private function calculateMoova($provider, $destinationZip, $weightKg, $declaredValue) {
-        // Moova solo opera en CABA y GBA
-        $zip = intval($destinationZip);
+        // Motomensajería solo para CABA y GBA
+        $zipClean = preg_replace('/[^0-9]/', '', $destinationZip);
+        $zip = intval($zipClean);
         
         if (($zip >= 1000 && $zip <= 1439) || ($zip >= 1600 && $zip <= 1900)) {
+            // Precio base + por kg
+            $basePrice = 4500; // Desde Rosario a Buenos Aires
+            $extraPerKg = ($weightKg > 2) ? (($weightKg - 2) * 1000) : 0;
+            $total = $basePrice + $extraPerKg;
+            
+            return [
+                'provider' => 'moova',
+                'service_name' => 'Motomensajería Buenos Aires',
+                'price' => $total,
+                'delivery_days' => 2,
+                'description' => 'Envío rápido en moto',
+                'estimated' => tru= 1439) || ($zip >= 1600 && $zip <= 1900)) {
             // Precio fijo para zona metropolitana
             return [
                 'provider' => 'moova',
