@@ -404,11 +404,11 @@ input[type="number"] {
                             <div class="mb-3">
                                 <input type="text" 
                                        class="form-control bg-dark text-white border-secondary" 
-                                       placeholder="Ej: 1425" 
+                                       placeholder="Ej: 1426, S2001, C1414" 
                                        id="codigoPostal"
                                        value="<?php echo htmlspecialchars($user_postal_code ?? ''); ?>"
                                        onkeyup="updateCalculateButton()"
-                                       maxlength="4">
+                                       maxlength="5">
                             </div>
                             <button class="btn btn-secondary w-100 mb-3" id="calculateBtn" onclick="calcularEnvio()" <?php echo empty($user_postal_code) ? 'disabled' : ''; ?>>
                                 CALCULAR

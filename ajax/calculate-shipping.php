@@ -25,11 +25,11 @@ $postalCode = trim($_POST['postal_code'] ?? '');
 $cartTotal = floatval($_POST['cart_total'] ?? 0);
 $cartWeight = floatval($_POST['cart_weight'] ?? 1.0); // Peso en kg
 
-// Validar código postal argentino (4 dígitos)
-if (empty($postalCode) || !preg_match('/^\d{4}$/', $postalCode)) {
+// Validar código postal argentino (4-5 caracteres, acepta formatos como 1426, S2001, C1414)
+if (empty($postalCode) || !preg_match('/^[A-Z]?\d{4}$/i', $postalCode)) {
     echo json_encode([
         'success' => false, 
-        'message' => 'Código postal inválido. Debe tener 4 dígitos.'
+        'message' => 'Código postal inválido. Debe tener 4 dígitos (Ej: 1426, S2001, C1414)'
     ]);
     exit;
 }
