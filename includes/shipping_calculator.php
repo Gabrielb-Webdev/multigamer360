@@ -15,9 +15,9 @@ class ShippingCalculator {
     public function __construct($pdo) {
         $this->pdo = $pdo;
         
-        // Obtener CP de origen desde configuración (tu local)
-        $this->originZip = '1426'; // ACTUALIZAR con tu CP real
-        $this->originAddress = 'Av. Corrientes 1234, CABA'; // ACTUALIZAR
+        // 📍 Punto de origen: Fitz Roy 1906, CABA
+        $this->originZip = '1414';
+        $this->originAddress = 'Fitz Roy 1906, C1414 CABA, Argentina';
     }
     
     /**
@@ -175,31 +175,112 @@ class ShippingCalculator {
     
     /**
      * Calcular envío con Correo Argentino
+     * Sistema basado en tarifas por zonas y peso
      */
     private function calculateCorreoArgentino($provider, $destinationZip, $weightKg, $declaredValue) {
-        // Correo Argentino tiene tarifas más económicas pero menos confiables
+        $config = json_decode($provider['config_json'], true);
         
-        $distance = $this->estimateDistance($this->originZip, $destinationZip);
+        // Determinar zona según CP destino
+        $zone = $this->getShippingZone($destinationZip);
         
-        $basePrice = 3500;
-        $pricePerKg = 800;
+        // Tarifas Correo Argentino 2026 (estimadas por zona y peso)
+        $tarifas = [
+            'caba' => [
+                'base' => 3200,
+                'por_kg' => 600,
+                'dias' => 3
+            ],
+            'gba' => [
+                'base' => 4100,
+                'por_kg' => 750,
+                'dias' => 4
+            ],
+            'bs_as' => [
+                'base' => 5500,
+                'por_kg' => 900,
+                'dias' => 5
+            ],
+            'centro' => [
+                'base' => 6800,
+                'por_kg' => 1100,
+                'dias' => 6
+            ],
+            'norte' => [
+                'base' => 8500,
+                'por_kg' => 1400,
+                'dias' => 8
+            ],
+            'patagonia' => [
+                'base' => 9800,
+                'por_kg' => 1650,
+                'dias' => 10
+            ]
+        ];
         
-        if ($distance > 500) {
-            $basePrice += 1500;
-        } elseif ($distance > 200) {
-            $basePrice += 800;
-        }
+        $tarifa = $tarifas[$zone] ?? $tarifas['centro'];
         
-        $total = $basePrice + ($weightKg * $pricePerKg);
+        // Calcular precio total
+        $precioBase = $tarifa['base'];
+        $precioExtra = ($weightKg > 1) ? (($weightKg - 1) * $tarifa['por_kg']) : 0;
+        $total = $precioBase + $precioExtra;
         
-        return [
+        // Servicio expreso (+50% pero menos días)
+        $quotes = [];
+        
+        // 1. Clásico (económico)
+        $quotes[] = [
             'provider' => 'correo_argentino',
             'service_name' => 'Correo Argentino Clásico',
             'price' => $total,
-            'delivery_days' => $distance > 300 ? 7 : 4,
-            'description' => 'Envío estándar a domicilio',
+            'delivery_days' => $tarifa['dias'],
+            'description' => 'Envío estándar - ' . $this->getZoneName($zone),
             'estimated' => true
         ];
+        
+        // 2. Expreso (más rápido, más caro)
+        $quotes[] = [
+            'provider' => 'correo_argentino',
+            'service_name' => 'Correo Argentino Expreso',
+            'price' => round($total * 1.5),
+            'delivery_days' => max(2, $tarifa['dias'] - 2),
+            'description' => 'Envío prioritario - ' . $this->getZoneName($zone),
+            'estimated' => true
+        ];
+        
+        // Retornar el clásico por defecto
+        return $quotes[0];
+    }
+    
+    /**
+     * Determinar zona de envío según CP
+     */
+    private function getShippingZone($zipCode) {
+        $zip = intval($zipCode);
+        
+        if ($zip >= 1000 && $zip <= 1439) return 'caba';
+        if ($zip >= 1600 && $zip <= 1900) return 'gba';
+        if ($zip >= 2000 && $zip <= 2999) return 'bs_as';
+        if ($zip >= 3000 && $zip <= 5999) return 'centro';
+        if ($zip >= 4000 && $zip <= 4999) return 'norte';
+        if ($zip >= 8000 && $zip <= 9999) return 'patagonia';
+        
+        return 'centro'; // Default
+    }
+    
+    /**
+     * Nombre legible de la zona
+     */
+    private function getZoneName($zone) {
+        $names = [
+            'caba' => 'Capital Federal',
+            'gba' => 'Gran Buenos Aires',
+            'bs_as' => 'Prov. Buenos Aires',
+            'centro' => 'Zona Centro',
+            'norte' => 'Zona Norte',
+            'patagonia' => 'Patagonia'
+        ];
+        
+        return $names[$zone] ?? 'Interior';
     }
     
     /**

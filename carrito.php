@@ -232,6 +232,22 @@ input[type="number"] {
     box-shadow: none !important;
     border-color: var(--bs-border-color) !important;
 }
+
+/* Opciones de envío dinámicas */
+.hover-shipping {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.hover-shipping:hover {
+    border-color: var(--bs-danger) !important;
+    background-color: rgba(220, 53, 69, 0.1);
+    transform: translateY(-2px);
+}
+
+.hover-shipping input:checked + label {
+    color: var(--bs-danger);
+}
 </style>
 
 <!-- Página del Carrito -->
@@ -424,54 +440,29 @@ input[type="number"] {
                         </div>
                     </div>
 
-                    <!-- Opciones de envío (inicialmente ocultas) -->
+                    <!-- Opciones de envío (se cargan dinámicamente) -->
                     <div id="shippingOptions" style="display: none;" class="mb-4">
-                        <h6 class="text-white mb-3">ENVÍO A DOMICILIO</h6>
+                        <h6 class="text-white mb-3">
+                            <i class="fas fa-shipping-fast me-2"></i>OPCIONES DE ENVÍO
+                            <span id="shippingToCP" class="text-muted small"></span>
+                        </h6>
                         
-                        <div class="form-check mb-3 p-3 border border-secondary rounded">
-                            <input class="form-check-input" type="radio" name="shippingMethod" id="correoNube" value="5648" onchange="updateShippingSelection(5648, '5648')">
-                            <label class="form-check-label text-white w-100" for="correoNube">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div>Envío Nube - Correo Argentino</div>
-                                        <div class="text-muted small">Clásico a domicilio</div>
-                                        <div class="text-success small">Llega entre 2 y 6 días hábiles</div>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="text-danger fw-bold">$5.648</span>
-                                    </div>
-                                </div>
-                            </label>
+                        <!--Loader mientras carga -->
+                        <div id="shippingLoader" style="display: none;" class="text-center py-4">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="text-muted mt-2">Calculando opciones de envío...</p>
                         </div>
-
-                        <div class="form-check mb-3 p-3 border border-secondary rounded">
-                            <input class="form-check-input" type="radio" name="shippingMethod" id="correoExpreso" value="6214" onchange="updateShippingSelection(6214, '6214')">
-                            <label class="form-check-label text-white w-100" for="correoExpreso">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div>Envío Nube - Correo Argentino</div>
-                                        <div class="text-muted small">Expreso a domicilio</div>
-                                        <div class="text-success small">Llega entre 1 y 4 días hábiles</div>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="text-danger fw-bold">$6.214</span>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="form-check mb-3 p-3 border border-secondary rounded">
-                            <input class="form-check-input" type="radio" name="shippingMethod" id="motoCABA" value="3500" onchange="updateShippingSelection(3500, '3500')">
-                            <label class="form-check-label text-white w-100" for="motoCABA">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div>Envío En moto dentro de CABA</div>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="text-danger fw-bold">$3.500</span>
-                                    </div>
-                                </div>
-                            </label>
+                        
+                        <!-- Contenedor para opciones dinámicas -->
+                        <div id="shippingMethodsContainer"></div>
+                        
+                        <!-- Mensaje si no hay opciones -->
+                        <div id="noShippingOptions" style="display: none;" class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No hay opciones de envío disponibles para este código postal.
+                            Podés retirar en nuestro local sin cargo.
                         </div>
                     </div>
 
@@ -831,16 +822,106 @@ function calcularEnvio() {
     }
 }
 
-// Función para mostrar la confirmación del código postal
-function mostrarConfirmacionCP(codigoPostal) {
+// Función para mostrar la confirmación del código postal y calcular envíos
+async function mostrarConfirmacionCP(codigoPostal) {
     const formCP = document.getElementById('codigoPostalForm');
     const confirmedCP = document.getElementById('codigoPostalConfirmed');
     const confirmedCPSpan = document.getElementById('confirmedCP');
+    const shippingOptions = document.getElementById('shippingOptions');
+    const shippingToCP = document.getElementById('shippingToCP');
+    const loader = document.getElementById('shippingLoader');
+    const container = document.getElementById('shippingMethodsContainer');
+    const noOptions = document.getElementById('noShippingOptions');
     
     // Ocultar formulario y mostrar confirmación
     formCP.style.display = 'none';
     confirmedCP.style.display = 'block';
     confirmedCPSpan.textContent = codigoPostal;
+    
+    // Mostrar opciones de envío y loader
+    shippingOptions.style.display = 'block';
+    shippingToCP.textContent = '(CP: ' + codigoPostal + ')';
+    loader.style.display = 'block';
+    container.innerHTML = '';
+    noOptions.style.display = 'none';
+    
+    try {
+        // Llamar a la API para calcular envíos
+        const response = await fetch('ajax/calculate-shipping.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `postal_code=${codigoPostal}&cart_total=<?php echo $subtotal; ?>&cart_weight=1.5`
+        });
+        
+        const data = await response.json();
+        
+        loader.style.display = 'none';
+        
+        if (data.success && data.options && data.options.length > 0) {
+            // Crear HTML para cada opción
+            let optionsHTML = '';
+            
+            data.options.forEach((option, index) => {
+                const isFirst = index === 0;
+                optionsHTML += `
+                    <div class="form-check mb-3 p-3 border border-secondary rounded hover-shipping">
+                        <input class="form-check-input" type="radio" name="shippingMethod" 
+                               id="shipping_${option.id}" 
+                               value="${option.price}" 
+                               data-method-id="${option.id}"
+                               data-method-name="${option.name}"
+                               onchange="updateShippingSelection(${option.price}, '${option.id}', '${option.name}')"
+                               ${isFirst ? 'checked' : ''}>
+                        <label class="form-check-label text-white w-100" for="shipping_${option.id}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">${option.name}</div>
+                                    ${option.description ? `<div class="text-muted small">${option.description}</div>` : ''}
+                                    <div class="text-success small">
+                                        <i class="fas fa-clock me-1"></i>${option.delivery_text}
+                                    </div>
+                                    ${option.is_estimated ? '<span class="badge bg-secondary mt-1">Estimado</span>' : ''}
+                                </div>
+                                <div class="text-end">
+                                    <span class="text-danger fw-bold fs-5">${option.price_formatted}</span>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = optionsHTML;
+            
+            // Auto-seleccionar la primera opción
+            if (data.options[0]) {
+                updateShippingSelection(
+                    data.options[0].price, 
+                    data.options[0].id,
+                    data.options[0].name
+                );
+            }
+            
+        } else {
+            // No hay opciones disponibles
+            noOptions.style.display = 'block';
+            container.innerHTML = '';
+        }
+        
+    } catch (error) {
+        console.error('Error al calcular envío:', error);
+        loader.style.display = 'none';
+        
+        // Mostrar error
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Error al calcular envío. Por favor intenta nuevamente.
+            </div>
+        `;
+    }
 }
 
 // Función para cambiar el código postal
@@ -963,10 +1044,16 @@ function iniciarCompra() {
 }
 
 // Función para manejar clicks manuales en opciones de envío
-function updateShippingSelection(cost, methodId) {
+function updateShippingSelection(cost, methodId, methodName = '') {
     const postalCode = document.getElementById('codigoPostal').value;
     updateShipping(cost);
     updateFormData(methodId, postalCode);
+    
+    // Guardar también el nombre del método
+    const shippingNameInput = document.getElementById('selectedShippingName');
+    if (shippingNameInput && methodName) {
+        shippingNameInput.value = methodName;
+    }
 }
 
 // Función para actualizar el total cuando se selecciona un método de envío
