@@ -484,22 +484,6 @@ input[type="number"] {
                                 </div>
                             </label>
                         </div>
-
-                        <div class="form-check mb-3 p-3 border border-secondary rounded">
-                            <input class="form-check-input" type="radio" name="shippingMethod" id="puntoRetiro" value="2207" onchange="updateShippingSelection(2207, '2207')">
-                            <label class="form-check-label text-white w-100" for="puntoRetiro">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div>Punto de retiro</div>
-                                        <div class="text-success small">Retirá entre 2 y 6 días hábiles</div>
-                                        <div class="text-danger small">👁 Ver ubicaciones</div>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="text-danger fw-bold">$2.207</span>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
                     </div>
 
                     <!-- Total (oculto hasta que se calcule el envío) -->
