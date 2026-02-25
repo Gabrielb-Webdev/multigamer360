@@ -858,6 +858,20 @@ async function mostrarConfirmacionCP(codigoPostal) {
             
             data.options.forEach((option, index) => {
                 const isFirst = index === 0;
+                
+                // Nota de pago contraentrega si está disponible
+                const paymentNote = option.supports_cash_on_delivery 
+                    ? `<div class="alert alert-info py-2 px-3 mt-2 mb-0 small">
+                           <i class="fas fa-info-circle me-1"></i>
+                           <strong>Pago disponible:</strong> Efectivo, Tarjeta o Transferencia (en el checkout)
+                       </div>` 
+                    : '';
+                
+                // Badge de distancia si está disponible
+                const distanceBadge = option.distance_km 
+                    ? `<span class="badge bg-primary mt-1">${option.distance_km} km</span>` 
+                    : '';
+                
                 optionsHTML += `
                     <div class="form-check mb-3 p-3 border border-secondary rounded hover-shipping">
                         <input class="form-check-input" type="radio" name="shippingMethod" 
@@ -865,6 +879,7 @@ async function mostrarConfirmacionCP(codigoPostal) {
                                value="${option.price}" 
                                data-method-id="${option.id}"
                                data-method-name="${option.name}"
+                               data-supports-cod="${option.supports_cash_on_delivery || false}"
                                onchange="updateShippingSelection(${option.price}, '${option.id}', '${option.name}')"
                                ${isFirst ? 'checked' : ''}>
                         <label class="form-check-label text-white w-100" for="shipping_${option.id}">
@@ -875,7 +890,11 @@ async function mostrarConfirmacionCP(codigoPostal) {
                                     <div class="text-success small">
                                         <i class="fas fa-clock me-1"></i>${option.delivery_text}
                                     </div>
-                                    ${option.is_estimated ? '<span class="badge bg-info text-dark mt-1">Estimado</span>' : ''}
+                                    <div class="mt-1">
+                                        ${option.is_estimated ? '<span class="badge bg-info text-dark">Estimado</span>' : ''}
+                                        ${distanceBadge}
+                                    </div>
+                                    ${paymentNote}
                                 </div>
                                 <div class="text-end">
                                     <span class="text-danger fw-bold fs-5">${option.price_formatted}</span>

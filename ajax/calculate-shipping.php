@@ -56,7 +56,7 @@ try {
     // Formatear respuesta
     $formattedOptions = [];
     foreach ($shippingOptions as $option) {
-        $formattedOptions[] = [
+        $formatted = [
             'provider' => $option['provider'],
             'id' => $option['provider'] . '_' . sanitizeProviderName($option['service_name']),
             'name' => $option['service_name'],
@@ -67,6 +67,18 @@ try {
             'description' => $option['description'] ?? '',
             'is_estimated' => $option['estimated'] ?? false
         ];
+        
+        // Agregar información adicional si está disponible
+        if (isset($option['distance_km'])) {
+            $formatted['distance_km'] = $option['distance_km'];
+        }
+        
+        if (isset($option['supports_cash_on_delivery']) && $option['supports_cash_on_delivery']) {
+            $formatted['supports_cash_on_delivery'] = true;
+            $formatted['payment_note'] = 'Pago contraentrega disponible (efectivo, tarjeta o transferencia)';
+        }
+        
+        $formattedOptions[] = $formatted;
     }
     
     // Guardar en sesión
@@ -104,7 +116,7 @@ function sanitizeProviderName($name) {
  */
 function getDeliveryText($days) {
     if ($days == 1) {
-        return 'Llega mañana';
+        return 'Llega hoy o mañana';
     } elseif ($days == 2) {
         return 'Llega en 2 días hábiles';
     } elseif ($days <= 4) {

@@ -91,12 +91,9 @@ class ShippingCalculator {
         }
         
         if ($coverage === 'caba_gba') {
-            // Motomensajería solo para Buenos Aires
-            // CPs de CABA: 1000-1439 (C1xxx)
-            // CPs de GBA: 1600-1900 (B1xxx)
-            $zipClean = preg_replace('/[^0-9]/', '', $destinationZip);
-            $zip = intval($zipClean);
-            return ($zip >= 1000 && $zip <= 1439) || ($zip >= 1600 && $zip <= 1900);
+            // Motomensajería solo si está dentro de 20 km radio
+            $distance = $this->estimateDistanceByZone($destinationZip);
+            return $distance !== null && $distance <= 20;
         }
         
         return false;
@@ -185,7 +182,8 @@ class ShippingCalculator {
         // Determinar zona según CP destino
         $zone = $this->getShippingZone($destinationZip);
         
-        // Tarifas Correo Argentino 2026 (actualizadas - precios reales)
+        // Tarifas Correo Argentino 2026 (TEMPORALES - Hasta integrar API real)
+        // TODO: Integrar API de Correo Argentino para cotización en tiempo real
         $tarifas = [
             'caba' => [
                 'base' => 8200,
@@ -292,32 +290,70 @@ class ShippingCalculator {
     }
     
     /**
-     * Calcular envío con Motomensajería (solo CABA y GBA)
+     * Calcular envío con Motomensajería (solo dentro de 20 km)
+     * Precio: $1.000 por kilómetro
      */
     private function calculateMoova($provider, $destinationZip, $weightKg, $declaredValue) {
-        // Motomensajería solo para CABA y GBA
+        // Estimar distancia desde Fitz Roy 1906, C1414 CABA
+        $distance = $this->estimateDistanceByZone($destinationZip);
+        
+        // Solo disponible si está dentro de 20 km
+        if ($distance === null || $distance > 20) {
+            return null;
+        }
+        
+        // Precio: $1.000 por kilómetro
+        $pricePerKm = 1000;
+        $total = round($distance * $pricePerKm);
+        
+        // Mínimo $5.000 (5 km mínimo)
+        $total = max($total, 5000);
+        
+        return [
+            'provider' => 'moova',
+            'service_name' => 'Motomensajería',
+            'price' => $total,
+            'delivery_days' => 1,
+            'description' => "Envío rápido en moto - " . round($distance, 1) . " km - Mismo día",
+            'estimated' => false,
+            'distance_km' => round($distance, 1),
+            'supports_cash_on_delivery' => true // Pago contraentrega disponible
+        ];
+    }
+    
+    /**
+     * Estimar distancia en kilómetros desde origen (Fitz Roy 1906, C1414) hasta destino
+     * Basado en zonas de código postal
+     * TEMPORAL: Hasta implementar Google Maps Distance Matrix API
+     */
+    private function estimateDistanceByZone($destinationZip) {
         $zipClean = preg_replace('/[^0-9]/', '', $destinationZip);
         $zip = intval($zipClean);
         
-        if (($zip >= 1000 && $zip <= 1439) || ($zip >= 1600 && $zip <= 1900)) {
-            // Precio base por zona + por kg extra (tarifas reales 2026)
-            $isCABA = ($zip >= 1000 && $zip <= 1439);
-            $basePrice = $isCABA ? 7500 : 9200; // CABA más barato que GBA
-            $extraPerKg = ($weightKg > 1) ? (($weightKg - 1) * 1800) : 0;
-            $total = $basePrice + $extraPerKg;
-            
-            $zoneName = $isCABA ? 'CABA' : 'GBA';
-            
-            return [
-                'provider' => 'moova',
-                'service_name' => "Motomensajería {$zoneName}",
-                'price' => $total,
-                'delivery_days' => 1,
-                'description' => 'Envío rápido en moto - Mismo día o próximo día',
-                'estimated' => true
-            ];
-        }
+        // Distancias aproximadas desde Fitz Roy 1906, Palermo (C1414)
+        // CABA - Zonas cercanas
+        if ($zip >= 1400 && $zip <= 1430) return 2;   // Palermo mismo (2 km)
+        if ($zip >= 1000 && $zip <= 1100) return 6;   // Retiro, San Nicolás, Montserrat (6 km)
+        if ($zip >= 1100 && $zip <= 1200) return 5;   // Recoleta, Balvanera (5 km)
+        if ($zip >= 1200 && $zip <= 1300) return 7;   // Almagro, Caballito (7 km)
+        if ($zip >= 1300 && $zip <= 1400) return 8;   // Villa Crespo, Flores (8 km)
         
+        // CABA - Zonas lejanas
+        if ($zip >= 1431 && $zip <= 1439) return 12;  // Belgrano, Núñez (12 km)
+        if ($zip >= 1001 && $zip <= 1050) return 15;  // La Boca, Barracas (15 km)
+        
+        // GBA Norte (dentro de 20 km)
+        if ($zip >= 1600 && $zip <= 1629) return 18;  // Vicente López, Olivos (18 km)
+        if ($zip >= 1630 && $zip <= 1659) return 20;  // San Isidro (20 km - límite)
+        
+        // GBA Sur (mayormente fuera de 20 km)
+        if ($zip >= 1824 && $zip <= 1832) return 16;  // Lanús Oeste (16 km)
+        if ($zip >= 1870 && $zip <= 1875) return 19;  // Avellaneda Centro (19 km)
+        
+        // Resto de GBA: fuera de rango
+        if ($zip >= 1660 && $zip <= 1900) return 25;  // GBA general (25+ km)
+        
+        // Fuera de CABA/GBA: null (no disponible moto)
         return null;
     }
     
