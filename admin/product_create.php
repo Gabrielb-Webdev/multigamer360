@@ -2651,10 +2651,13 @@ if ($showModal):
                 if (value) {
                     value = parseInt(value, 10);
                     if (value > 100) value = 100; // Máximo 100%
+                } else {
+                    value = ''; // Permitir campo vacío
                 }
                 
-                this.value = value || '';
-                this.setAttribute('data-raw-value', value || '0');
+                // Mostrar el valor (puede ser 0, número, o vacío)
+                this.value = value !== '' ? value.toString() : '';
+                this.setAttribute('data-raw-value', value !== '' ? value.toString() : '0');
                 
                 // Actualizar preview de descuento usando función unificada
                 const currency = this.id.includes('ars') ? 'ars' : 'usd';
