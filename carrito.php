@@ -103,6 +103,8 @@ function getCartProducts($pdo, $cart) {
             // Consulta CON product_images (sin usar is_active que no existe)
             $stmt = $pdo->prepare("
                 SELECT p.id, p.name, 
+                       COALESCE(p.price_pesos, 0) as price_pesos,
+                       COALESCE(p.price_dollars, 0) as price_dollars,
                        COALESCE(p.price_pesos, p.price_dollars, 0) as price, 
                        p.main_image, p.stock_quantity,
                        COALESCE(
@@ -135,6 +137,8 @@ function getCartProducts($pdo, $cart) {
             // Consulta SIN product_images (fallback)
             $stmt = $pdo->prepare("
                 SELECT id, name, 
+                       COALESCE(price_pesos, 0) as price_pesos,
+                       COALESCE(price_dollars, 0) as price_dollars,
                        COALESCE(price_pesos, price_dollars, 0) as price, 
                        main_image, stock_quantity,
                        COALESCE(main_image, '') as primary_image,
@@ -326,7 +330,12 @@ input[type="number"] {
                                 </div>
                                 <div class="col-md-5">
                                     <h6 class="mb-1 text-white"><?php echo htmlspecialchars($product['name']); ?></h6>
-                                    <p class="text-danger h5 mb-0">$<?php echo number_format($product['price'], 0, ',', '.'); ?></p>
+                                    <p class="text-danger h5 mb-0 product-price" 
+                                       data-price-ars="<?php echo $product['price_pesos']; ?>"
+                                       data-price-usd="<?php echo $product['price_dollars']; ?>"
+                                       data-product-id="<?php echo $product['id']; ?>">
+                                        $<?php echo number_format($product['price'], 0, ',', '.'); ?>
+                                    </p>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small text-light">Cantidad</label>
@@ -392,7 +401,7 @@ input[type="number"] {
                     <!-- Subtotal -->
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
                         <span class="text-white h6 mb-0">Subtotal (sin envío):</span>
-                        <span class="text-white h5 mb-0">$<?php echo number_format($total - $shippingCost, 0, ',', '.'); ?></span>
+                        <span class="text-white h5 mb-0" id="totalAmount">$<?php echo number_format($total - $shippingCost, 0, ',', '.'); ?></span>
                     </div>
 
                     <!-- Código Postal -->
@@ -1042,13 +1051,38 @@ function updateShippingSelection(cost, methodId, methodName = '') {
 
 // Función para actualizar el total cuando se selecciona un método de envío
 function updateShipping(shippingCost) {
-    const subtotal = <?php echo $total - $shippingCost; ?>;
+    // Calcular subtotal dinámicamente desde los precios mostrados
+    let subtotal = 0;
+    const currentCurrency = localStorage.getItem('currency') || 'ARS';
+    
+    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(priceElement => {
+        const priceARS = parseFloat(priceElement.dataset.priceArs);
+        const priceUSD = parseFloat(priceElement.dataset.priceUsd);
+        const productId = priceElement.dataset.productId;
+        
+        // Obtener la cantidad del producto
+        const quantityInput = document.querySelector(`input[onchange*="updateQuantity(${productId}"]`);
+        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+        
+        // Calcular precio según moneda actual
+        let price = 0;
+        if (currentCurrency === 'USD') {
+            price = priceUSD > 0 ? priceUSD : priceARS / 1000;
+        } else {
+            price = priceARS;
+        }
+        
+        subtotal += price * quantity;
+    });
+    
     const newTotal = subtotal + parseInt(shippingCost);
     
     // Mostrar la sección del total
     document.getElementById('totalSection').style.display = 'block';
     
-    document.getElementById('totalAmount').textContent = '$' + newTotal.toLocaleString('es-AR');
+    // Actualizar el total (subtotal + envío)
+    // Nota: El envío se mantiene en ARS, por lo que si estamos en USD, el total será mixto
+    document.getElementById('totalAmount').textContent = '$' + Math.round(newTotal).toLocaleString('es-AR');
     
     // Mostrar precio con efectivo (simulado con 10% descuento)
     const totalWithCash = Math.floor(newTotal * 0.9);
@@ -1071,7 +1105,51 @@ window.addEventListener('DOMContentLoaded', function() {
             calcularEnvio();
         }, 500);
     }
+    
+    // Escuchar cambios de moneda y actualizar precios del carrito
+    window.addEventListener('currencyChanged', updateCartPrices);
+    
+    // Actualizar precios inicialmente
+    updateCartPrices();
 });
+
+// Función para actualizar precios del carrito cuando cambia la moneda
+function updateCartPrices() {
+    const currentCurrency = localStorage.getItem('currency') || 'ARS';
+    let subtotal = 0;
+    
+    // Actualizar cada precio de producto en el carrito
+    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(priceElement => {
+        const priceARS = parseFloat(priceElement.dataset.priceArs);
+        const priceUSD = parseFloat(priceElement.dataset.priceUsd);
+        const productId = priceElement.dataset.productId;
+        
+        // Obtener la cantidad del producto
+        const quantityInput = document.querySelector(`input[onchange*="updateQuantity(${productId}"]`);
+        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+        
+        // Calcular precio según moneda
+        let price = 0;
+        if (currentCurrency === 'USD') {
+            price = priceUSD > 0 ? priceUSD : priceARS / 1000; // Conversión aproximada si no hay precio USD
+            priceElement.textContent = '$' + Math.round(price).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        } else {
+            price = priceARS;
+            priceElement.textContent = '$' + price.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        }
+        
+        // Sumar al subtotal
+        subtotal += price * quantity;
+    });
+    
+    // Actualizar el subtotal en la interfaz
+    const totalAmountElement = document.getElementById('totalAmount');
+    if (totalAmountElement) {
+        totalAmountElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+    
+    // Nota: El envío siempre se mantiene en ARS, no se convierte
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>

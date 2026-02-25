@@ -206,6 +206,9 @@ if ($cartCount > 0) {
             localStorage.setItem('currency', currentCurrency);
             updateCurrencyDisplay();
             convertAllPrices();
+            
+            // Disparar evento personalizado para que otras páginas puedan reaccionar
+            window.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency: currentCurrency } }));
         }
         
         // Actualizar el display visual de las opciones
