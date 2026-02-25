@@ -497,12 +497,37 @@ input[type="number"] {
 
                     <!-- Total (oculto hasta que se calcule el envío) -->
                     <div class="border-top border-secondary pt-3" id="totalSection" style="display: none;">
+                        <!-- Subtotal Productos -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-white-50">Subtotal productos:</span>
+                            <div class="text-end">
+                                <span class="text-white" id="subtotalProductAmount">$<?php echo number_format($total - $shippingCost, 0, ',', '.'); ?></span>
+                                <span class="text-white-50 small ms-1" id="subtotalCurrency">ARS</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Envío -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary">
+                            <span class="text-white-50">Envío:</span>
+                            <div class="text-end">
+                                <span class="text-white" id="shippingAmount">$0</span>
+                                <span class="text-white-50 small ms-1">ARS</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Total -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-danger h5 mb-0">Total:</span>
                             <div class="text-end">
                                 <div class="text-danger h4 mb-0" id="totalAmount">$<?php echo number_format($total, 0, ',', '.'); ?></div>
                                 <div class="text-muted small" id="totalWithTax" style="display: none;">O $XXX con Efectivo</div>
                             </div>
+                        </div>
+                        
+                        <!-- Nota explicativa si hay mezcla de monedas -->
+                        <div class="alert alert-warning py-2 px-3 small" id="currencyMixNote" style="display: none;">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Nota:</strong> El subtotal está en <span id="mixNoteCurrency">USD</span> y el envío en ARS.
                         </div>
                     </div>
                 </div>
@@ -1094,20 +1119,65 @@ function updateShipping(shippingCost) {
         subtotal += price * quantity;
     });
     
-    const newTotal = subtotal + parseInt(shippingCost);
-    
     // Mostrar la sección del total
     document.getElementById('totalSection').style.display = 'block';
     
-    // Actualizar el total (subtotal + envío)
-    // Nota: El envío se mantiene en ARS, por lo que si estamos en USD, el total será mixto
-    document.getElementById('totalAmount').textContent = '$' + Math.round(newTotal).toLocaleString('es-AR');
+    // Actualizar subtotal de productos
+    const subtotalElement = document.getElementById('subtotalProductAmount');
+    const subtotalCurrencyElement = document.getElementById('subtotalCurrency');
+    if (subtotalElement) {
+        subtotalElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR');
+        subtotalCurrencyElement.textContent = currentCurrency;
+    }
     
-    // Mostrar precio con efectivo (simulado con 10% descuento)
-    const totalWithCash = Math.floor(newTotal * 0.9);
+    // Actualizar envío (siempre en ARS)
+    const shippingElement = document.getElementById('shippingAmount');
+    if (shippingElement) {
+        shippingElement.textContent = '$' + parseInt(shippingCost).toLocaleString('es-AR');
+    }
+    
+    // Mostrar/ocultar nota de mezcla de monedas
+    const mixNoteElement = document.getElementById('currencyMixNote');
+    const mixNoteCurrencyElement = document.getElementById('mixNoteCurrency');
+    if (currentCurrency === 'USD' && parseInt(shippingCost) > 0) {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'block';
+            if (mixNoteCurrencyElement) {
+                mixNoteCurrencyElement.textContent = currentCurrency;
+            }
+        }
+    } else {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'none';
+        }
+    }
+    
+    // Calcular total (si es USD con envío ARS, es una suma mixta)
+    let totalDisplay = subtotal + parseInt(shippingCost);
+    const totalElement = document.getElementById('totalAmount');
+    if (totalElement) {
+        if (currentCurrency === 'USD' && parseInt(shippingCost) > 0) {
+            // Mostrar como mixto: productos en USD + envío en ARS
+            totalElement.innerHTML = `
+                <span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} ${currentCurrency}</span>
+                <span class="fs-6"> + </span>
+                <span class="fs-6">$${parseInt(shippingCost).toLocaleString('es-AR')} ARS</span>
+            `;
+        } else {
+            // Todo en ARS
+            totalElement.textContent = '$' + Math.round(totalDisplay).toLocaleString('es-AR');
+        }
+    }
+    
+    // Mostrar precio con efectivo (solo si todo está en ARS)
     const totalWithTaxElement = document.getElementById('totalWithTax');
-    totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
-    totalWithTaxElement.style.display = 'block';
+    if (currentCurrency === 'ARS') {
+        const totalWithCash = Math.floor(totalDisplay * 0.9);
+        totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
+        totalWithTaxElement.style.display = 'block';
+    } else {
+        totalWithTaxElement.style.display = 'none';
+    }
 }
 
 // Auto-calcular si hay código postal precargado
@@ -1161,10 +1231,46 @@ function updateCartPrices() {
         subtotal += price * quantity;
     });
     
-    // Actualizar el subtotal en la interfaz
+    // Actualizar subtotal de productos (sin envío)
+    const subtotalElement = document.getElementById('subtotalProductAmount');
+    const subtotalCurrencyElement = document.getElementById('subtotalCurrency');
+    if (subtotalElement) {
+        subtotalElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+    if (subtotalCurrencyElement) {
+        subtotalCurrencyElement.textContent = currentCurrency;
+    }
+    
+    // Actualizar el total del pedido (Subtotal sin envío mostrado arriba)
     const totalAmountElement = document.getElementById('totalAmount');
     if (totalAmountElement) {
         totalAmountElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+    
+    // Si hay un envío seleccionado, recalcular el total completo
+    const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]:checked');
+    if (shippingRadios.length > 0) {
+        const shippingCost = parseInt(shippingRadios[0].value) || 0;
+        updateShipping(shippingCost);
+    }
+    
+    // Mostrar/ocultar nota de mezcla de monedas si hay envío seleccionado
+    const mixNoteElement = document.getElementById('currencyMixNote');
+    const mixNoteCurrencyElement = document.getElementById('mixNoteCurrency');
+    const shippingAmount = document.getElementById('shippingAmount');
+    const hasShipping = shippingAmount && parseInt(shippingAmount.textContent.replace(/[^\d]/g, '')) > 0;
+    
+    if (currentCurrency === 'USD' && hasShipping) {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'block';
+            if (mixNoteCurrencyElement) {
+                mixNoteCurrencyElement.textContent = currentCurrency;
+            }
+        }
+    } else {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'none';
+        }
     }
     
     // Nota: El envío siempre se mantiene en ARS, no se convierte
