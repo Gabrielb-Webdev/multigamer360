@@ -1048,16 +1048,34 @@ function iniciarCompra() {
     const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
     const postalCode = document.getElementById('codigoPostal').value;
     
-    // Preparar datos
+    // Obtener el costo de envío
+    let shippingCost = 0;
+    if (shippingMethod.value === '0') {
+        // Retiro en local, costo $0
+        shippingCost = 0;
+    } else {
+        // Obtener costo de la etiqueta del método seleccionado o del elemento shippingAmount
+        const shippingAmountElement = document.getElementById('shippingAmount');
+        if (shippingAmountElement) {
+            // Extraer número del texto (ejemplo: "$8,400" -> 8400)
+            const costText = shippingAmountElement.textContent.replace(/[$.,]/g, '');
+            shippingCost = parseInt(costText) || 0;
+        }
+    }
+    
+    // Obtener nombre del método
+    const label = document.querySelector(`label[for="${shippingMethod.id}"]`);
+    const shippingName = label ? label.textContent.trim().split('\n')[0] : 'Envío';
+    
+    // Preparar datos con los nombres correctos que espera set-shipping.php
     const formData = new FormData();
-    formData.append('shippingMethod', shippingMethod.value);
+    formData.append('shipping_method', shippingMethod.value); // Cambio: shipping_method en lugar de shippingMethod
+    formData.append('shipping_cost', shippingCost);
+    formData.append('shipping_name', shippingName);
     
     // Solo enviar código postal si NO es retiro en local
     if (shippingMethod.value !== '0') {
-        formData.append('postalCode', postalCode);
-    } else {
-        // Para retiro en local, no enviamos código postal (o enviamos string vacío)
-        formData.append('postalCode', '');
+        formData.append('postal_code', postalCode);
     }
     
     // Enviar por AJAX

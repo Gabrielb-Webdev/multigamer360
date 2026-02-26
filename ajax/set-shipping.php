@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $shippingCost = floatval($_POST['shipping_cost'] ?? 0);
 $shippingMethod = $_POST['shipping_method'] ?? '';
 $shippingName = $_POST['shipping_name'] ?? '';
-$postalCode = $_SESSION['postal_code'] ?? '';
+$postalCode = $_POST['postal_code'] ?? $_SESSION['postal_code'] ?? '';
 
 // Validar datos
 if (empty($shippingMethod)) {
@@ -28,6 +28,11 @@ if (empty($shippingMethod)) {
 $_SESSION['shipping_cost'] = $shippingCost;
 $_SESSION['shipping_method'] = $shippingMethod;
 $_SESSION['shipping_name'] = $shippingName;
+
+// Guardar código postal en sesión si se proporcionó
+if (!empty($postalCode)) {
+    $_SESSION['postal_code'] = $postalCode;
+}
 
 // Determinar tipo (pickup vs delivery)
 if ($shippingMethod === '0' || $shippingMethod === 'multigamer_360') {
