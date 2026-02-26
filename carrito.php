@@ -1236,8 +1236,11 @@ window.addEventListener('DOMContentLoaded', function() {
     // Escuchar cambios de moneda y actualizar precios del carrito
     window.addEventListener('currencyChanged', updateCartPrices);
     
-    // Actualizar precios inicialmente
-    updateCartPrices();
+    // Actualizar precios inicialmente con un pequeño delay para asegurar DOM listo
+    console.log('Ejecutando updateCartPrices al cargar...'); // Debug
+    setTimeout(function() {
+        updateCartPrices();
+    }, 100);
     
     // Agregar event listeners a todos los radio buttons de envío
     document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
@@ -1283,11 +1286,13 @@ function updateCartPrices() {
     const subtotalAmountElement = document.getElementById('subtotalAmount');
     if (subtotalAmountElement) {
         if (currentCurrency === 'USD') {
-            subtotalAmountElement.innerHTML = `$${Math.round(subtotal).toLocaleString('es-AR')} <span class="small text-white-50">USD</span>`;
+            subtotalAmountElement.innerHTML = `$${Math.round(subtotal).toLocaleString('es-AR')} <span class="small">USD</span>`;
         } else {
-            subtotalAmountElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR');
+            subtotalAmountElement.innerHTML = `$${Math.round(subtotal).toLocaleString('es-AR')}`;
         }
     }
+    
+    console.log('Subtotal actualizado:', subtotal, currentCurrency); // Debug
     
     // Actualizar subtotal de productos (abajo en sección de envío - si existe)
     const subtotalProductElement = document.getElementById('subtotalProductAmount');
