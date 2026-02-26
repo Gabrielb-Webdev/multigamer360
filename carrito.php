@@ -661,6 +661,215 @@ function clearCart() {
         });
 }
 
+// ==================== FUNCIONES DE ENVÍO (DEFINIDAS PRIMERO) ====================
+
+// Función para actualizar los campos hidden del formulario
+function updateFormData(shippingMethod, postalCode) {
+    const shippingMethodInput = document.getElementById('selectedShippingMethod');
+    const postalCodeInput = document.getElementById('selectedPostalCode');
+    
+    if (shippingMethodInput) {
+        shippingMethodInput.value = shippingMethod;
+    }
+    
+    if (postalCodeInput) {
+        postalCodeInput.value = postalCode;
+    }
+}
+
+// Función para validar antes de ir al checkout
+function validateShipping() {
+    const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
+    const postalCode = document.getElementById('codigoPostal').value;
+    
+    if (!shippingMethod) {
+        alert('Por favor, selecciona un método de envío antes de continuar.');
+        return false;
+    }
+    
+    // Si es retiro en local (Multigamer 360), NO requiere código postal
+    if (shippingMethod.value === '0') {
+        return true;
+    }
+    
+    // Para envíos a domicilio, SÍ requiere código postal
+    if (!postalCode) {
+        alert('Por favor, ingresa tu código postal antes de continuar.');
+        return false;
+    }
+    
+    return true;
+}
+
+// Función para actualizar el total cuando se selecciona un método de envío
+function updateShipping(shippingCost) {
+    // Calcular subtotal dinámicamente desde los precios mostrados
+    let subtotal = 0;
+    const currentCurrency = localStorage.getItem('currency') || 'ARS';
+    
+    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(priceElement => {
+        const priceARS = parseFloat(priceElement.dataset.priceArs);
+        const priceUSD = parseFloat(priceElement.dataset.priceUsd);
+        const productId = priceElement.dataset.productId;
+        
+        // Obtener la cantidad del producto
+        const quantityInput = document.querySelector(`input[onchange*="updateQuantity(${productId}"]`);
+        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+        
+        // Calcular precio según moneda actual
+        let price = 0;
+        if (currentCurrency === 'USD') {
+            price = priceUSD > 0 ? priceUSD : priceARS / 1000;
+        } else {
+            price = priceARS;
+        }
+        
+        subtotal += price * quantity;
+    });
+    
+    // Mostrar la sección del total
+    document.getElementById('totalSection').style.display = 'block';
+    
+    // Actualizar subtotal de productos
+    const subtotalElement = document.getElementById('subtotalProductAmount');
+    const subtotalCurrencyElement = document.getElementById('subtotalCurrency');
+    if (subtotalElement) {
+        subtotalElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR');
+        subtotalCurrencyElement.textContent = currentCurrency;
+    }
+    
+    // Actualizar envío (siempre en ARS)
+    const shippingElement = document.getElementById('shippingAmount');
+    if (shippingElement) {
+        shippingElement.textContent = '$' + parseInt(shippingCost).toLocaleString('es-AR');
+    }
+    
+    // Mostrar/ocultar nota de mezcla de monedas
+    const mixNoteElement = document.getElementById('currencyMixNote');
+    const mixNoteCurrencyElement = document.getElementById('mixNoteCurrency');
+    if (currentCurrency === 'USD' && parseInt(shippingCost) > 0) {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'block';
+            if (mixNoteCurrencyElement) {
+                mixNoteCurrencyElement.textContent = currentCurrency;
+            }
+        }
+    } else {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'none';
+        }
+    }
+    
+    // Calcular total según la moneda
+    const totalElement = document.getElementById('totalAmount');
+    if (totalElement) {
+        if (currentCurrency === 'USD') {
+            if (parseInt(shippingCost) > 0) {
+                // Mixto: productos en USD + envío en ARS
+                totalElement.innerHTML = `
+                    <span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>
+                    <span class="fs-6"> + </span>
+                    <span class="fs-6">$${parseInt(shippingCost).toLocaleString('es-AR')} ARS</span>
+                `;
+            } else {
+                // Solo USD (envío gratis o retiro en local)
+                totalElement.innerHTML = `<span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>`;
+            }
+        } else {
+            // Todo en ARS
+            let totalDisplay = subtotal + parseInt(shippingCost);
+            totalElement.textContent = '$' + Math.round(totalDisplay).toLocaleString('es-AR');
+        }
+    }
+    
+    // Mostrar precio con efectivo (solo si todo está en ARS)
+    const totalWithTaxElement = document.getElementById('totalWithTax');
+    if (currentCurrency === 'ARS') {
+        let totalDisplay = subtotal + parseInt(shippingCost);
+        const totalWithCash = Math.floor(totalDisplay * 0.9);
+        totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
+        totalWithTaxElement.style.display = 'block';
+    } else {
+        totalWithTaxElement.style.display = 'none';
+    }
+}
+
+// Función para manejar clicks manuales en opciones de envío
+function updateShippingSelection(cost, methodId, methodName = '') {
+    const postalCode = document.getElementById('codigoPostal').value;
+    updateShipping(cost);
+    updateFormData(methodId, postalCode);
+    
+    // Guardar también el nombre del método
+    const shippingNameInput = document.getElementById('selectedShippingName');
+    if (shippingNameInput && methodName) {
+        shippingNameInput.value = methodName;
+    }
+}
+
+// Función para iniciar compra (guardar shipping y redirigir)
+function iniciarCompra() {
+    // Primero validar
+    if (!validateShipping()) {
+        return;
+    }
+    
+    // Obtener método seleccionado
+    const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
+    const postalCode = document.getElementById('codigoPostal').value;
+    
+    // Obtener el costo de envío
+    let shippingCost = 0;
+    if (shippingMethod.value === '0') {
+        // Retiro en local, costo $0
+        shippingCost = 0;
+    } else {
+        // Obtener costo de la etiqueta del método seleccionado o del elemento shippingAmount
+        const shippingAmountElement = document.getElementById('shippingAmount');
+        if (shippingAmountElement) {
+            // Extraer número del texto (ejemplo: "$8,400" -> 8400)
+            const costText = shippingAmountElement.textContent.replace(/[$.,]/g, '');
+            shippingCost = parseInt(costText) || 0;
+        }
+    }
+    
+    // Obtener nombre del método
+    const label = document.querySelector(`label[for="${shippingMethod.id}"]`);
+    const shippingName = label ? label.textContent.trim().split('\n')[0] : 'Envío';
+    
+    // Preparar datos con los nombres correctos que espera set-shipping.php
+    const formData = new FormData();
+    formData.append('shipping_method', shippingMethod.value);
+    formData.append('shipping_cost', shippingCost);
+    formData.append('shipping_name', shippingName);
+    
+    // Solo enviar código postal si NO es retiro en local
+    if (shippingMethod.value !== '0') {
+        formData.append('postal_code', postalCode);
+    }
+    
+    // Enviar por AJAX
+    fetch('ajax/set-shipping.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Redirigir a checkout
+            window.location.href = 'checkout.php';
+        } else {
+            alert('Error al guardar método de envío: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+// ==================== FIN FUNCIONES DE ENVÍO ====================
+
 // Ir al checkout
 function goToCheckout() {
     // Verificar que se haya seleccionado un método de envío
@@ -997,211 +1206,6 @@ function cambiarCodigoPostal() {
     
     // Actualizar estado del botón
     updateCalculateButton();
-}
-
-// Función para actualizar los campos hidden del formulario
-function updateFormData(shippingMethod, postalCode) {
-    const shippingMethodInput = document.getElementById('selectedShippingMethod');
-    const postalCodeInput = document.getElementById('selectedPostalCode');
-    
-    if (shippingMethodInput) {
-        shippingMethodInput.value = shippingMethod;
-    }
-    
-    if (postalCodeInput) {
-        postalCodeInput.value = postalCode;
-    }
-}
-
-// Función para validar antes de ir al checkout
-function validateShipping() {
-    const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
-    const postalCode = document.getElementById('codigoPostal').value;
-    
-    if (!shippingMethod) {
-        alert('Por favor, selecciona un método de envío antes de continuar.');
-        return false;
-    }
-    
-    // Si es retiro en local (Multigamer 360), NO requiere código postal
-    if (shippingMethod.value === '0') {
-        return true;
-    }
-    
-    // Para envíos a domicilio, SÍ requiere código postal
-    if (!postalCode) {
-        alert('Por favor, ingresa tu código postal antes de continuar.');
-        return false;
-    }
-    
-    return true;
-}
-
-// Función para iniciar compra (guardar shipping y redirigir)
-function iniciarCompra() {
-    // Primero validar
-    if (!validateShipping()) {
-        return;
-    }
-    
-    // Obtener método seleccionado
-    const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
-    const postalCode = document.getElementById('codigoPostal').value;
-    
-    // Obtener el costo de envío
-    let shippingCost = 0;
-    if (shippingMethod.value === '0') {
-        // Retiro en local, costo $0
-        shippingCost = 0;
-    } else {
-        // Obtener costo de la etiqueta del método seleccionado o del elemento shippingAmount
-        const shippingAmountElement = document.getElementById('shippingAmount');
-        if (shippingAmountElement) {
-            // Extraer número del texto (ejemplo: "$8,400" -> 8400)
-            const costText = shippingAmountElement.textContent.replace(/[$.,]/g, '');
-            shippingCost = parseInt(costText) || 0;
-        }
-    }
-    
-    // Obtener nombre del método
-    const label = document.querySelector(`label[for="${shippingMethod.id}"]`);
-    const shippingName = label ? label.textContent.trim().split('\n')[0] : 'Envío';
-    
-    // Preparar datos con los nombres correctos que espera set-shipping.php
-    const formData = new FormData();
-    formData.append('shipping_method', shippingMethod.value); // Cambio: shipping_method en lugar de shippingMethod
-    formData.append('shipping_cost', shippingCost);
-    formData.append('shipping_name', shippingName);
-    
-    // Solo enviar código postal si NO es retiro en local
-    if (shippingMethod.value !== '0') {
-        formData.append('postal_code', postalCode);
-    }
-    
-    // Enviar por AJAX
-    fetch('ajax/set-shipping.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Redirigir a checkout
-            window.location.href = 'checkout.php';
-        } else {
-            alert('Error al guardar método de envío: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al procesar la solicitud');
-    });
-}
-
-// Función para manejar clicks manuales en opciones de envío
-function updateShippingSelection(cost, methodId, methodName = '') {
-    const postalCode = document.getElementById('codigoPostal').value;
-    updateShipping(cost);
-    updateFormData(methodId, postalCode);
-    
-    // Guardar también el nombre del método
-    const shippingNameInput = document.getElementById('selectedShippingName');
-    if (shippingNameInput && methodName) {
-        shippingNameInput.value = methodName;
-    }
-}
-
-// Función para actualizar el total cuando se selecciona un método de envío
-function updateShipping(shippingCost) {
-    // Calcular subtotal dinámicamente desde los precios mostrados
-    let subtotal = 0;
-    const currentCurrency = localStorage.getItem('currency') || 'ARS';
-    
-    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(priceElement => {
-        const priceARS = parseFloat(priceElement.dataset.priceArs);
-        const priceUSD = parseFloat(priceElement.dataset.priceUsd);
-        const productId = priceElement.dataset.productId;
-        
-        // Obtener la cantidad del producto
-        const quantityInput = document.querySelector(`input[onchange*="updateQuantity(${productId}"]`);
-        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
-        
-        // Calcular precio según moneda actual
-        let price = 0;
-        if (currentCurrency === 'USD') {
-            price = priceUSD > 0 ? priceUSD : priceARS / 1000;
-        } else {
-            price = priceARS;
-        }
-        
-        subtotal += price * quantity;
-    });
-    
-    // Mostrar la sección del total
-    document.getElementById('totalSection').style.display = 'block';
-    
-    // Actualizar subtotal de productos
-    const subtotalElement = document.getElementById('subtotalProductAmount');
-    const subtotalCurrencyElement = document.getElementById('subtotalCurrency');
-    if (subtotalElement) {
-        subtotalElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR');
-        subtotalCurrencyElement.textContent = currentCurrency;
-    }
-    
-    // Actualizar envío (siempre en ARS)
-    const shippingElement = document.getElementById('shippingAmount');
-    if (shippingElement) {
-        shippingElement.textContent = '$' + parseInt(shippingCost).toLocaleString('es-AR');
-    }
-    
-    // Mostrar/ocultar nota de mezcla de monedas
-    const mixNoteElement = document.getElementById('currencyMixNote');
-    const mixNoteCurrencyElement = document.getElementById('mixNoteCurrency');
-    if (currentCurrency === 'USD' && parseInt(shippingCost) > 0) {
-        if (mixNoteElement) {
-            mixNoteElement.style.display = 'block';
-            if (mixNoteCurrencyElement) {
-                mixNoteCurrencyElement.textContent = currentCurrency;
-            }
-        }
-    } else {
-        if (mixNoteElement) {
-            mixNoteElement.style.display = 'none';
-        }
-    }
-    
-    // Calcular total según la moneda
-    const totalElement = document.getElementById('totalAmount');
-    if (totalElement) {
-        if (currentCurrency === 'USD') {
-            if (parseInt(shippingCost) > 0) {
-                // Mixto: productos en USD + envío en ARS
-                totalElement.innerHTML = `
-                    <span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>
-                    <span class="fs-6"> + </span>
-                    <span class="fs-6">$${parseInt(shippingCost).toLocaleString('es-AR')} ARS</span>
-                `;
-            } else {
-                // Solo USD (envío gratis o retiro en local)
-                totalElement.innerHTML = `<span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>`;
-            }
-        } else {
-            // Todo en ARS
-            let totalDisplay = subtotal + parseInt(shippingCost);
-            totalElement.textContent = '$' + Math.round(totalDisplay).toLocaleString('es-AR');
-        }
-    }
-    
-    // Mostrar precio con efectivo (solo si todo está en ARS)
-    const totalWithTaxElement = document.getElementById('totalWithTax');
-    if (currentCurrency === 'ARS') {
-        let totalDisplay = subtotal + parseInt(shippingCost);
-        const totalWithCash = Math.floor(totalDisplay * 0.9);
-        totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
-        totalWithTaxElement.style.display = 'block';
-    } else {
-        totalWithTaxElement.style.display = 'none';
-    }
 }
 
 // Auto-calcular si hay código postal precargado
