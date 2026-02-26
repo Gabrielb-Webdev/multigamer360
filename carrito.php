@@ -1234,10 +1234,13 @@ window.addEventListener('DOMContentLoaded', function() {
     }
     
     // Escuchar cambios de moneda y actualizar precios del carrito
-    window.addEventListener('currencyChanged', updateCartPrices);
+    window.addEventListener('currencyChanged', function(e) {
+        console.log('💱 Evento currencyChanged recibido:', e.detail);
+        updateCartPrices();
+    });
     
     // Actualizar precios inicialmente con un pequeño delay para asegurar DOM listo
-    console.log('Ejecutando updateCartPrices al cargar...'); // Debug
+    console.log('🚀 Ejecutando updateCartPrices al cargar...');
     setTimeout(function() {
         updateCartPrices();
     }, 100);
@@ -1258,11 +1261,16 @@ function updateCartPrices() {
     const currentCurrency = localStorage.getItem('currency') || 'ARS';
     let subtotal = 0;
     
+    console.log('=== updateCartPrices ejecutándose ===');
+    console.log('Moneda actual:', currentCurrency);
+    
     // Actualizar cada precio de producto en el carrito
     document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(priceElement => {
         const priceARS = parseFloat(priceElement.dataset.priceArs);
         const priceUSD = parseFloat(priceElement.dataset.priceUsd);
         const productId = priceElement.dataset.productId;
+        
+        console.log('Producto ID:', productId, 'ARS:', priceARS, 'USD:', priceUSD);
         
         // Obtener la cantidad del producto
         const quantityInput = document.querySelector(`input[onchange*="updateQuantity(${productId}"]`);
@@ -1278,21 +1286,29 @@ function updateCartPrices() {
             priceElement.textContent = '$' + price.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
         }
         
+        console.log('Precio calculado:', price, 'Cantidad:', quantity);
+        
         // Sumar al subtotal
         subtotal += price * quantity;
     });
     
+    console.log('Subtotal total calculado:', subtotal);
+    
     // Actualizar subtotal sin envío (arriba)
     const subtotalAmountElement = document.getElementById('subtotalAmount');
+    console.log('Elemento subtotalAmount encontrado:', subtotalAmountElement ? 'SÍ' : 'NO');
+    
     if (subtotalAmountElement) {
         if (currentCurrency === 'USD') {
             subtotalAmountElement.innerHTML = `$${Math.round(subtotal).toLocaleString('es-AR')} <span class="small">USD</span>`;
+            console.log('Subtotal actualizado a USD:', subtotalAmountElement.innerHTML);
         } else {
             subtotalAmountElement.innerHTML = `$${Math.round(subtotal).toLocaleString('es-AR')}`;
+            console.log('Subtotal actualizado a ARS:', subtotalAmountElement.innerHTML);
         }
+    } else {
+        console.error('❌ Elemento subtotalAmount NO encontrado!');
     }
-    
-    console.log('Subtotal actualizado:', subtotal, currentCurrency); // Debug
     
     // Actualizar subtotal de productos (abajo en sección de envío - si existe)
     const subtotalProductElement = document.getElementById('subtotalProductAmount');
