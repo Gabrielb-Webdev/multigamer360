@@ -1170,19 +1170,24 @@ function updateShipping(shippingCost) {
         }
     }
     
-    // Calcular total (si es USD con envío ARS, es una suma mixta)
-    let totalDisplay = subtotal + parseInt(shippingCost);
+    // Calcular total según la moneda
     const totalElement = document.getElementById('totalAmount');
     if (totalElement) {
-        if (currentCurrency === 'USD' && parseInt(shippingCost) > 0) {
-            // Mostrar como mixto: productos en USD + envío en ARS
-            totalElement.innerHTML = `
-                <span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} ${currentCurrency}</span>
-                <span class="fs-6"> + </span>
-                <span class="fs-6">$${parseInt(shippingCost).toLocaleString('es-AR')} ARS</span>
-            `;
+        if (currentCurrency === 'USD') {
+            if (parseInt(shippingCost) > 0) {
+                // Mixto: productos en USD + envío en ARS
+                totalElement.innerHTML = `
+                    <span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>
+                    <span class="fs-6"> + </span>
+                    <span class="fs-6">$${parseInt(shippingCost).toLocaleString('es-AR')} ARS</span>
+                `;
+            } else {
+                // Solo USD (envío gratis o retiro en local)
+                totalElement.innerHTML = `<span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>`;
+            }
         } else {
             // Todo en ARS
+            let totalDisplay = subtotal + parseInt(shippingCost);
             totalElement.textContent = '$' + Math.round(totalDisplay).toLocaleString('es-AR');
         }
     }
@@ -1190,6 +1195,7 @@ function updateShipping(shippingCost) {
     // Mostrar precio con efectivo (solo si todo está en ARS)
     const totalWithTaxElement = document.getElementById('totalWithTax');
     if (currentCurrency === 'ARS') {
+        let totalDisplay = subtotal + parseInt(shippingCost);
         const totalWithCash = Math.floor(totalDisplay * 0.9);
         totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
         totalWithTaxElement.style.display = 'block';
@@ -1259,19 +1265,39 @@ function updateCartPrices() {
         subtotalCurrencyElement.textContent = currentCurrency;
     }
     
-    // Actualizar el total del pedido (Subtotal sin envío mostrado arriba)
-    const totalAmountElement = document.getElementById('totalAmount');
-    if (totalAmountElement) {
-        totalAmountElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-    }
+    // Si ya hay envío calculado, recalcular total completo
+    const shippingAmountElement = document.getElementById('shippingAmount');
+    const hasShipping = shippingAmountElement && shippingAmountElement.textContent !== '$0';
     
-    // Si hay un envío seleccionado, recalcular el total completo
-    const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]:checked');
-    if (shippingRadios.length > 0) {
-        const shippingCost = parseInt(shippingRadios[0].value) || 0;
+    if (hasShipping) {
+        // Extraer el costo de envío del elemento (eliminar formato)
+        const costText = shippingAmountElement.textContent.replace(/[$.,]/g, '');
+        const shippingCost = parseInt(costText) || 0;
         updateShipping(shippingCost);
+    } else {
+        // No hay envío calculado todavía, solo mostrar subtotal de productos
+        const totalAmountElement = document.getElementById('totalAmount');
+        if (totalAmountElement) {
+            if (currentCurrency === 'USD') {
+                totalAmountElement.innerHTML = `<span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>`;
+            } else {
+                totalAmountElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR');
+            }
+        }
     }
     
+    // Actualizar nota de mezcla de monedas
+    const mixNoteElement = document.getElementById('currencyMixNote');
+    if (currentCurrency === 'USD' && hasShipping) {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'block';
+        }
+    } else {
+        if (mixNoteElement) {
+            mixNoteElement.style.display = 'none';
+        }
+    }
+}
     // Mostrar/ocultar nota de mezcla de monedas si hay envío seleccionado
     const mixNoteElement = document.getElementById('currencyMixNote');
     const mixNoteCurrencyElement = document.getElementById('mixNoteCurrency');
