@@ -401,7 +401,7 @@ input[type="number"] {
                     <!-- Subtotal -->
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
                         <span class="text-white h6 mb-0">Subtotal (sin envío):</span>
-                        <span class="text-white h5 mb-0" id="totalAmount">$<?php echo number_format($total - $shippingCost, 0, ',', '.'); ?></span>
+                        <span class="text-white h5 mb-0" id="subtotalAmount">$<?php echo number_format($total - $shippingCost, 0, ',', '.'); ?></span>
                     </div>
 
                     <!-- Código Postal -->
@@ -480,7 +480,7 @@ input[type="number"] {
                         <h6 class="text-white mb-3 mt-4">RETIRAR POR</h6>
                         
                         <div class="form-check mb-3 p-3 border border-secondary rounded">
-                            <input class="form-check-input" type="radio" name="shippingMethod" id="multigamer360" value="0" onchange="updateShippingSelection(0, '0')">
+                            <input class="form-check-input" type="radio" name="shippingMethod" id="multigamer360" value="0" data-cost="0" data-method-id="0" data-method-name="Retiro en local">
                             <label class="form-check-label text-white w-100" for="multigamer360">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -1108,13 +1108,13 @@ async function mostrarConfirmacionCP(codigoPostal) {
                 
                 optionsHTML += `
                     <div class="form-check mb-3 p-3 border border-secondary rounded hover-shipping">
-                        <input class="form-check-input" type="radio" name="shippingMethod" 
+                        <input class="form-check-input shipping-option-radio" type="radio" name="shippingMethod" 
                                id="shipping_${option.id}" 
                                value="${option.price}" 
+                               data-cost="${option.price}"
                                data-method-id="${option.id}"
                                data-method-name="${option.name}"
                                data-supports-cod="${option.supports_cash_on_delivery || false}"
-                               onchange="updateShippingSelection(${option.price}, '${option.id}', '${option.name}')"
                                ${isFirst ? 'checked' : ''}>
                         <label class="form-check-label text-white w-100" for="shipping_${option.id}">
                             <div class="d-flex justify-content-between align-items-start">
@@ -1140,6 +1140,16 @@ async function mostrarConfirmacionCP(codigoPostal) {
             });
             
             container.innerHTML = optionsHTML;
+            
+            // Agregar event listeners a las nuevas opciones de envío
+            container.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const cost = this.dataset.cost || this.value;
+                    const methodId = this.dataset.methodId || this.value;
+                    const methodName = this.dataset.methodName || '';
+                    updateShippingSelection(parseFloat(cost), methodId, methodName);
+                });
+            });
             
             // Auto-seleccionar la primera opción
             if (data.options[0]) {
@@ -1228,6 +1238,16 @@ window.addEventListener('DOMContentLoaded', function() {
     
     // Actualizar precios inicialmente
     updateCartPrices();
+    
+    // Agregar event listeners a todos los radio buttons de envío
+    document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const cost = this.dataset.cost || this.value;
+            const methodId = this.dataset.methodId || this.value;
+            const methodName = this.dataset.methodName || '';
+            updateShippingSelection(parseFloat(cost), methodId, methodName);
+        });
+    });
 });
 
 // Función para actualizar precios del carrito cuando cambia la moneda
@@ -1259,11 +1279,21 @@ function updateCartPrices() {
         subtotal += price * quantity;
     });
     
-    // Actualizar subtotal de productos (sin envío)
-    const subtotalElement = document.getElementById('subtotalProductAmount');
+    // Actualizar subtotal sin envío (arriba)
+    const subtotalAmountElement = document.getElementById('subtotalAmount');
+    if (subtotalAmountElement) {
+        if (currentCurrency === 'USD') {
+            subtotalAmountElement.innerHTML = `$${Math.round(subtotal).toLocaleString('es-AR')} <span class="small text-white-50">USD</span>`;
+        } else {
+            subtotalAmountElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR');
+        }
+    }
+    
+    // Actualizar subtotal de productos (abajo en sección de envío - si existe)
+    const subtotalProductElement = document.getElementById('subtotalProductAmount');
     const subtotalCurrencyElement = document.getElementById('subtotalCurrency');
-    if (subtotalElement) {
-        subtotalElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    if (subtotalProductElement) {
+        subtotalProductElement.textContent = '$' + Math.round(subtotal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
     }
     if (subtotalCurrencyElement) {
         subtotalCurrencyElement.textContent = currentCurrency;
