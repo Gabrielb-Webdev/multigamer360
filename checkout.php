@@ -3,10 +3,11 @@
  * =====================================================
  * MULTIGAMER360 - PÁGINA DE CHECKOUT
  * =====================================================
+ * Version: 1.0.1
+ * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Proceso de finalización de compra
  * Autor: MultiGamer360 Development Team
- * Fecha: 2025-09-16
  * 
  * Funcionalidades:
  * - Finalización del proceso de compra
@@ -16,12 +17,12 @@
  * - Resumen de la orden
  * - Aplicación de cupones de descuento
  * - Generación de orden de compra
+ * 
+ * Changelog v1.0.1 (06 Mar 2026):
+ * - Fix CRÍTICO: Corregida consulta SQL para usar product_images con LEFT JOIN
+ * - Fix: Eliminada referencia a p.image_url que no existe en la base de datos
+ * - Mejora: Usar pi.image_url desde tabla product_images (compatibilidad con process_checkout.php)
  */
-
-// DEBUG: Mostrar errores temporalmente
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 // =====================================================
 // CONFIGURACIÓN INICIAL
@@ -36,13 +37,11 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once 'config/database.php';
 require_once 'includes/cart_manager.php';
 require_once 'includes/auth.php';
-
-// PaymentHelper - Comentado temporalmente para debugging
-// require_once 'includes/payment_helper.php';
+require_once 'includes/payment_helper.php';
 
 // Cargar configuración de pagos
-// $paymentConfig = require 'config/payment_config.php';
-// $paymentHelper = new PaymentHelper($pdo);
+$paymentConfig = require 'config/payment_config.php';
+$paymentHelper = new PaymentHelper($pdo);
 
 // =====================================================
 // OBTENER INFORMACIÓN DEL USUARIO
@@ -103,16 +102,9 @@ if (!empty($_SESSION['cart'])) {
     $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
     
     $stmt = $pdo->prepare("
-        SELECT p.id, p.name, p.price_pesos as price, p.image_url,
-               COALESCE(
-                   (SELECT pi.image_url 
-                    FROM product_images pi 
-                    WHERE pi.product_id = p.id 
-                    AND pi.is_primary = 1
-                    LIMIT 1),
-                   p.image_url
-               ) as primary_image
+        SELECT p.id, p.name, p.price_pesos as price, pi.image_url
         FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
         WHERE p.id IN ($placeholders)
     ");
     
@@ -125,10 +117,10 @@ if (!empty($_SESSION['cart'])) {
         $cart_total += $subtotal;
         
         // Procesar la ruta de la imagen
-        $image_url = $product['primary_image'] ?? $product['image_url'];
+        $image_url = !empty($product['image_url']) ? $product['image_url'] : 'uploads/products/default.jpg';
         
         // Si la imagen no tiene una ruta completa, agregar la ruta de uploads
-        if ($image_url && !preg_match('/^(http|https|\/)/i', $image_url)) {
+        if ($image_url && !preg_match('/^(http|https|\/|uploads)/i', $image_url)) {
             $image_url = 'uploads/products/' . $image_url;
         }
         
