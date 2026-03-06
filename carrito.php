@@ -1353,27 +1353,6 @@ function updateCartPrices() {
         }
     }
 }
-    // Mostrar/ocultar nota de mezcla de monedas si hay envío seleccionado
-    const mixNoteElement = document.getElementById('currencyMixNote');
-    const mixNoteCurrencyElement = document.getElementById('mixNoteCurrency');
-    const shippingAmount = document.getElementById('shippingAmount');
-    const hasShipping = shippingAmount && parseInt(shippingAmount.textContent.replace(/[^\d]/g, '')) > 0;
-    
-    if (currentCurrency === 'USD' && hasShipping) {
-        if (mixNoteElement) {
-            mixNoteElement.style.display = 'block';
-            if (mixNoteCurrencyElement) {
-                mixNoteCurrencyElement.textContent = currentCurrency;
-            }
-        }
-    } else {
-        if (mixNoteElement) {
-            mixNoteElement.style.display = 'none';
-        }
-    }
-    
-    // Nota: El envío siempre se mantiene en ARS, no se convierte
-}
 </script>
 
 <?php include 'includes/footer.php'; ?>
