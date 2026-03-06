@@ -39,8 +39,10 @@ try {
         require_once __DIR__ . '/cart_manager.php';
         $cartManager = new CartManager($pdo);
         
-        // Obtener total y cantidad del carrito
-        $cartTotal = $cartManager->getCartTotal();
+        // Obtener totales en ambas monedas y cantidad del carrito
+        $cartTotals = $cartManager->getCartTotals();
+        $cartTotal = $cartTotals['ars'];  // Por defecto mostramos ARS
+        $cartTotalUSD = $cartTotals['usd'];
         $cartCount = $cartManager->getCartCount();
     }
     
@@ -93,6 +95,8 @@ if ($cartCount > 0) {
     <script>
         // Datos del carrito ya cargados desde el servidor
         window.cartData = {
+            cart_total_ars: <?php echo $cartTotal; ?>,
+            cart_total_usd: <?php echo $cartTotalUSD; ?>,
             cart_total: <?php echo $cartTotal; ?>,
             cart_count: <?php echo $cartCount; ?>,
             wishlist_count: <?php echo $wishlistCount; ?>
@@ -127,7 +131,15 @@ if ($cartCount > 0) {
             const cartDisplay = document.getElementById('cart-display');
             if (cartDisplay && data.cart_total !== undefined) {
                 const count = parseInt(data.cart_count || 0);
-                const total = parseFloat(data.cart_total || 0);
+                let total;
+                
+                // Usar la moneda actual
+                const currency = localStorage.getItem('currency') || 'ARS';
+                if (currency === 'USD') {
+                    total = parseFloat(data.cart_total_usd || 0);
+                } else {
+                    total = parseFloat(data.cart_total_ars || data.cart_total || 0);
+                }
                 
                 let formattedText;
                 if (count > 0) {
@@ -207,6 +219,9 @@ if ($cartCount > 0) {
             updateCurrencyDisplay();
             convertAllPrices();
             
+            // Actualizar el carrito del navbar cuando cambia la moneda
+            updateCartDisplay();
+            
             // Disparar evento personalizado para que otras páginas puedan reaccionar
             window.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency: currentCurrency } }));
         }
@@ -236,6 +251,25 @@ if ($cartCount > 0) {
             document.querySelectorAll('[data-price-ars][data-price-usd]').forEach(element => {
                 const priceARS = parseFloat(element.dataset.priceArs);
                 const priceUSD = parseFloat(element.dataset.priceUsd);
+                
+                // Caso especial para el carrito del navbar
+                if (element.id === 'cart-display') {
+                    const count = parseInt(element.dataset.cartCount || 0);
+                    let total;
+                    
+                    if (currentCurrency === 'USD') {
+                        total = priceUSD;
+                    } else {
+                        total = priceARS;
+                    }
+                    
+                    if (count > 0) {
+                        element.textContent = `${count} - $${Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                    } else {
+                        element.textContent = '$0';
+                    }
+                    return; // Salir temprano para este elemento
+                }
                 
                 // Detectar si este elemento tiene descuentos por moneda
                 const hasDiscountARS = element.dataset.hasDiscountArs === '1';
@@ -371,7 +405,7 @@ if ($cartCount > 0) {
                                 </div>
                                 <div class="cart-button">
                                     <a href="/carrito.php" class="btn header-btn position-relative">
-                                        <i class="fas fa-shopping-cart"></i> <span id="cart-display"><?php echo $cartDisplayText; ?></span>
+                                        <i class="fas fa-shopping-cart"></i> <span id="cart-display" data-price-ars="<?php echo $cartTotal; ?>" data-price-usd="<?php echo $cartTotalUSD; ?>" data-cart-count="<?php echo $cartCount; ?>"><?php echo $cartDisplayText; ?></span>
                                     </a>
                                 </div>
                             </div>

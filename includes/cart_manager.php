@@ -306,6 +306,41 @@ class CartManager {
     }
 
     /**
+     * Obtener total del carrito en ambas monedas (ARS y USD)
+     */
+    public function getCartTotals() {
+        if (empty($_SESSION['cart'])) {
+            return ['ars' => 0, 'usd' => 0];
+        }
+
+        try {
+            $product_ids = array_keys($_SESSION['cart']);
+            $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
+            
+            $stmt = $this->pdo->prepare("SELECT id, price_pesos, price_dollars FROM products WHERE id IN ($placeholders)");
+            $stmt->execute($product_ids);
+            $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $totalARS = 0;
+            $totalUSD = 0;
+            
+            foreach ($products as $product) {
+                $product_id = $product['id'];
+                if (isset($_SESSION['cart'][$product_id])) {
+                    $quantity = $_SESSION['cart'][$product_id];
+                    $totalARS += ($product['price_pesos'] ?? 0) * $quantity;
+                    $totalUSD += ($product['price_dollars'] ?? 0) * $quantity;
+                }
+            }
+
+            return ['ars' => $totalARS, 'usd' => $totalUSD];
+        } catch (Exception $e) {
+            error_log("Error calculando totales del carrito: " . $e->getMessage());
+            return ['ars' => 0, 'usd' => 0];
+        }
+    }
+
+    /**
      * Obtener información completa del carrito
      */
     public function getCartInfo() {
