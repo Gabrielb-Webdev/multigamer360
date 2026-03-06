@@ -29,6 +29,7 @@ $isLoggedIn = isLoggedIn();
 // CARGAR CARRITO INMEDIATAMENTE EN PHP (SIN ESPERAR JAVASCRIPT)
 // ====================================================================
 $cartTotal = 0;
+$cartTotalUSD = 0;
 $cartCount = 0;
 $wishlistCount = 0;
 
@@ -95,14 +96,15 @@ if ($cartCount > 0) {
     <script>
         // Datos del carrito ya cargados desde el servidor
         window.cartData = {
-            cart_total_ars: <?php echo $cartTotal; ?>,
-            cart_total_usd: <?php echo $cartTotalUSD; ?>,
-            cart_total: <?php echo $cartTotal; ?>,
+            cart_total_ars: <?php echo number_format($cartTotal, 2, '.', ''); ?>,
+            cart_total_usd: <?php echo number_format($cartTotalUSD, 2, '.', ''); ?>,
+            cart_total: <?php echo number_format($cartTotal, 2, '.', ''); ?>,
             cart_count: <?php echo $cartCount; ?>,
             wishlist_count: <?php echo $wishlistCount; ?>
         };
         
         console.log('Cart loaded from PHP:', window.cartData);
+        console.log('Cart ARS:', <?php echo number_format($cartTotal, 2, '.', ''); ?>, 'USD:', <?php echo number_format($cartTotalUSD, 2, '.', ''); ?>);
         
         // Detectar horario local del usuario y enviarlo al servidor
         document.addEventListener('DOMContentLoaded', function() {
@@ -216,11 +218,9 @@ if ($cartCount > 0) {
         function setCurrency(currency) {
             currentCurrency = currency;
             localStorage.setItem('currency', currentCurrency);
+            console.log('Cambiando moneda a:', currentCurrency);
             updateCurrencyDisplay();
             convertAllPrices();
-            
-            // Actualizar el carrito del navbar cuando cambia la moneda
-            updateCartDisplay();
             
             // Disparar evento personalizado para que otras páginas puedan reaccionar
             window.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency: currentCurrency } }));
@@ -257,6 +257,8 @@ if ($cartCount > 0) {
                     const count = parseInt(element.dataset.cartCount || 0);
                     let total;
                     
+                    console.log('Actualizando carrito navbar - Currency:', currentCurrency, 'ARS:', priceARS, 'USD:', priceUSD, 'Count:', count);
+                    
                     if (currentCurrency === 'USD') {
                         total = priceUSD;
                     } else {
@@ -264,7 +266,9 @@ if ($cartCount > 0) {
                     }
                     
                     if (count > 0) {
-                        element.textContent = `${count} - $${Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                        const formattedTotal = Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                        element.textContent = `${count} - $${formattedTotal}`;
+                        console.log('Carrito actualizado a:', element.textContent);
                     } else {
                         element.textContent = '$0';
                     }
@@ -334,6 +338,12 @@ if ($cartCount > 0) {
         
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded - currentCurrency:', currentCurrency);
+            console.log('Cart data en DOM:', {
+                ars: document.getElementById('cart-display')?.dataset.priceArs,
+                usd: document.getElementById('cart-display')?.dataset.priceUsd,
+                count: document.getElementById('cart-display')?.dataset.cartCount
+            });
             updateCurrencyDisplay();
             convertAllPrices();
         });
@@ -405,7 +415,7 @@ if ($cartCount > 0) {
                                 </div>
                                 <div class="cart-button">
                                     <a href="/carrito.php" class="btn header-btn position-relative">
-                                        <i class="fas fa-shopping-cart"></i> <span id="cart-display" data-price-ars="<?php echo $cartTotal; ?>" data-price-usd="<?php echo $cartTotalUSD; ?>" data-cart-count="<?php echo $cartCount; ?>"><?php echo $cartDisplayText; ?></span>
+                                        <i class="fas fa-shopping-cart"></i> <span id="cart-display" data-price-ars="<?php echo number_format($cartTotal, 2, '.', ''); ?>" data-price-usd="<?php echo number_format($cartTotalUSD, 2, '.', ''); ?>" data-cart-count="<?php echo $cartCount; ?>"><?php echo $cartDisplayText; ?></span>
                                     </a>
                                 </div>
                             </div>

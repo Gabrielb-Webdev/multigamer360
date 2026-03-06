@@ -332,6 +332,8 @@ class CartManager {
                     $totalUSD += ($product['price_dollars'] ?? 0) * $quantity;
                 }
             }
+            
+            error_log("CartTotals - ARS: $totalARS, USD: $totalUSD");
 
             return ['ars' => $totalARS, 'usd' => $totalUSD];
         } catch (Exception $e) {
