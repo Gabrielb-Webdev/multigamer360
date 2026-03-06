@@ -778,7 +778,7 @@ select.form-control option {
                                             $<?php echo number_format($shipping_cost, 0, ',', '.'); ?>
                                         <?php endif; ?>
                                     </div>
-                                    <?php if (!empty($postal_code)): ?>
+                                    <?php if (!empty($postal_code) && $postal_code !== 'RETIRO_LOCAL'): ?>
                                         <small class="text-muted">CP: <?php echo htmlspecialchars($postal_code); ?></small>
                                     <?php endif; ?>
                                 </div>
@@ -836,7 +836,7 @@ select.form-control option {
                             <!-- Confirmación de método de pago seleccionado -->
                             <div id="payment-method-confirmed" style="display: none;">
                                 <div class="shipping-option selected">
-                                    <input type="hidden" name="confirmedPaymentMethod" id="confirmedPaymentMethod">
+                                    <input type="hidden" name="paymentMethod" id="paymentMethod">
                                     <div>
                                         <div class="shipping-title" id="confirmed-payment-title"></div>
                                         <small id="confirmed-payment-description"></small>
@@ -1257,7 +1257,7 @@ function selectPayment(paymentId) {
     // Actualizar información en la confirmación
     document.getElementById('confirmed-payment-title').textContent = paymentTitle;
     document.getElementById('confirmed-payment-description').textContent = paymentDescription;
-    document.getElementById('confirmedPaymentMethod').value = paymentId;
+    document.getElementById('paymentMethod').value = paymentId;
     
     selectedPayment = paymentId;
     
@@ -1324,7 +1324,7 @@ function changePaymentMethod() {
     
     // Limpiar selecciones
     selectedPayment = null;
-    document.getElementById('confirmedPaymentMethod').value = '';
+    document.getElementById('paymentMethod').value = '';
     
     // Ocultar campos de dirección y remover required
     const deliveryAddress = document.getElementById('delivery-address');
