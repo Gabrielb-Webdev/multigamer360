@@ -32,7 +32,9 @@ try {
         // Consulta CON product_images
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, 
-                   COALESCE(p.price_pesos, p.price_dollars) as price, 
+                   COALESCE(p.price_pesos, p.price_dollars) as price,
+                   p.price_pesos,
+                   p.price_dollars, 
                    p.main_image, p.stock_quantity,
                    COALESCE(
                        (SELECT pi.image_url 
@@ -53,7 +55,9 @@ try {
         // Consulta SIN product_images (fallback)
         $stmt = $pdo->prepare("
             SELECT p.id, p.name, 
-                   COALESCE(p.price_pesos, p.price_dollars) as price, 
+                   COALESCE(p.price_pesos, p.price_dollars) as price,
+                   p.price_pesos,
+                   p.price_dollars, 
                    p.main_image, p.stock_quantity,
                    COALESCE(p.main_image, '') as primary_image,
                    uf.created_at as added_date
@@ -194,7 +198,12 @@ try {
                         <div class="wishlist-info">
                             <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
                             <div class="price-section">
-                                <span class="current-price wishlist-price" data-price="<?php echo $product['price']; ?>">$<?php echo number_format($product['price'], 2); ?></span>
+                                <span class="current-price wishlist-price" 
+                                      data-price-ars="<?php echo $product['price_pesos'] ?? 0; ?>" 
+                                      data-price-usd="<?php echo $product['price_dollars'] ?? 0; ?>"
+                                      data-product-id="<?php echo $product['id']; ?>">
+                                    $<?php echo number_format($product['price'], 0, ',', '.'); ?>
+                                </span>
                             </div>
                             <div class="added-date">
                                 <i class="fas fa-heart text-danger"></i>
@@ -508,18 +517,23 @@ try {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    margin: 0 !important;
+    width: 100%;
+    max-width: 100%;
 }
 
-#wishlist-container.list-view .col-md-4,
-#wishlist-container.list-view .col-lg-3 {
-    max-width: 100%;
-    flex: 0 0 100%;
+#wishlist-container.list-view > [class*="col-"] {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
 }
 
 #wishlist-container.list-view .wishlist-card {
     display: flex;
     flex-direction: row;
     height: auto;
+    width: 100%;
 }
 
 #wishlist-container.list-view .wishlist-image-container {
@@ -670,6 +684,15 @@ document.addEventListener('DOMContentLoaded', function() {
             addToCart(productId, this);
         });
     });
+    
+    // Escuchar cambios de moneda
+    window.addEventListener('currencyChanged', function(e) {
+        console.log('💱 Evento currencyChanged en wishlist:', e.detail);
+        updateWishlistPrices();
+    });
+    
+    // Actualizar precios al cargar la página
+    updateWishlistPrices();
     
     // Toggle entre vistas
     const viewGrid = document.getElementById('view-grid');
@@ -833,6 +856,41 @@ function addToCart(productId, button) {
         button.disabled = false;
         showNotification('Error de conexión', 'error');
     });
+}
+
+// Función para actualizar precios según la moneda seleccionada
+function updateWishlistPrices() {
+    const currentCurrency = localStorage.getItem('currency') || 'ARS';
+    let total = 0;
+    
+    console.log('Actualizando precios de wishlist a:', currentCurrency);
+    
+    // Actualizar cada precio de producto
+    document.querySelectorAll('.wishlist-price[data-price-ars][data-price-usd]').forEach(priceElement => {
+        const priceARS = parseFloat(priceElement.dataset.priceArs) || 0;
+        const priceUSD = parseFloat(priceElement.dataset.priceUsd) || 0;
+        
+        let price = 0;
+        if (currentCurrency === 'USD') {
+            price = priceUSD > 0 ? priceUSD : priceARS / 1000; // Conversión aproximada
+            priceElement.textContent = '$' + Math.round(price).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        } else {
+            price = priceARS > 0 ? priceARS : priceUSD * 1000; // Conversión aproximada
+            priceElement.textContent = '$' + Math.round(price).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        }
+        
+        total += price;
+    });
+    
+    // Actualizar el valor total
+    const totalElement = document.getElementById('wishlist-total');
+    if (totalElement) {
+        if (currentCurrency === 'USD') {
+            totalElement.innerHTML = '$' + Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' <span style="font-size: 0.8em;">USD</span>';
+        } else {
+            totalElement.textContent = '$' + Math.round(total).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        }
+    }
 }
 
 // Función para mostrar notificaciones mejoradas
