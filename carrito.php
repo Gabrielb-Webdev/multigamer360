@@ -3,10 +3,11 @@
  * =====================================================
  * MULTIGAMER360 - CARRITO DE COMPRAS
  * =====================================================
+ * Version: 1.0.1
+ * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Página del carrito de compras con gestión completa
  * Autor: MultiGamer360 Development Team
- * Fecha: 2025-09-16
  * 
  * Funcionalidades:
  * - Visualización de productos en el carrito
@@ -16,6 +17,10 @@
  * - Aplicación de cupones de descuento
  * - Gestión de direcciones de envío
  * - Integración con sistema de checkout
+ * 
+ * Changelog v1.0.1 (06 Mar 2026):
+ * - Fix: Eliminado código JavaScript duplicado en updateCartPrices()
+ * - Fix: Corregido error de sintaxis que causaba "removeFromCart is not defined"
  */
 
 // =====================================================

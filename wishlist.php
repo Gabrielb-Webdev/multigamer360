@@ -1,11 +1,20 @@
 <?php
 /**
  * WISHLIST / FAVORITOS DEL USUARIO
- * Version: 2.1.0 - Fix SELECT query con campos correctos
- * Fecha: 12 Feb 2026
- * Cambios:
- *  - Corregido: Removido campo 'price' inexistente de COALESCE
- *  - Mejora: Ahora solo selecciona price_pesos y price_dollars
+ * Version: 2.2.0
+ * Fecha: 06 Mar 2026
+ * 
+ * Changelog v2.2.0 (06 Mar 2026):
+ * - Nuevo: Icono de basura para eliminar productos (reemplaza X)
+ * - Nuevo: Toggle para cambiar entre vista grid y lista
+ * - Nuevo: Vista lista horizontal con ancho completo
+ * - Nuevo: Cambio dinámico de precios ARS/USD según selección
+ * - Mejora: Guardado de preferencia de vista en localStorage
+ * - Mejora: Actualización automática de valores totales
+ * 
+ * Changelog v2.1.0 (12 Feb 2026):
+ * - Corregido: Removido campo 'price' inexistente de COALESCE
+ * - Mejora: Ahora selecciona price_pesos y price_dollars
  */
 
 require_once 'config/session_config.php';
