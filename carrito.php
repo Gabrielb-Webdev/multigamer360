@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - CARRITO DE COMPRAS
  * =====================================================
- * Version: 1.0.5
+ * Version: 1.0.6
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Página del carrito de compras con gestión completa
@@ -17,6 +17,11 @@
  * - Aplicación de cupones de descuento
  * - Gestión de direcciones de envío
  * - Integración con sistema de checkout
+ * 
+ * Changelog v1.0.6 (06 Mar 2026):
+ * - Fix CRÍTICO: Corregida validación en set-shipping.php que rechazaba value="0"
+ * - Motivo: empty("0") en PHP devuelve true, impedía guardar retiro local
+ * - Ahora usa isset() para permitir shipping_method="0" correctamente
  * 
  * Changelog v1.0.5 (06 Mar 2026):
  * - Fix CRÍTICO: Cambiado FormData a URLSearchParams para envío de método de envío

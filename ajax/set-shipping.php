@@ -14,12 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Obtener datos del POST (sistema dinámico)
 $shippingCost = floatval($_POST['shipping_cost'] ?? 0);
-$shippingMethod = $_POST['shipping_method'] ?? '';
+$shippingMethod = $_POST['shipping_method'] ?? null;
 $shippingName = $_POST['shipping_name'] ?? '';
 $postalCode = $_POST['postal_code'] ?? $_SESSION['postal_code'] ?? '';
 
-// Validar datos
-if (empty($shippingMethod)) {
+// Validar datos - IMPORTANTE: No usar empty() porque "0" es válido para retiro local
+if (!isset($shippingMethod) || $shippingMethod === '' || $shippingMethod === null) {
     echo json_encode(['success' => false, 'message' => 'Método de envío no especificado']);
     exit;
 }
