@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - CARRITO DE COMPRAS
  * =====================================================
- * Version: 1.0.3
+ * Version: 1.0.4
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Página del carrito de compras con gestión completa
@@ -17,6 +17,11 @@
  * - Aplicación de cupones de descuento
  * - Gestión de direcciones de envío
  * - Integración con sistema de checkout
+ * 
+ * Changelog v1.0.4 (06 Mar 2026):
+ * - Fix: Mejorada validación para reconocer Multigamer 360 tanto por value como por id
+ * - Mejora: Logs más detallados en validateShipping() para debugging
+ * - Mejora: Mensajes de error más claros y específicos
  * 
  * Changelog v1.0.3 (06 Mar 2026):
  * - Fix: Mejorado manejo de retiro en local con código especial "RETIRO_LOCAL"
@@ -695,25 +700,37 @@ function updateFormData(shippingMethod, postalCode) {
 
 // Función para validar antes de ir al checkout
 function validateShipping() {
+    console.log('🔍 Validando método de envío...');
+    
     const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
     const postalCode = document.getElementById('codigoPostal').value;
     
+    console.log('Método seleccionado:', shippingMethod);
+    console.log('Valor del método:', shippingMethod?.value);
+    console.log('Código postal:', postalCode);
+    
     if (!shippingMethod) {
-        alert('Por favor, selecciona un método de envío antes de continuar.');
+        console.error('❌ No se encontró método de envío seleccionado');
+        alert('Por favor, selecciona un método de envío o retiro antes de continuar.');
         return false;
     }
     
+    console.log('✅ Método de envío encontrado:', shippingMethod.id, '- Valor:', shippingMethod.value);
+    
     // Si es retiro en local (Multigamer 360), NO requiere código postal
-    if (shippingMethod.value === '0') {
+    if (shippingMethod.value === '0' || shippingMethod.id === 'multigamer360') {
+        console.log('✅ Retiro en local seleccionado - no requiere código postal');
         return true;
     }
     
     // Para envíos a domicilio, SÍ requiere código postal
-    if (!postalCode) {
-        alert('Por favor, ingresa tu código postal antes de continuar.');
+    if (!postalCode || postalCode.length < 4) {
+        console.error('❌ Código postal faltante o inválido para envío a domicilio');
+        alert('Por favor, ingresa tu código postal y calcula el envío antes de continuar.');
         return false;
     }
     
+    console.log('✅ Validación exitosa para envío a domicilio');
     return true;
 }
 
