@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - CARRITO DE COMPRAS
  * =====================================================
- * Version: 1.0.4
+ * Version: 1.0.5
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Página del carrito de compras con gestión completa
@@ -17,6 +17,12 @@
  * - Aplicación de cupones de descuento
  * - Gestión de direcciones de envío
  * - Integración con sistema de checkout
+ * 
+ * Changelog v1.0.5 (06 Mar 2026):
+ * - Fix CRÍTICO: Cambiado FormData a URLSearchParams para envío de método de envío
+ * - Fix: Agregado Content-Type: application/x-www-form-urlencoded explícito
+ * - Mejora: Logs detallados de valores antes de enviar al servidor
+ * - Motivo: El servidor no recibía correctamente shipping_method con FormData
  * 
  * Changelog v1.0.4 (06 Mar 2026):
  * - Fix: Mejorada validación para reconocer Multigamer 360 tanto por value como por id
@@ -900,8 +906,15 @@ function iniciarCompra() {
     
     console.log('📝 Nombre del método:', shippingName);
     
-    // Preparar datos con los nombres correctos que espera set-shipping.php
-    const formData = new FormData();
+    // Preparar datos - IMPORTANTE: Verificar valores antes de enviar
+    console.log('🔍 Verificando valores antes de enviar:');
+    console.log('   - shipping_method:', shippingMethod.value);
+    console.log('   - shipping_cost:', shippingCost);
+    console.log('   - shipping_name:', shippingName);
+    console.log('   - postal_code:', postalCode);
+    
+    // Preparar datos como URLSearchParams para asegurar compatibilidad
+    const formData = new URLSearchParams();
     formData.append('shipping_method', shippingMethod.value);
     formData.append('shipping_cost', shippingCost);
     formData.append('shipping_name', shippingName);
@@ -909,10 +922,13 @@ function iniciarCompra() {
     
     console.log('📤 Enviando datos al servidor...');
     
-    // Enviar por AJAX
+    // Enviar por AJAX con Content-Type correcto
     fetch('ajax/set-shipping.php', {
         method: 'POST',
-        body: formData
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
     })
     .then(response => response.json())
     .then(data => {
