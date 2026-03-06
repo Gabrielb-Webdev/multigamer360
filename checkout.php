@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - PÁGINA DE CHECKOUT
  * =====================================================
- * Version: 1.0.2
+ * Version: 1.0.3
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Proceso de finalización de compra
@@ -17,6 +17,12 @@
  * - Resumen de la orden
  * - Aplicación de cupones de descuento
  * - Generación de orden de compra
+ * 
+ * Changelog v1.0.3 (06 Mar 2026):
+ * - Fix UX: Forzado color claro en inputs con !important (sobrescribe Bootstrap)
+ * - Agregado estilo para placeholders (rgba(255,255,255,0.5))
+ * - Agregado estilo para select, option, textarea
+ * - Garantiza visibilidad de todo texto ingresado en formularios
  * 
  * Changelog v1.0.2 (06 Mar 2026):
  * - Fix UX: Corregido color de texto en elementos del checkout (visibilidad)
@@ -534,8 +540,12 @@ require_once 'includes/header.php';
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     padding: 0.75rem;
-    color: var(--text-light);
+    color: var(--text-light) !important;
     width: 100%;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .form-control:focus {
@@ -543,6 +553,21 @@ require_once 'includes/header.php';
     border-color: var(--accent-red);
     outline: none;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    color: var(--text-light) !important;
+}
+
+/* Asegurar que los inputs selectos y textareas también sean visibles */
+.form-select,
+select.form-control,
+textarea.form-control {
+    color: var(--text-light) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.form-select option,
+select.form-control option {
+    background: #1a1a1a;
+    color: var(--text-light);
 }
 
 .btn-checkout {
