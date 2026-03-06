@@ -22,13 +22,7 @@ $postalCode = $_POST['postal_code'] ?? $_SESSION['postal_code'] ?? '';
 if ($shippingMethod === null || $shippingMethod === '') {
     echo json_encode([
         'success' => false, 
-        'message' => 'Método de envío no especificado',
-        'debug' => [
-            'POST' => $_POST,
-            'shipping_method' => $shippingMethod,
-            'isset' => isset($_POST['shipping_method']),
-            'value_type' => gettype($shippingMethod)
-        ]
+        'message' => 'Método de envío no especificado'
     ]);
     exit;
 }
@@ -50,9 +44,14 @@ if ($shippingMethod === '0' || $shippingMethod === 'multigamer_360') {
     $_SESSION['shipping_type'] = 'delivery';
 }
 
+// IMPORTANTE: Forzar escritura de sesión antes de responder
+session_write_close();
+
 echo json_encode([
     'success' => true,
     'message' => 'Método de envío guardado',
     'shipping_method' => $shippingMethod,
+    'shipping_name' => $shippingName,
     'postal_code' => $postalCode
 ]);
+
