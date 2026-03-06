@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - PÁGINA DE CHECKOUT
  * =====================================================
- * Version: 1.0.1
+ * Version: 1.0.2
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Proceso de finalización de compra
@@ -17,6 +17,12 @@
  * - Resumen de la orden
  * - Aplicación de cupones de descuento
  * - Generación de orden de compra
+ * 
+ * Changelog v1.0.2 (06 Mar 2026):
+ * - Fix UX: Corregido color de texto en elementos del checkout (visibilidad)
+ * - Agregado color claro a .shipping-title, .payment-option
+ * - Forzado color claro en labels, small, text-muted sobre fondo oscuro
+ * - Todos los textos ahora son visibles sobre el fondo oscuro
  * 
  * Changelog v1.0.1 (06 Mar 2026):
  * - Fix CRÍTICO: Corregida consulta SQL para usar product_images con LEFT JOIN
@@ -154,6 +160,22 @@ require_once 'includes/header.php';
     background-color: var(--bg-dark);
     min-height: 100vh;
     color: var(--text-light);
+}
+
+/* Asegurar que todos los elementos de texto sean visibles */
+.checkout-page * {
+    color: inherit;
+}
+
+.checkout-page input[type="radio"] ~ label,
+.checkout-page input[type="radio"] ~ div,
+.checkout-page label,
+.checkout-page small {
+    color: var(--text-light) !important;
+}
+
+.checkout-page .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .checkout-container {
@@ -445,6 +467,7 @@ require_once 'includes/header.php';
 .shipping-title {
     font-weight: 600;
     margin-bottom: 0.25rem;
+    color: var(--text-light);
 }
 
 .shipping-price {
@@ -469,6 +492,7 @@ require_once 'includes/header.php';
     margin-bottom: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    color: var(--text-light);
 }
 
 .payment-option:hover {
