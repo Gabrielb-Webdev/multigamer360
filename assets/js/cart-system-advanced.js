@@ -62,10 +62,13 @@ class AdvancedCartSystem {
             }
         });
 
-        // Listener para cambios de página
+        // Listener para cambios de página - DESHABILITADO porque causa errores al redirigir
+        // El carrito ya se sincroniza automáticamente al cargar páginas
+        /*
         window.addEventListener('beforeunload', () => {
             this.syncCartState();
         });
+        */
 
         // Listener para visibilidad de página
         document.addEventListener('visibilitychange', () => {

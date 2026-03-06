@@ -88,7 +88,7 @@ if (file_exists(__DIR__ . '/../config/asset_versions.php')) {
     <!-- JavaScript Files - Orden optimizado para evitar conflictos -->
     <script src="/assets/js/mobile-menu.js?v=1.3"></script>
     <script src="/assets/js/wishlist-system.js?v=<?php echo defined('JS_VERSION') ? JS_VERSION['wishlist-system'] : '0.1'; ?>"></script>
-    <script src="/assets/js/cart-system-advanced.js?v=1.7"></script>
+    <script src="/assets/js/cart-system-advanced.js?v=1.8"></script>
     <script src="/assets/js/modern-cart-button.js?v=<?php echo defined('JS_VERSION') ? JS_VERSION['modern-cart-button'] : '0.1'; ?>"></script>
     <script src="/assets/js/main.js?v=<?php echo defined('JS_VERSION') ? JS_VERSION['main'] : '1.1'; ?>"></script>
     
