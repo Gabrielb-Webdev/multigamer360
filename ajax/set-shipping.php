@@ -14,26 +14,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Obtener datos del POST (sistema dinámico)
 $shippingCost = floatval($_POST['shipping_cost'] ?? 0);
-$shippingMethod = $_POST['shipping_method'] ?? null;
+$shippingMethod = isset($_POST['shipping_method']) ? $_POST['shipping_method'] : null;
 $shippingName = $_POST['shipping_name'] ?? '';
 $postalCode = $_POST['postal_code'] ?? $_SESSION['postal_code'] ?? '';
 
-// DEBUG: Log de valores recibidos
-error_log("=== SET-SHIPPING DEBUG ===");
-error_log("POST data: " . print_r($_POST, true));
-error_log("shipping_method recibido: " . var_export($shippingMethod, true));
-error_log("isset: " . (isset($shippingMethod) ? 'true' : 'false'));
-error_log("valor comparado con '': " . ($shippingMethod === '' ? 'true' : 'false'));
-error_log("valor comparado con null: " . ($shippingMethod === null ? 'true' : 'false'));
-
-// Validar datos - IMPORTANTE: No usar empty() porque "0" es válido para retiro local
-if (!isset($shippingMethod) || $shippingMethod === '' || $shippingMethod === null) {
-    error_log("RECHAZADO: Método de envío no especificado");
-    echo json_encode(['success' => false, 'message' => 'Método de envío no especificado', 'debug' => ['received' => $shippingMethod, 'post' => $_POST]]);
+// Validar datos - IMPORTANTE: "0" es un valor válido para retiro local
+if ($shippingMethod === null || $shippingMethod === '') {
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Método de envío no especificado',
+        'debug' => [
+            'POST' => $_POST,
+            'shipping_method' => $shippingMethod,
+            'isset' => isset($_POST['shipping_method']),
+            'value_type' => gettype($shippingMethod)
+        ]
+    ]);
     exit;
 }
-
-error_log("ACEPTADO: shipping_method = " . $shippingMethod);
 
 // Guardar en sesión
 $_SESSION['shipping_cost'] = $shippingCost;
