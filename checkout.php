@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - PÁGINA DE CHECKOUT
  * =====================================================
- * Version: 1.0.3
+ * Version: 1.0.4
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Proceso de finalización de compra
@@ -17,6 +17,12 @@
  * - Resumen de la orden
  * - Aplicación de cupones de descuento
  * - Generación de orden de compra
+ * 
+ * Changelog v1.0.4 (06 Mar 2026):
+ * - Fix UX: Eliminado requisito de especificar método de pago para "Pagar en el Local"
+ * - Ocultada sección "Opciones de pago en el local" (Efectivo, Tarjeta, Dólares)
+ * - El método de pago se decide al momento del retiro en el local
+ * - Eliminada validación que requería seleccionar método de pago local específico
  * 
  * Changelog v1.0.3 (06 Mar 2026):
  * - Fix UX: Forzado color claro en inputs con !important (sobrescribe Bootstrap)
@@ -1305,8 +1311,9 @@ function selectPayment(paymentId) {
         document.getElementById('online-payment-options').style.display = 'block';
         console.log('Showing online payment options');
     } else if (paymentId === 'local') {
-        document.getElementById('local-payment-options').style.display = 'block';
-        console.log('Showing local payment options');
+        // NO mostrar opciones de pago local - se decide en el momento del retiro
+        // document.getElementById('local-payment-options').style.display = 'block';
+        console.log('Pago en local seleccionado - no requiere especificar método ahora');
     }
 }
 
@@ -1499,7 +1506,9 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         }
     }
     
-    // Si seleccionó pago local, verificar que haya elegido un método específico
+    // Si seleccionó pago local, NO requiere especificar método ahora
+    // Se decide en el momento del retiro en el local
+    /*
     if (selectedPayment === 'local') {
         const selectedLocalMethod = document.querySelector('input[name="localPaymentMethod"]:checked');
         if (!selectedLocalMethod) {
@@ -1508,6 +1517,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
             return;
         }
     }
+    */
 });
 
 // Inicializar cuando carga la página
