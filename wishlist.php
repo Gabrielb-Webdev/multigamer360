@@ -1,8 +1,12 @@
 <?php
 /**
  * WISHLIST / FAVORITOS DEL USUARIO
- * Version: 2.2.0
+ * Version: 2.2.1
  * Fecha: 06 Mar 2026
+ * 
+ * Changelog v2.2.1 (06 Mar 2026):
+ * - Mejora: Botón "Ver Producto" ahora usa colores rojos alineados con el diseño
+ * - Mejora: Añadido efecto de sombra en hover del botón
  * 
  * Changelog v2.2.0 (06 Mar 2026):
  * - Nuevo: Icono de basura para eliminar productos (reemplaza X)
@@ -460,14 +464,15 @@ try {
 }
 
 .btn-view {
-    background: linear-gradient(45deg, #007bff, #0056b3);
+    background: linear-gradient(45deg, #dc3545, #c82333);
     color: white;
 }
 
 .btn-view:hover {
-    background: linear-gradient(45deg, #0056b3, #004085);
+    background: linear-gradient(45deg, #c82333, #bd2130);
     color: white;
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
 }
 
 .btn-cart {
