@@ -3,7 +3,7 @@
  * =====================================================
  * MULTIGAMER360 - CARRITO DE COMPRAS
  * =====================================================
- * Version: 1.0.2
+ * Version: 1.0.3
  * Fecha última modificación: 06 Mar 2026
  * 
  * Descripción: Página del carrito de compras con gestión completa
@@ -17,6 +17,12 @@
  * - Aplicación de cupones de descuento
  * - Gestión de direcciones de envío
  * - Integración con sistema de checkout
+ * 
+ * Changelog v1.0.3 (06 Mar 2026):
+ * - Fix: Mejorado manejo de retiro en local con código especial "RETIRO_LOCAL"
+ * - Mejora: Agregados console.logs detallados para debugging
+ * - Mejora: El campo de código postal ya no se oculta (solo es opcional para retiro)
+ * - Mejora: Validación mejorada y manejo de errores más robusto
  * 
  * Changelog v1.0.2 (06 Mar 2026):
  * - Mejora: Retiro en local ya no requiere código postal
@@ -819,14 +825,40 @@ function updateShippingSelection(cost, methodId, methodName = '') {
 
 // Función para iniciar compra (guardar shipping y redirigir)
 function iniciarCompra() {
+    console.log('🛒 Iniciando proceso de compra...');
+    
     // Primero validar
     if (!validateShipping()) {
+        console.error('❌ Validación de envío falló');
         return;
     }
     
+    console.log('✅ Validación de envío exitosa');
+    
     // Obtener método seleccionado
     const shippingMethod = document.querySelector('input[name="shippingMethod"]:checked');
-    const postalCode = document.getElementById('codigoPostal').value;
+    
+    if (!shippingMethod) {
+        alert('Por favor, selecciona un método de envío antes de continuar.');
+        return;
+    }
+    
+    console.log('📦 Método de envío seleccionado:', shippingMethod.value);
+    
+    let postalCode;
+    
+    // Si es retiro en local, usar un código especial
+    if (shippingMethod.value === '0') {
+        postalCode = 'RETIRO_LOCAL';
+        console.log('🏪 Retiro en local seleccionado - usando código especial');
+    } else {
+        postalCode = document.getElementById('codigoPostal').value;
+        if (!postalCode) {
+            alert('Por favor, ingresa tu código postal antes de continuar.');
+            return;
+        }
+        console.log('📬 Código postal:', postalCode);
+    }
     
     // Obtener el costo de envío
     let shippingCost = 0;
@@ -843,20 +875,22 @@ function iniciarCompra() {
         }
     }
     
+    console.log('💰 Costo de envío:', shippingCost);
+    
     // Obtener nombre del método
     const label = document.querySelector(`label[for="${shippingMethod.id}"]`);
     const shippingName = label ? label.textContent.trim().split('\n')[0] : 'Envío';
+    
+    console.log('📝 Nombre del método:', shippingName);
     
     // Preparar datos con los nombres correctos que espera set-shipping.php
     const formData = new FormData();
     formData.append('shipping_method', shippingMethod.value);
     formData.append('shipping_cost', shippingCost);
     formData.append('shipping_name', shippingName);
+    formData.append('postal_code', postalCode);
     
-    // Solo enviar código postal si NO es retiro en local
-    if (shippingMethod.value !== '0') {
-        formData.append('postal_code', postalCode);
-    }
+    console.log('📤 Enviando datos al servidor...');
     
     // Enviar por AJAX
     fetch('ajax/set-shipping.php', {
@@ -865,16 +899,19 @@ function iniciarCompra() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('📥 Respuesta del servidor:', data);
         if (data.success) {
+            console.log('✅ Datos guardados, redirigiendo a checkout...');
             // Redirigir a checkout
             window.location.href = 'checkout.php';
         } else {
+            console.error('❌ Error del servidor:', data.message);
             alert('Error al guardar método de envío: ' + data.message);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Error al procesar la solicitud');
+        console.error('❌ Error de red:', error);
+        alert('Error al procesar la solicitud. Por favor, intenta nuevamente.');
     });
 }
 
@@ -1204,13 +1241,11 @@ function cambiarCodigoPostal() {
     formCP.style.display = 'block';
     confirmedCP.style.display = 'none';
     
-    // Ocultar opciones de envío y total
+    // Ocultar opciones de envío
     shippingOptions.style.display = 'none';
     
-    // Mostrar noCodigoPostal solo si NO está seleccionado retiro en local
-    if (!pickupOption || !pickupOption.checked) {
-        noCodigoPostal.style.display = 'block';
-    }
+    // Mostrar mensaje "No sé mi código postal"
+    noCodigoPostal.style.display = 'block';
     
     // Ocultar total solo si NO está seleccionado retiro en local
     if (!pickupOption || !pickupOption.checked) {
@@ -1248,18 +1283,14 @@ window.addEventListener('DOMContentLoaded', function() {
     // Verificar si el retiro en local está seleccionado al cargar
     const pickupOption = document.getElementById('multigamer360');
     if (pickupOption && pickupOption.checked) {
-        // Ocultar sección de código postal
-        const cpSection = document.querySelector('.mb-4:has(#codigoPostal)');
-        if (cpSection) {
-            cpSection.style.display = 'none';
-        }
+        console.log('🏪 Retiro en local detectado al cargar página');
         
         // Mostrar el total con envío $0
         updateShipping(0);
-        updateFormData('0', '');
+        updateFormData('0', 'RETIRO_LOCAL');
     } else if (userPostalCode && userPostalCode.length >= 4) {
         // Si hay código postal del usuario y no está seleccionado retiro, calcular automáticamente
-        console.log('Código postal detectado:', userPostalCode);
+        console.log('📬 Código postal detectado:', userPostalCode);
         
         // Simular click en el botón calcular después de un momento
         setTimeout(function() {
@@ -1286,33 +1317,15 @@ window.addEventListener('DOMContentLoaded', function() {
             const methodId = this.dataset.methodId || this.value;
             const methodName = this.dataset.methodName || '';
             
-            // Si es retiro en local (value = 0), ocultar código postal y mostrar total
+            // Si es retiro en local (value = 0), mostrar total inmediatamente
             if (this.value === '0' || methodId === '0') {
-                // Ocultar sección de código postal
-                const cpSection = document.querySelector('.mb-4:has(#codigoPostal)');
-                if (cpSection) {
-                    cpSection.style.display = 'none';
-                }
-                
-                // Ocultar mensaje de "No sé mi código postal"
-                const noCP = document.getElementById('noCodigoPostal');
-                if (noCP) noCP.style.display = 'none';
+                console.log('🏪 Retiro en local seleccionado');
                 
                 // Mostrar el total inmediatamente con envío $0
                 updateShipping(0);
                 
                 // Guardar datos del envío
-                updateFormData('0', '');
-            } else {
-                // Si selecciona envío a domicilio, mostrar código postal de nuevo
-                const cpSection = document.querySelector('.mb-4:has(#codigoPostal)');
-                if (cpSection) {
-                    cpSection.style.display = 'block';
-                }
-                
-                // Mostrar mensaje de "No sé mi código postal"
-                const noCP = document.getElementById('noCodigoPostal');
-                if (noCP) noCP.style.display = 'block';
+                updateFormData('0', 'RETIRO_LOCAL');
             }
             
             updateShippingSelection(parseFloat(cost), methodId, methodName);
