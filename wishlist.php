@@ -105,10 +105,20 @@ try {
         <?php if (!empty($wishlist_products)): ?>
         <div class="wishlist-actions-bar mt-4">
             <div class="row align-items-center">
-                <div class="col-12 text-center">
+                <div class="col-md-6">
                     <a href="productos.php" class="btn btn-outline-primary">
                         <i class="fas fa-plus"></i> Agregar más productos
                     </a>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group view-toggle" role="group">
+                        <button type="button" class="btn btn-outline-light active" id="view-grid" title="Vista cuadrícula">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-light" id="view-list" title="Vista lista">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -125,7 +135,7 @@ try {
             </a>
         </div>
     <?php else: ?>
-        <div class="row">
+        <div class="row" id="wishlist-container">
             <?php foreach ($wishlist_products as $product): ?>
                 <div class="col-md-4 col-lg-3 mb-4" id="product-<?php echo $product['id']; ?>">
                     <div class="wishlist-card">
@@ -171,7 +181,7 @@ try {
                             <button class="btn-remove-wishlist" 
                                     data-id="<?php echo $product['id']; ?>"
                                     title="Quitar de wishlist">
-                                <i class="fas fa-times"></i>
+                                <i class="fas fa-trash-alt"></i>
                             </button>
                             
                             <!-- Indicador de stock -->
@@ -473,6 +483,94 @@ try {
     to { transform: rotate(360deg); }
 }
 
+/* Toggle de vista */
+.view-toggle .btn {
+    padding: 8px 16px;
+}
+
+.view-toggle .btn.active {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.view-toggle .btn:not(.active) {
+    color: #999;
+}
+
+.view-toggle .btn:hover:not(.active) {
+    color: white;
+    border-color: #dc3545;
+}
+
+/* Vista Lista */
+#wishlist-container.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#wishlist-container.list-view .col-md-4,
+#wishlist-container.list-view .col-lg-3 {
+    max-width: 100%;
+    flex: 0 0 100%;
+}
+
+#wishlist-container.list-view .wishlist-card {
+    display: flex;
+    flex-direction: row;
+    height: auto;
+}
+
+#wishlist-container.list-view .wishlist-image-container {
+    width: 200px;
+    min-width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+}
+
+#wishlist-container.list-view .wishlist-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 30px;
+}
+
+#wishlist-container.list-view .product-title {
+    height: auto;
+    -webkit-line-clamp: 2;
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+}
+
+#wishlist-container.list-view .price-section {
+    margin-bottom: 15px;
+}
+
+#wishlist-container.list-view .current-price {
+    font-size: 1.8rem;
+}
+
+#wishlist-container.list-view .wishlist-actions {
+    width: 250px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    border-left: 1px solid #333;
+}
+
+#wishlist-container.list-view .action-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 15px;
+}
+
+#wishlist-container.list-view .btn-action {
+    padding: 15px;
+    font-size: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .wishlist-title {
@@ -494,6 +592,31 @@ try {
     
     .wishlist-image-container {
         height: 200px;
+    }
+    
+    .view-toggle {
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .wishlist-actions-bar .col-md-6 {
+        text-align: center;
+    }
+    
+    #wishlist-container.list-view .wishlist-card {
+        flex-direction: column;
+    }
+    
+    #wishlist-container.list-view .wishlist-image-container {
+        width: 100%;
+        height: 220px;
+    }
+    
+    #wishlist-container.list-view .wishlist-actions {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #333;
     }
     
     .wishlist-actions-bar .row {
@@ -547,6 +670,43 @@ document.addEventListener('DOMContentLoaded', function() {
             addToCart(productId, this);
         });
     });
+    
+    // Toggle entre vistas
+    const viewGrid = document.getElementById('view-grid');
+    const viewList = document.getElementById('view-list');
+    const container = document.getElementById('wishlist-container');
+    
+    // Cargar vista preferida guardada
+    const savedView = localStorage.getItem('wishlist-view') || 'grid';
+    if (savedView === 'list' && container) {
+        container.classList.add('list-view');
+        viewGrid?.classList.remove('active');
+        viewList?.classList.add('active');
+    }
+    
+    // Cambiar a vista grid
+    if (viewGrid) {
+        viewGrid.addEventListener('click', function() {
+            if (container) {
+                container.classList.remove('list-view');
+                viewGrid.classList.add('active');
+                viewList.classList.remove('active');
+                localStorage.setItem('wishlist-view', 'grid');
+            }
+        });
+    }
+    
+    // Cambiar a vista lista
+    if (viewList) {
+        viewList.addEventListener('click', function() {
+            if (container) {
+                container.classList.add('list-view');
+                viewList.classList.add('active');
+                viewGrid.classList.remove('active');
+                localStorage.setItem('wishlist-view', 'list');
+            }
+        });
+    }
 });
 
 function removeFromWishlist(productId, button) {
