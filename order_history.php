@@ -407,8 +407,15 @@ include 'includes/header.php';
     padding: 20px 30px;
     border-bottom: 1px solid #2a2a2a;
     vertical-align: middle;
-    color: white;
+    color: white !important;
     background: #0d0d0d;
+}
+
+.orders-table tbody td strong,
+.orders-table tbody td small,
+.orders-table tbody td span:not(.badge),
+.orders-table tbody td div {
+    color: inherit;
 }
 
 .orders-table tbody tr.order-row {
@@ -426,13 +433,17 @@ include 'includes/header.php';
 }
 
 .order-number strong {
-    color: #8B0000;
+    color: #DC143C !important;
     font-size: 1.1rem;
     font-weight: 700;
 }
 
 .order-date strong {
-    color: white;
+    color: #ffffff !important;
+}
+
+.order-date small {
+    color: #aaaaaa !important;
 }
 
 .status-badge {
