@@ -957,22 +957,39 @@ function updateShipping(shippingCost) {
     
     // Calcular total según la moneda
     const totalElement = document.getElementById('totalAmount');
+
+    // Descuento de cupón activo
+    const couponDiscount = (appliedCoupon && appliedCoupon.discount_amount)
+        ? parseFloat(appliedCoupon.discount_amount)
+        : 0;
+
+    // Mantener fila de descuento visible si hay cupón
+    if (couponDiscount > 0) {
+        let discountRow = document.getElementById('couponDiscountRow');
+        if (discountRow) {
+            discountRow.innerHTML = `
+                <span class="text-success"><i class="fas fa-tag me-1"></i>Descuento (${appliedCoupon.code}):</span>
+                <span class="text-success fw-bold">-$${Math.round(couponDiscount).toLocaleString('es-AR')} ${currentCurrency}</span>
+            `;
+        }
+    }
+
     if (totalElement) {
         if (currentCurrency === 'USD') {
             if (parseInt(shippingCost) > 0) {
                 // Mixto: productos en USD + envío en ARS
                 totalElement.innerHTML = `
-                    <span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>
+                    <span class="fs-6">$${Math.round(subtotal - couponDiscount).toLocaleString('es-AR')} USD</span>
                     <span class="fs-6"> + </span>
                     <span class="fs-6">$${parseInt(shippingCost).toLocaleString('es-AR')} ARS</span>
                 `;
             } else {
                 // Solo USD (envío gratis o retiro en local)
-                totalElement.innerHTML = `<span class="fs-6">$${Math.round(subtotal).toLocaleString('es-AR')} USD</span>`;
+                totalElement.innerHTML = `<span class="fs-6">$${Math.round(subtotal - couponDiscount).toLocaleString('es-AR')} USD</span>`;
             }
         } else {
             // Todo en ARS
-            let totalDisplay = subtotal + parseInt(shippingCost);
+            let totalDisplay = subtotal - couponDiscount + parseInt(shippingCost);
             totalElement.textContent = '$' + Math.round(totalDisplay).toLocaleString('es-AR');
         }
     }
@@ -980,7 +997,7 @@ function updateShipping(shippingCost) {
     // Mostrar precio con efectivo (solo si todo está en ARS)
     const totalWithTaxElement = document.getElementById('totalWithTax');
     if (currentCurrency === 'ARS') {
-        let totalDisplay = subtotal + parseInt(shippingCost);
+        let totalDisplay = subtotal - couponDiscount + parseInt(shippingCost);
         const totalWithCash = Math.floor(totalDisplay * 0.9);
         totalWithTaxElement.textContent = 'O $' + totalWithCash.toLocaleString('es-AR') + ' con Efectivo';
         totalWithTaxElement.style.display = 'block';
