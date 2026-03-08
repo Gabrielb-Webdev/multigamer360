@@ -755,7 +755,7 @@ require_once 'inc/header.php';
         let isEditMode = false;
         
         function toggleDiscountFields() {
-            const type = document.querySelector('select[name="type"]').value;
+            const type = document.getElementById('typeField').value;
             const maxDiscountField = document.getElementById('maxDiscountField');
             const valueField = document.getElementById('valueField');
             const valueHelp = document.getElementById('valueHelp');
@@ -790,7 +790,7 @@ require_once 'inc/header.php';
         function validatePercentageValue() {
             const valueField = document.getElementById('valueField');
             const valueHelp = document.getElementById('valueHelp');
-            const type = document.querySelector('select[name="type"]').value;
+            const type = document.getElementById('typeField').value;
             
             if (type === 'percentage') {
                 let value = parseFloat(valueField.value);
@@ -813,26 +813,26 @@ require_once 'inc/header.php';
         // Event listeners cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
             const valueField = document.getElementById('valueField');
-            const typeSelect = document.querySelector('select[name="type"]');
+            const typeField = document.getElementById('typeField');
             
             if (valueField) {
                 // Validar mientras escribe
                 valueField.addEventListener('input', function() {
-                    if (typeSelect.value === 'percentage') {
+                    if (typeField && typeField.value === 'percentage') {
                         validatePercentageValue();
                     }
                 });
                 
                 // Validar al perder foco
                 valueField.addEventListener('blur', function() {
-                    if (typeSelect.value === 'percentage') {
+                    if (typeField && typeField.value === 'percentage') {
                         validatePercentageValue();
                     }
                 });
                 
                 // Validar al cambiar
                 valueField.addEventListener('change', function() {
-                    if (typeSelect.value === 'percentage') {
+                    if (typeField && typeField.value === 'percentage') {
                         validatePercentageValue();
                     }
                 });
@@ -840,7 +840,7 @@ require_once 'inc/header.php';
                 // Validar al pegar
                 valueField.addEventListener('paste', function() {
                     setTimeout(function() {
-                        if (typeSelect.value === 'percentage') {
+                        if (typeField && typeField.value === 'percentage') {
                             validatePercentageValue();
                         }
                     }, 10);
@@ -848,10 +848,10 @@ require_once 'inc/header.php';
             }
             
             // Validar antes de submit
-            const form = document.querySelector('form[method="POST"]');
+            const form = document.getElementById('couponForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    const type = document.querySelector('select[name="type"]').value;
+                    const type = document.getElementById('typeField').value;
                     const value = parseFloat(valueField.value);
                     
                     if (type === 'percentage' && value > 100) {
