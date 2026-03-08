@@ -1,4 +1,19 @@
 <?php
+/**
+ * =====================================================
+ * MULTIGAMER360 - HISTORIAL DE PEDIDOS
+ * =====================================================
+ * Version: 1.0.1
+ * Fecha última modificación: 08 Mar 2026
+ *
+ * Descripción: Historial de pedidos del usuario logueado
+ * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.1 (08 Mar 2026):
+ * - Fix CRÍTICO: SELECT usaba columnas inexistentes (payment_status, shipped_at, delivered_at, tracking_number)
+ * - Query simplificada a columnas reales: id, order_number, status, payment_type, total_amount, notes, created_at
+ * - Eliminadas referencias a payment_status y tracking_number en el HTML de la tabla
+ */
 // Solo iniciar sesión si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -26,12 +41,10 @@ try {
             o.id,
             o.order_number,
             o.status,
-            o.payment_status,
+            o.payment_type,
             o.total_amount as total,
+            o.notes,
             o.created_at,
-            o.shipped_at,
-            o.delivered_at,
-            o.tracking_number,
             COUNT(oi.id) as item_count
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -178,11 +191,6 @@ include 'includes/header.php';
                             <td>
                                 <div class="order-number">
                                     <strong>#<?php echo htmlspecialchars($order['order_number']); ?></strong>
-                                    <?php if (!empty($order['tracking_number'])): ?>
-                                    <br><small class="text-muted">
-                                        <i class="fas fa-truck"></i> <?php echo htmlspecialchars($order['tracking_number']); ?>
-                                    </small>
-                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td>
@@ -195,9 +203,6 @@ include 'includes/header.php';
                                 <span class="badge bg-<?php echo getStatusColor($order['status']); ?> status-badge">
                                     <?php echo getStatusText($order['status']); ?>
                                 </span>
-                                <?php if ($order['payment_status'] !== 'paid'): ?>
-                                <br><small class="text-warning">
-                                    <i class="fas fa-exclamation-triangle"></i> Pago pendiente
                                 </small>
                                 <?php endif; ?>
                             </td>
