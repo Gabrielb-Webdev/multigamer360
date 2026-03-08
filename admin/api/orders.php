@@ -3,11 +3,15 @@
  * =====================================================
  * MULTIGAMER360 ADMIN - API PEDIDOS
  * =====================================================
- * Version: 1.0.1
+ * Version: 1.0.2
  * Fecha última modificación: 08 Mar 2026
  *
  * Descripción: API REST para gestión de pedidos (admin)
  * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.2 (08 Mar 2026):
+ * - Fix CRÍTICO: Auth checkeaba $_SESSION['user_role_level'] (no existe) → 401 siempre
+ * - Corregido a $_SESSION['is_admin'] que es lo que guarda auth.php
  *
  * Changelog v1.0.1 (08 Mar 2026):
  * - Fix: PUT fallaba porque allowed_fields incluía columnas inexistentes (payment_status, shipping_cost, discount_amount)
@@ -22,7 +26,7 @@ header('Content-Type: application/json');
 
 try {
     // Verificar autenticación
-    if (!isset($_SESSION['user_id']) || $_SESSION['user_role_level'] < 60) {
+    if (!isset($_SESSION['user_id']) || empty($_SESSION['is_admin'])) {
         http_response_code(401);
         echo json_encode(['success' => false, 'message' => 'No autorizado']);
         exit;
