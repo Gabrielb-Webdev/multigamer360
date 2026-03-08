@@ -749,18 +749,18 @@ function applyCoupon() {
     .then(data => {
         btn.disabled = false;
         if (data.success) {
-            appliedCoupon = data.coupon;
-            appliedCoupon.discount_amount = data.discount_amount;
+            appliedCoupon = data.coupon; // data.coupon ya incluye discount_amount
             btn.textContent = 'Quitar';
             input.readOnly = true;
             input.classList.add('border-success');
 
-            const discountFormatted = '$' + Math.round(data.discount_amount).toLocaleString('es-AR');
+            const discountAmount = parseFloat(data.coupon.discount_amount) || 0;
+            const discountFormatted = '$' + Math.round(discountAmount).toLocaleString('es-AR');
             showCouponFeedback('success',
                 `<i class="fas fa-check-circle me-1"></i><strong>${data.coupon.name}</strong> — Descuento: <strong>${discountFormatted} ${currentCurrency}</strong>`);
 
             // Recalcular totales con descuento
-            recalculateWithCoupon(data.discount_amount, currentCurrency);
+            recalculateWithCoupon(discountAmount, currentCurrency);
         } else {
             btn.textContent = 'Aplicar';
             showCouponFeedback('error', `<i class="fas fa-times-circle me-1"></i>${data.message}`);
