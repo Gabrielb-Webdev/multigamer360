@@ -48,12 +48,12 @@ try {
 // Cargar items (en try/catch separado para no redirigir si falla)
 try {
     $stmt = $pdo->prepare("
-        SELECT oi.id, oi.product_id, oi.product_name, oi.product_sku, oi.quantity, oi.price, oi.total,
+        SELECT oi.id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.subtotal as total,
                p.name as product_title,
                pi.filename as product_image
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
-        LEFT JOIN product_images pi ON pi.product_id = oi.product_id AND pi.is_main = 1
+        LEFT JOIN product_images pi ON pi.product_id = oi.product_id AND pi.is_primary = 1
         WHERE oi.order_id = ?
         ORDER BY oi.id
     ");
@@ -61,9 +61,8 @@ try {
     $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     error_log("Error cargando items en order_detail: " . $e->getMessage());
-    // Intentar query mínima sin JOIN de imágenes
     try {
-        $stmt2 = $pdo->prepare("SELECT id, product_id, product_name, product_sku, quantity, price, total FROM order_items WHERE order_id = ? ORDER BY id");
+        $stmt2 = $pdo->prepare("SELECT id, product_id, product_name, quantity, price, subtotal as total FROM order_items WHERE order_id = ? ORDER BY id");
         $stmt2->execute([$order_id]);
         $order_items = $stmt2->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e2) {
