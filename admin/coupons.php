@@ -13,6 +13,11 @@ require_once __DIR__ . '/../includes/notification_manager.php';
 
 // $userManager ya está disponible desde auth.php
 
+// Auto-migración: agregar columna currency si no existe
+try {
+    $pdo->exec("ALTER TABLE coupons ADD COLUMN currency VARCHAR(10) NOT NULL DEFAULT 'both'");
+} catch (PDOException $e) { /* columna ya existe */ }
+
 // Procesar acciones
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -32,9 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $start_date = str_replace('T', ' ', $_POST['start_date']) . ':00';
             $end_date = !empty($_POST['end_date']) ? str_replace('T', ' ', $_POST['end_date']) . ':00' : null;
             
+            $coupon_currency = in_array($_POST['currency'] ?? 'both', ['ARS', 'USD', 'both']) ? $_POST['currency'] : 'both';
+
             $stmt = $pdo->prepare("
-                INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active, notification_type) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO coupons (code, name, description, type, value, minimum_amount, maximum_discount, usage_limit, per_user_limit, start_date, end_date, is_active, notification_type, currency) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
             $stmt->execute([
@@ -50,7 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $start_date,
                 $end_date,
                 isset($_POST['is_active']) ? 1 : 0,
-                $notification_type
+                $notification_type,
+                $coupon_currency
             ]);
             
             $coupon_id = $pdo->lastInsertId();
@@ -97,12 +105,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $start_date = str_replace('T', ' ', $_POST['start_date']) . ':00';
             $end_date = !empty($_POST['end_date']) ? str_replace('T', ' ', $_POST['end_date']) . ':00' : null;
             
+            $coupon_currency = in_array($_POST['currency'] ?? 'both', ['ARS', 'USD', 'both']) ? $_POST['currency'] : 'both';
+
             $stmt = $pdo->prepare("
                 UPDATE coupons 
                 SET code = ?, name = ?, description = ?, type = ?, value = ?, 
                     minimum_amount = ?, maximum_discount = ?, usage_limit = ?, 
                     per_user_limit = ?, start_date = ?, end_date = ?, 
-                    is_active = ?, notification_type = ?
+                    is_active = ?, notification_type = ?, currency = ?
                 WHERE id = ?
             ");
             
@@ -120,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $end_date,
                 isset($_POST['is_active']) ? 1 : 0,
                 $notification_type,
+                $coupon_currency,
                 $coupon_id
             ]);
             
@@ -634,7 +645,7 @@ require_once 'inc/header.php';
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
                                     <label class="form-label">Tipo de Descuento *</label>
                                     <select class="form-select" name="type" id="typeField" required onchange="toggleDiscountFields()">
@@ -643,14 +654,25 @@ require_once 'inc/header.php';
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="mb-3">
                                     <label class="form-label">Valor del Descuento *</label>
-                                    <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="0.01" placeholder="10">
-                                    <div class="form-text" id="valueHelp">Porcentaje de descuento (ej: 10 para 10%)</div>
+                                    <input type="number" class="form-control" name="value" id="valueField" required min="0" max="100" step="1" placeholder="10">
+                                    <div class="form-text" id="valueHelp">Porcentaje de descuento (ej: 10 para 10%) — Máx 100%</div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Moneda del Cupón *</label>
+                                    <select class="form-select" name="currency" id="currencyField" required>
+                                        <option value="both">🌐 ARS + USD (ambas)</option>
+                                        <option value="ARS">🇦🇷 Solo ARS (pesos)</option>
+                                        <option value="USD">🇺🇸 Solo USD (dólares)</option>
+                                    </select>
+                                    <div class="form-text" id="currencyHelp">Moneda en la que aplica el descuento</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
                                 <div class="mb-3">
                                     <label class="form-label">Descuento Máximo</label>
                                     <input type="number" class="form-control" name="maximum_discount" min="0" step="0.01" id="maxDiscountField">
@@ -740,23 +762,24 @@ require_once 'inc/header.php';
             
             if (type === 'percentage') {
                 // Modo Porcentaje
-                maxDiscountField.style.display = 'block';
-                maxDiscountField.closest('.col-md-4').style.display = 'block';
+                maxDiscountField.closest('.col-md-3').style.display = 'block';
                 valueField.setAttribute('max', '100');
+                valueField.setAttribute('step', '1');
                 valueField.setAttribute('placeholder', '10');
                 valueField.dataset.type = 'percentage';
-                valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) - Máximo 100%';
+                valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) — Máx 100%';
+                valueHelp.classList.remove('text-danger');
                 
                 // Validar valor actual
                 validatePercentageValue();
             } else {
                 // Modo Monto Fijo
-                maxDiscountField.style.display = 'none';
-                maxDiscountField.closest('.col-md-4').style.display = 'none';
+                maxDiscountField.closest('.col-md-3').style.display = 'none';
                 valueField.removeAttribute('max');
-                valueField.setAttribute('placeholder', '500.00');
+                valueField.setAttribute('step', '1');
+                valueField.setAttribute('placeholder', '5000');
                 valueField.dataset.type = 'fixed';
-                valueHelp.textContent = 'Monto fijo de descuento en pesos - Sin límite';
+                valueHelp.textContent = 'Monto fijo de descuento — Sin límite';
                 
                 // Remover estilos de error
                 valueField.classList.remove('is-invalid');
@@ -770,20 +793,20 @@ require_once 'inc/header.php';
             const type = document.querySelector('select[name="type"]').value;
             
             if (type === 'percentage') {
-                const value = parseFloat(valueField.value);
+                let value = parseFloat(valueField.value);
+                
+                if (isNaN(value)) return;
                 
                 if (value > 100) {
-                    valueField.classList.add('is-invalid');
-                    valueHelp.textContent = '⚠️ El porcentaje no puede ser mayor a 100%';
-                    valueHelp.classList.add('text-danger');
                     valueField.value = 100;
+                    value = 100;
                 } else if (value < 0) {
                     valueField.value = 0;
-                } else {
-                    valueField.classList.remove('is-invalid');
-                    valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) - Máximo 100%';
-                    valueHelp.classList.remove('text-danger');
+                    value = 0;
                 }
+                valueField.classList.remove('is-invalid');
+                valueHelp.textContent = 'Porcentaje de descuento (ej: 10 para 10%) — Máx 100%';
+                valueHelp.classList.remove('text-danger');
             }
         }
         
@@ -929,6 +952,7 @@ require_once 'inc/header.php';
             
             document.getElementById('notificationType').value = coupon.notification_type || 'private';
             document.getElementById('isActiveCheck').checked = coupon.is_active == 1;
+            document.getElementById('currencyField').value = coupon.currency || 'both';
             
             // Actualizar campos dinámicos
             toggleDiscountFields();
@@ -968,6 +992,7 @@ require_once 'inc/header.php';
                     // Restaurar valores por defecto
                     document.getElementById('typeField').value = 'percentage';
                     document.getElementById('isActiveCheck').checked = true;
+                    document.getElementById('currencyField').value = 'both';
                     
                     toggleDiscountFields();
                     updateNotificationHelp();

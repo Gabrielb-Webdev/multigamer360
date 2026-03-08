@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $coupon_code = strtoupper(trim($_POST['coupon_code'] ?? ''));
 $cart_total = floatval($_POST['cart_total'] ?? 0);
+$cart_currency = in_array(strtoupper($_POST['cart_currency'] ?? 'ARS'), ['ARS', 'USD']) ? strtoupper($_POST['cart_currency']) : 'ARS';
 $user_id = $_SESSION['user_id'];
 
 if (empty($coupon_code)) {
@@ -37,6 +38,14 @@ try {
 
     if (!$coupon) {
         echo json_encode(['success' => false, 'message' => 'Cupón inválido o expirado']);
+        exit;
+    }
+
+    // Verificar moneda del cupón
+    $coupon_currency = $coupon['currency'] ?? 'both';
+    if ($coupon_currency !== 'both' && $coupon_currency !== $cart_currency) {
+        $currency_name = $coupon_currency === 'ARS' ? 'pesos argentinos (ARS)' : 'dólares (USD)';
+        echo json_encode(['success' => false, 'message' => "Este cupón solo aplica para pagos en {$currency_name}"]);
         exit;
     }
 
