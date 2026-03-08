@@ -412,13 +412,23 @@ include 'includes/header.php';
 .orders-table tbody td {
     border: none;
     padding: 20px 30px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #2a2a2a;
     vertical-align: middle;
     color: white;
+    background: #0d0d0d;
+}
+
+.orders-table tbody tr.order-row {
+    background: #0d0d0d;
+}
+
+.orders-table .order-row:hover td {
+    background: #1a0505;
+    transition: all 0.3s ease;
 }
 
 .orders-table .order-row:hover {
-    background: rgba(139, 0, 0, 0.1);
+    background: #1a0505;
     transition: all 0.3s ease;
 }
 
@@ -735,6 +745,7 @@ include 'includes/header.php';
 .order-row {
     transition: all 0.3s ease;
     position: relative;
+    background: #0d0d0d !important;
 }
 
 .order-row::before {
