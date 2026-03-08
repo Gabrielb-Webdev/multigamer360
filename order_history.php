@@ -3,11 +3,15 @@
  * =====================================================
  * MULTIGAMER360 - HISTORIAL DE PEDIDOS
  * =====================================================
- * Version: 1.0.1
+ * Version: 1.0.2
  * Fecha última modificación: 08 Mar 2026
  *
  * Descripción: Historial de pedidos del usuario logueado
  * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.2 (08 Mar 2026):
+ * - Nueva columna de miniaturas de productos: 1 imagen full, 2 = mitad/mitad, 3 = featured+2, 4 = 2x2 grid
+ * - GROUP_CONCAT para obtener hasta 4 imágenes por pedido vía product_images
  *
  * Changelog v1.0.1 (08 Mar 2026):
  * - Fix CRÍTICO: SELECT usaba columnas inexistentes (payment_status, shipped_at, delivered_at, tracking_number)
@@ -45,9 +49,12 @@ try {
             o.total_amount as total,
             o.notes,
             o.created_at,
-            COUNT(oi.id) as item_count
+            COUNT(DISTINCT oi.id) as item_count,
+            GROUP_CONCAT(DISTINCT pi.image_url ORDER BY oi.id ASC SEPARATOR '|') as product_imgs
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        LEFT JOIN product_images pi ON pi.product_id = oi.product_id AND pi.is_primary = 1
         WHERE o.user_id = ?
         GROUP BY o.id
         ORDER BY o.created_at DESC
@@ -86,6 +93,25 @@ function getStatusText($status) {
         case 'cancelled': return 'Cancelado';
         default: return 'Desconocido';
     }
+}
+
+// Función para renderizar miniaturas de productos del pedido (máx 4)
+function renderOrderThumbnails($product_imgs) {
+    if (empty($product_imgs)) {
+        return '<div class="order-thumb-placeholder"><i class="fas fa-gamepad"></i></div>';
+    }
+    $imgs = array_values(array_filter(array_slice(explode('|', $product_imgs), 0, 4)));
+    $count = count($imgs);
+    if ($count === 0) {
+        return '<div class="order-thumb-placeholder"><i class="fas fa-gamepad"></i></div>';
+    }
+    $html = '<div class="order-thumbnails count-' . $count . '">';
+    foreach ($imgs as $img) {
+        $safe = htmlspecialchars($img, ENT_QUOTES, 'UTF-8');
+        $html .= '<div class="thumb-item"><img src="uploads/products/' . $safe . '" alt="Producto" loading="lazy"></div>';
+    }
+    $html .= '</div>';
+    return $html;
 }
 
 include 'includes/header.php';
@@ -150,6 +176,7 @@ include 'includes/header.php';
                 <table class="table orders-table">
                     <thead>
                         <tr>
+                            <th class="order-img-th"></th>
                             <th>Pedido #</th>
                             <th>Fecha</th>
                             <th>Estado</th>
@@ -162,7 +189,7 @@ include 'includes/header.php';
                         <?php if (empty($orders)): ?>
                         <!-- Estado vacío -->
                         <tr>
-                            <td colspan="6">
+                            <td colspan="7">
                                 <div class="empty-state">
                                     <div class="empty-icon">
                                         <i class="fas fa-shopping-cart"></i>
@@ -188,6 +215,9 @@ include 'includes/header.php';
                         <!-- Lista de pedidos -->
                         <?php foreach ($orders as $order): ?>
                         <tr class="order-row" data-status="<?php echo $order['status']; ?>">
+                            <td class="order-thumb-cell">
+                                <?php echo renderOrderThumbnails($order['product_imgs'] ?? ''); ?>
+                            </td>
                             <td>
                                 <div class="order-number">
                                     <strong>#<?php echo htmlspecialchars($order['order_number']); ?></strong>
@@ -479,6 +509,82 @@ include 'includes/header.php';
 .order-actions .btn-outline-danger:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Miniaturas de productos en la tabla de pedidos */
+.order-img-th {
+    width: 90px;
+    padding-left: 20px !important;
+}
+
+.order-thumb-cell {
+    padding: 12px 8px 12px 20px !important;
+}
+
+.order-thumbnails {
+    width: 74px;
+    height: 74px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: grid;
+    gap: 2px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.order-thumbnails.count-1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+.order-thumbnails.count-2 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+}
+
+.order-thumbnails.count-3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.order-thumbnails.count-3 .thumb-item:first-child {
+    grid-column: 1 / -1;
+}
+
+.order-thumbnails.count-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.thumb-item {
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    font-size: 0.75rem;
+    color: #555;
+}
+
+.thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.order-thumb-placeholder {
+    width: 74px;
+    height: 74px;
+    border-radius: 8px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    font-size: 1.4rem;
 }
 
 /* Estado vacío */
