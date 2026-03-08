@@ -264,11 +264,11 @@ include 'includes/header.php';
                             </td>
                             <td>
                                 <div class="order-actions">
-                                    <button class="btn btn-sm btn-outline-primary" 
-                                            onclick="viewOrderDetails(<?php echo $order['id']; ?>)"
-                                            title="Ver detalles">
+                                    <a href="order_detail.php?id=<?php echo $order['id']; ?>"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Ver detalles">
                                         <i class="fas fa-eye"></i>
-                                    </button>
+                                    </a>
                                     <?php if ($order['status'] === 'delivered'): ?>
                                     <button class="btn btn-sm btn-outline-success ms-1" 
                                             onclick="reorderItems(<?php echo $order['id']; ?>)"

@@ -39,12 +39,21 @@ try {
         header('Location: order_history.php');
         exit;
     }
+} catch (Exception $e) {
+    error_log("Error cargando pedido en order_detail: " . $e->getMessage());
+    header('Location: order_history.php');
+    exit;
+}
 
-    // Cargar items con imagen principal
+// Cargar items (en try/catch separado para no redirigir si falla)
+try {
     $stmt = $pdo->prepare("
         SELECT oi.*,
                p.name as product_title,
-               (SELECT filename FROM product_images pi WHERE pi.product_id = oi.product_id AND pi.is_primary = 1 LIMIT 1) as product_image
+               COALESCE(
+                   (SELECT pi.filename FROM product_images pi WHERE pi.product_id = oi.product_id AND pi.is_primary = 1 LIMIT 1),
+                   (SELECT pi.filename FROM product_images pi WHERE pi.product_id = oi.product_id ORDER BY pi.id ASC LIMIT 1)
+               ) as product_image
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE oi.order_id = ?
@@ -52,11 +61,9 @@ try {
     ");
     $stmt->execute([$order_id]);
     $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (Exception $e) {
-    error_log("Error al cargar detalle de pedido: " . $e->getMessage());
-    header('Location: order_history.php');
-    exit;
+    error_log("Error cargando items en order_detail: " . $e->getMessage());
+    $order_items = []; // Mostrar página sin items en vez de redirigir
 }
 
 // Parsear notes JSON
