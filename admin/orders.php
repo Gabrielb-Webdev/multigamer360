@@ -3,11 +3,16 @@
  * =====================================================
  * MULTIGAMER360 ADMIN - GESTIÓN DE PEDIDOS
  * =====================================================
- * Version: 1.0.1
+ * Version: 1.0.2
  * Fecha última modificación: 08 Mar 2026
  *
  * Descripción: Listado y filtrado de pedidos en el panel de administración
  * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.2 (08 Mar 2026):
+ * - UX: Columna ESTADO reemplazada por <select> inline con colores por estado
+ * - UX: Eliminado botón engranaje y popup de confirmación — cambio directo sin recarga
+ * - UX: Select se deshabilita mientras guarda y revierte si hay error
  *
  * Changelog v1.0.1 (08 Mar 2026):
  * - Fix: Búsqueda usaba CONCAT(customer_first_name, customer_last_name) - columnas inexistentes
@@ -356,20 +361,31 @@ try {
                                 <?php endif; ?>
                             </td>
                             <td>
+                                <?php if (hasPermission('orders', 'update')): ?>
+                                <select class="form-select form-select-sm status-select" 
+                                        data-order-id="<?php echo $order['id']; ?>"
+                                        onchange="updateOrderStatus(this)">
+                                    <option value="pending"     <?php echo $order['status']==='pending'     ? 'selected':'' ?>>Pendiente</option>
+                                    <option value="processing"  <?php echo $order['status']==='processing'  ? 'selected':'' ?>>Procesando</option>
+                                    <option value="shipped"     <?php echo $order['status']==='shipped'     ? 'selected':'' ?>>Enviado</option>
+                                    <option value="delivered"   <?php echo $order['status']==='delivered'   ? 'selected':'' ?>>Entregado</option>
+                                    <option value="completed"   <?php echo $order['status']==='completed'   ? 'selected':'' ?>>Completado</option>
+                                    <option value="cancelled"   <?php echo $order['status']==='cancelled'   ? 'selected':'' ?>>Cancelado</option>
+                                </select>
+                                <?php else: ?>
                                 <?php
                                 $status_config = [
-                                    'pending' => ['class' => 'bg-warning text-dark', 'text' => 'Pendiente'],
-                                    'processing' => ['class' => 'bg-info', 'text' => 'Procesando'],
-                                    'shipped' => ['class' => 'bg-primary', 'text' => 'Enviado'],
-                                    'delivered' => ['class' => 'bg-success', 'text' => 'Entregado'],
-                                    'cancelled' => ['class' => 'bg-danger', 'text' => 'Cancelado'],
-                                    'completed' => ['class' => 'bg-success', 'text' => 'Completado']
+                                    'pending'    => ['class' => 'bg-warning text-dark', 'text' => 'Pendiente'],
+                                    'processing' => ['class' => 'bg-info',              'text' => 'Procesando'],
+                                    'shipped'    => ['class' => 'bg-primary',           'text' => 'Enviado'],
+                                    'delivered'  => ['class' => 'bg-success',           'text' => 'Entregado'],
+                                    'cancelled'  => ['class' => 'bg-danger',            'text' => 'Cancelado'],
+                                    'completed'  => ['class' => 'bg-success',           'text' => 'Completado'],
                                 ];
-                                $status_info = $status_config[$order['status']] ?? ['class' => 'bg-secondary', 'text' => ucfirst($order['status'])];
+                                $status_info = $status_config[$order['status']] ?? ['class'=>'bg-secondary','text'=>ucfirst($order['status'])];
                                 ?>
-                                <span class="badge <?php echo $status_info['class']; ?>">
-                                    <?php echo $status_info['text']; ?>
-                                </span>
+                                <span class="badge <?php echo $status_info['class']; ?>"><?php echo $status_info['text']; ?></span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php
@@ -398,31 +414,6 @@ try {
                                        data-bs-toggle="tooltip" title="Ver detalles">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    
-                                    <?php if (hasPermission('orders', 'update')): ?>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                                data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-cog"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'processing')">
-                                                <i class="fas fa-cog me-2"></i>Marcar como Procesando
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'shipped')">
-                                                <i class="fas fa-shipping-fast me-2"></i>Marcar como Enviado
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'delivered')">
-                                                <i class="fas fa-check-circle me-2"></i>Marcar como Entregado
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'cancelled')">
-                                                <i class="fas fa-times me-2"></i>Cancelar Pedido
-                                            </a></li>
-                                        </ul>
-                                    </div>
-                                    <?php endif; ?>
-                                    
                                     <button type="button" class="btn btn-sm btn-outline-info" 
                                             onclick="printOrder(<?php echo $order['id']; ?>)"
                                             data-bs-toggle="tooltip" title="Imprimir">
@@ -485,12 +476,49 @@ try {
     </div>
 </div>
 
+<style>
+.status-select {
+    min-width: 130px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.status-select:disabled { opacity: 0.6; cursor: wait; }
+.status-select option { background: #fff; color: #212529; font-weight: normal; }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Configurar selección múltiple
     if (typeof TableManager !== 'undefined') {
         TableManager.setupBulkActions('.table');
     }
+
+    // Colorear selects de estado según valor actual
+    const statusColors = {
+        pending:    'bg-warning text-dark',
+        processing: 'bg-info text-white',
+        shipped:    'bg-primary text-white',
+        delivered:  'bg-success text-white',
+        completed:  'bg-success text-white',
+        cancelled:  'bg-danger text-white'
+    };
+    document.querySelectorAll('.status-select').forEach(function(sel) {
+        const cls = statusColors[sel.value] || '';
+        if (cls) sel.classList.add(...cls.split(' '));
+        sel.dataset.prev = sel.value;
+        // Actualizar color al cambiar
+        sel.addEventListener('change', function() {
+            // Quitar colores anteriores
+            Object.values(statusColors).forEach(c => c.split(' ').forEach(k => sel.classList.remove(k)));
+            const newCls = statusColors[sel.value] || '';
+            if (newCls) sel.classList.add(...newCls.split(' '));
+        });
+    });
     
     // Auto-refresh cada 30 segundos si hay pedidos pendientes
     if (<?php echo $stats['pending_orders']; ?> > 0) {
@@ -522,42 +550,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }); // Fin DOMContentLoaded
 
-// Actualizar estado de pedido individual
-function updateOrderStatus(orderId, status) {
-    const statusNames = {
-        'processing': 'Procesando',
-        'shipped': 'Enviado', 
-        'delivered': 'Entregado',
-        'cancelled': 'Cancelado',
-        'completed': 'Completado'
-    };
-    
-    Utils.confirm(`¿Cambiar estado del pedido a "${statusNames[status]}"?`, function() {
-        fetch('api/orders.php', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': AdminPanel.csrfToken
-            },
-            body: JSON.stringify({ 
-                id: orderId, 
-                status: status,
-                csrf_token: AdminPanel.csrfToken
-            })
+// Actualizar estado de pedido — inline select
+function updateOrderStatus(selectEl) {
+    const orderId = selectEl.dataset.orderId;
+    const status  = selectEl.value;
+    const prevValue = selectEl.dataset.prev || selectEl.value;
+
+    selectEl.disabled = true;
+
+    fetch('api/orders.php', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': AdminPanel.csrfToken
+        },
+        body: JSON.stringify({
+            id: orderId,
+            status: status,
+            csrf_token: AdminPanel.csrfToken
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Utils.showToast('Estado actualizado correctamente', 'success');
-                location.reload();
-            } else {
-                Utils.showToast(data.message || 'Error al actualizar estado', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Utils.showToast('Error de conexión', 'danger');
-        });
+    })
+    .then(r => r.json())
+    .then(data => {
+        selectEl.disabled = false;
+        if (data.success) {
+            selectEl.dataset.prev = status;
+            // Colorear el select según el estado
+            const colors = {
+                pending:    'bg-warning text-dark',
+                processing: 'bg-info text-white',
+                shipped:    'bg-primary text-white',
+                delivered:  'bg-success text-white',
+                completed:  'bg-success text-white',
+                cancelled:  'bg-danger text-white'
+            };
+            selectEl.className = 'form-select form-select-sm status-select ' + (colors[status] || '');
+            Utils.showToast('Estado actualizado', 'success');
+        } else {
+            selectEl.value = prevValue;
+            Utils.showToast(data.message || 'Error al actualizar estado', 'danger');
+        }
+    })
+    .catch(() => {
+        selectEl.disabled = false;
+        selectEl.value = prevValue;
+        Utils.showToast('Error de conexión', 'danger');
     });
 }
 
