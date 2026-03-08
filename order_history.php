@@ -71,6 +71,16 @@ try {
     $orders = [];
 }
 
+// Obtener tipo de cambio ARS -> USD
+$exchange_rate = 1200;
+try {
+    $stmt_rate = $pdo->query("SELECT exchange_rate FROM currency_settings WHERE currency_code = 'USD' LIMIT 1");
+    $rate_row = $stmt_rate ? $stmt_rate->fetch(PDO::FETCH_ASSOC) : null;
+    if ($rate_row && $rate_row['exchange_rate'] > 0) {
+        $exchange_rate = (float)$rate_row['exchange_rate'];
+    }
+} catch (Exception $e) { /* tabla puede no existir, usar default */ }
+
 // Función para obtener el color del estado
 function getStatusColor($status) {
     switch($status) {
@@ -131,15 +141,19 @@ include 'includes/header.php';
                 </p>
             </div>
             <div class="col-md-4 text-end">
-                <div class="order-stats">
+                <div class="order-stats flex-wrap">
                     <div class="stat-item">
                         <span class="stat-number"><?php echo $total_orders; ?></span>
-                        <span class="stat-label">Pedidos Totales</span>
+                        <span class="stat-label">Pedidos</span>
                     </div>
                     <?php if ($total_orders > 0): ?>
-                    <div class="stat-item ms-4">
-                        <span class="stat-number">$<?php echo number_format($total_spent, 2); ?></span>
-                        <span class="stat-label">Total Gastado</span>
+                    <div class="stat-item ms-3">
+                        <span class="stat-number stat-number-sm">$<?php echo number_format($total_spent, 0, ',', '.'); ?></span>
+                        <span class="stat-label">Total ARS</span>
+                    </div>
+                    <div class="stat-item ms-3">
+                        <span class="stat-number stat-number-sm">U$S <?php echo number_format($total_spent / $exchange_rate, 0, ',', '.'); ?></span>
+                        <span class="stat-label">Total USD</span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -234,7 +248,19 @@ include 'includes/header.php';
                                 </span>
                             </td>
                             <td>
-                                <strong class="order-total">$<?php echo number_format($order['total'], 2); ?></strong>
+                                <?php
+                                    $order_notes_parsed = json_decode($order['notes'] ?? '{}', true) ?: [];
+                                    $order_currency = $order_notes_parsed['currency'] ?? 'ARS';
+                                    if ($order_currency === 'USD') {
+                                        $display_total = 'U$S ' . number_format($order['total'] / $exchange_rate, 0, ',', '.');
+                                        $alt_total = '$' . number_format($order['total'], 0, ',', '.') . ' ARS';
+                                    } else {
+                                        $display_total = '$' . number_format($order['total'], 0, ',', '.');
+                                        $alt_total = 'U$S ' . number_format($order['total'] / $exchange_rate, 0, ',', '.') . ' USD';
+                                    }
+                                ?>
+                                <strong class="order-total"><?php echo $display_total; ?></strong>
+                                <br><small class="order-total-alt"><?php echo $alt_total; ?></small>
                             </td>
                             <td>
                                 <div class="order-actions">
@@ -323,6 +349,9 @@ include 'includes/header.php';
 .order-stats {
     display: flex;
     justify-content: flex-end;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px 0;
 }
 
 .stat-item {
@@ -335,6 +364,10 @@ include 'includes/header.php';
     font-weight: bold;
     color: #8B0000;
     line-height: 1;
+}
+
+.stat-number-sm {
+    font-size: 1.3rem !important;
 }
 
 .stat-label {
@@ -483,9 +516,16 @@ include 'includes/header.php';
 }
 
 .order-total {
-    color: #8B0000;
-    font-size: 1.2rem;
+    color: #DC143C;
+    font-size: 1.1rem;
     font-weight: 700;
+    display: block;
+}
+
+.order-total-alt {
+    color: #888888;
+    font-size: 0.8rem;
+    font-weight: 400;
 }
 
 .order-actions {
@@ -796,10 +836,7 @@ function filterOrders() {
 
 // Función para ver detalles del pedido
 function viewOrderDetails(orderId) {
-    // Por ahora mostrar alert, después se puede crear una página de detalles
-    showNotification('Redirigiendo a detalles del pedido #' + orderId, 'info');
-    // TODO: Implementar página de detalles
-    // window.location.href = 'order-details.php?id=' + orderId;
+    window.location.href = 'order_detail.php?id=' + orderId;
 }
 
 // Función para volver a pedir

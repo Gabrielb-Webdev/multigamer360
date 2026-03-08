@@ -301,13 +301,15 @@ try {
         $shipping_address_full = $address . ', ' . $city . ', ' . $province . ' - CP: ' . $zipCode;
     }
 
-    // Guardar datos extra en notes (subtotal, descuentos, envío, método de pago)
+    // Guardar datos extra en notes (subtotal, descuentos, envío, método de pago, moneda)
+    $order_currency = in_array($_POST['order_currency'] ?? '', ['ARS', 'USD']) ? $_POST['order_currency'] : 'ARS';
     $notes_data = [
         'payment_name'    => $payment_name,
         'subtotal'        => $subtotal,
         'shipping_cost'   => $shippingCost,
         'shipping_name'   => $shippingName,
         'coupon_discount' => $coupon_discount,
+        'currency'        => $order_currency,
     ];
     if ($coupon_data) {
         $notes_data['coupon_code'] = $coupon_data['code'];

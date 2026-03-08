@@ -790,6 +790,10 @@ select.form-control option {
                             </div>
                         </div>
 
+                        <!-- Moneda al momento del pedido (se rellena desde localStorage) -->
+                        <input type="hidden" name="order_currency" id="order_currency" value="ARS">
+                        <script>document.getElementById('order_currency').value = localStorage.getItem('currency') || 'ARS';</script>
+
                         <!-- Método de Pago -->
                         <div class="payment-section">
                             <h4><i class="fas fa-credit-card"></i> Método de Pago</h4>
