@@ -407,22 +407,27 @@ try {
         }
     }
     
-    // Guardar uso de cupón si existe
+    // Guardar uso de cupón si existe (protegido para no bloquear el checkout)
     if ($coupon_data && $coupon_discount > 0) {
-        $stmt = $pdo->prepare("
-            INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount, created_at) 
-            VALUES (?, ?, ?, ?, NOW())
-        ");
-        $stmt->execute([
-            $coupon_data['id'],
-            $user_id,
-            $inserted_order_id,
-            $coupon_discount
-        ]);
-        
-        // Incrementar contador de uso del cupón
-        $stmt = $pdo->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
-        $stmt->execute([$coupon_data['id']]);
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount, created_at) 
+                VALUES (?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([
+                $coupon_data['id'],
+                $user_id,
+                $inserted_order_id,
+                $coupon_discount
+            ]);
+            
+            // Incrementar contador de uso del cupón
+            $stmt = $pdo->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
+            $stmt->execute([$coupon_data['id']]);
+        } catch (Exception $e) {
+            error_log("Warning: Could not save coupon usage: " . $e->getMessage());
+            // No bloquear el checkout si falla el registro de uso del cupón
+        }
     }
     
     // Confirmar transacción

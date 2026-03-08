@@ -722,6 +722,15 @@ select.form-control option {
             <h1>Finalizar Compra</h1>
         </div>
 
+        <?php if (!empty($_SESSION['checkout_error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert" style="border-radius:8px; font-weight:500;">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <?php echo htmlspecialchars($_SESSION['checkout_error']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['checkout_error']); ?>
+        <?php endif; ?>
+
         <div class="row">
             <!-- Resumen del Pedido -->
             <div class="col-lg-5">
