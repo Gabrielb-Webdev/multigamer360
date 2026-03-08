@@ -48,14 +48,12 @@ try {
 // Cargar items (en try/catch separado para no redirigir si falla)
 try {
     $stmt = $pdo->prepare("
-        SELECT oi.*,
+        SELECT oi.id, oi.product_id, oi.product_name, oi.product_sku, oi.quantity, oi.price, oi.total,
                p.name as product_title,
-               COALESCE(
-                   (SELECT pi.filename FROM product_images pi WHERE pi.product_id = oi.product_id AND pi.is_primary = 1 LIMIT 1),
-                   (SELECT pi.filename FROM product_images pi WHERE pi.product_id = oi.product_id ORDER BY pi.id ASC LIMIT 1)
-               ) as product_image
+               pi.filename as product_image
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
+        LEFT JOIN product_images pi ON pi.product_id = oi.product_id AND pi.is_main = 1
         WHERE oi.order_id = ?
         ORDER BY oi.id
     ");
@@ -63,7 +61,14 @@ try {
     $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     error_log("Error cargando items en order_detail: " . $e->getMessage());
-    $order_items = []; // Mostrar página sin items en vez de redirigir
+    // Intentar query mínima sin JOIN de imágenes
+    try {
+        $stmt2 = $pdo->prepare("SELECT id, product_id, product_name, product_sku, quantity, price, total FROM order_items WHERE order_id = ? ORDER BY id");
+        $stmt2->execute([$order_id]);
+        $order_items = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e2) {
+        $order_items = [];
+    }
 }
 
 // Parsear notes JSON
@@ -203,7 +208,7 @@ include 'includes/header.php';
                                 </div>
                             </div>
                             <div class="od-item-total">
-                                <?php echo fmtMoney($item['price'] * $item['quantity'], $order_currency, $exchange_rate); ?>
+                                <?php echo fmtMoney($item['total'] ?? ($item['price'] * $item['quantity']), $order_currency, $exchange_rate); ?>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -264,9 +269,23 @@ include 'includes/header.php';
                         <span class="od-info-value"><?php echo htmlspecialchars($payment_name); ?></span>
                     </div>
                     <?php if (!empty($order['shipping_address'])): ?>
+                    <?php
+                        // Limpiar el valor de la dirección
+                        $raw_addr = $order['shipping_address'];
+                        if (
+                            stripos($raw_addr, 'RETIRO_LOCAL') !== false ||
+                            stripos($raw_addr, 'retiro en tienda') !== false
+                        ) {
+                            $display_addr = 'Retiro en tienda';
+                        } else {
+                            // Quitar posible "; CP: RETIRO_LOCAL" al final si quedara
+                            $display_addr = preg_replace('/\s*-?\s*CP:\s*RETIRO_LOCAL\s*/i', '', $raw_addr);
+                            $display_addr = trim($display_addr, ' -,');
+                        }
+                    ?>
                     <div class="od-info-row">
                         <span class="od-info-label"><i class="fas fa-map-marker-alt me-2"></i>Dirección de envío</span>
-                        <span class="od-info-value"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></span>
+                        <span class="od-info-value"><?php echo nl2br(htmlspecialchars($display_addr)); ?></span>
                     </div>
                     <?php else: ?>
                     <div class="od-info-row">
