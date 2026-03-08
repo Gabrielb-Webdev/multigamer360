@@ -189,7 +189,7 @@ require_once 'includes/header.php';
     }
     
     /* Asegurar que las cards tengan la misma altura */
-    .row > [class*='col-'] {
+    .confirmation-grid > [class*='col-'] {
         display: flex;
     }
     
@@ -598,8 +598,7 @@ require_once 'includes/header.php';
             <p class="order-id">ID de Orden: <?php echo htmlspecialchars($order['order_id']); ?></p>
         </div>
 
-        <div class="row">
-            <!-- Información del Cliente -->
+        <div class="row confirmation-grid">
             <div class="col-md-6">
                 <div class="confirmation-card">
                     <h3 class="section-title"><i class="fas fa-user"></i> Información del Cliente</h3>
