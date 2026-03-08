@@ -1,4 +1,19 @@
 <?php
+/**
+ * =====================================================
+ * MULTIGAMER360 ADMIN - API PEDIDOS
+ * =====================================================
+ * Version: 1.0.1
+ * Fecha última modificación: 08 Mar 2026
+ *
+ * Descripción: API REST para gestión de pedidos (admin)
+ * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.1 (08 Mar 2026):
+ * - Fix: PUT fallaba porque allowed_fields incluía columnas inexistentes (payment_status, shipping_cost, discount_amount)
+ * - Fix: INSERT en order_status_history y order_notes lanzaba excepción si las tablas no existen — ahora en try/catch
+ * - Fix: Notificación por email también en try/catch para no bloquear la actualización
+ */
 session_start();
 require_once '../inc/auth.php';
 require_once '../../config/database.php';
@@ -255,8 +270,8 @@ function handlePut() {
             throw new Exception('ID(s) de pedido requerido(s)');
         }
         
-        // Campos permitidos para actualización
-        $allowed_fields = ['status', 'payment_status', 'shipping_cost', 'discount_amount', 'notes'];
+        // Campos permitidos para actualización (solo columnas que existen en la BD)
+        $allowed_fields = ['status', 'notes'];
         $update_fields = [];
         $params = [];
         
@@ -281,45 +296,58 @@ function handlePut() {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         
-        // Registrar historial de estado si se cambió el estado
+        // Registrar historial de estado si se cambió el estado (solo si la tabla existe)
         if (isset($input['status'])) {
-            foreach ($order_ids as $order_id) {
-                // Obtener estado anterior
-                $old_status_stmt = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
-                $old_status_stmt->execute([$order_id]);
-                $old_status = $old_status_stmt->fetchColumn();
-                
-                if ($old_status && $old_status !== $input['status']) {
-                    $history_stmt = $pdo->prepare("
-                        INSERT INTO order_status_history (order_id, old_status, new_status, admin_id, note, created_at)
-                        VALUES (?, ?, ?, ?, ?, NOW())
-                    ");
-                    $history_stmt->execute([
-                        $order_id,
-                        $old_status,
-                        $input['status'],
-                        $_SESSION['user_id'],
-                        $input['note'] ?? ''
-                    ]);
+            try {
+                foreach ($order_ids as $order_id) {
+                    $old_status_stmt = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
+                    $old_status_stmt->execute([$order_id]);
+                    $old_status = $old_status_stmt->fetchColumn();
+                    
+                    if ($old_status && $old_status !== $input['status']) {
+                        $history_stmt = $pdo->prepare("
+                            INSERT INTO order_status_history (order_id, old_status, new_status, admin_id, note, created_at)
+                            VALUES (?, ?, ?, ?, ?, NOW())
+                        ");
+                        $history_stmt->execute([
+                            $order_id,
+                            $old_status,
+                            $input['status'],
+                            $_SESSION['user_id'],
+                            $input['note'] ?? ''
+                        ]);
+                    }
                 }
+            } catch (Exception $historyEx) {
+                // La tabla order_status_history no existe — ignorar, no bloquear la actualización
+                error_log("order_status_history no disponible: " . $historyEx->getMessage());
             }
         }
         
-        // Agregar nota si se especifica
+        // Agregar nota si se especifica (solo si la tabla existe)
         if (!empty($input['note'])) {
-            foreach ($order_ids as $order_id) {
-                $note_stmt = $pdo->prepare("
-                    INSERT INTO order_notes (order_id, admin_id, note, created_at)
-                    VALUES (?, ?, ?, NOW())
-                ");
-                $note_stmt->execute([$order_id, $_SESSION['user_id'], $input['note']]);
+            try {
+                foreach ($order_ids as $order_id) {
+                    $note_stmt = $pdo->prepare("
+                        INSERT INTO order_notes (order_id, admin_id, note, created_at)
+                        VALUES (?, ?, ?, NOW())
+                    ");
+                    $note_stmt->execute([$order_id, $_SESSION['user_id'], $input['note']]);
+                }
+            } catch (Exception $noteEx) {
+                // La tabla order_notes no existe — ignorar
+                error_log("order_notes no disponible: " . $noteEx->getMessage());
             }
         }
         
-        // Enviar notificación por email si se especifica
+        // Notificación por email — ignorar si falla
         if (!empty($input['send_notification']) && isset($input['status'])) {
-            foreach ($order_ids as $order_id) {
-                sendOrderStatusNotification($order_id, $input['status']);
+            try {
+                foreach ($order_ids as $order_id) {
+                    sendOrderStatusNotification($order_id, $input['status']);
+                }
+            } catch (Exception $notifEx) {
+                error_log("Error enviando notificación: " . $notifEx->getMessage());
             }
         }
         

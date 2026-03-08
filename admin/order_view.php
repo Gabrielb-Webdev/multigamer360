@@ -3,17 +3,21 @@
  * =====================================================
  * MULTIGAMER360 ADMIN - DETALLE DE PEDIDO
  * =====================================================
- * Version: 1.0.1
+ * Version: 1.0.2
  * Fecha última modificación: 08 Mar 2026
  *
  * Descripción: Vista detalle de un pedido individual en el panel de administración
  * Autor: MultiGamer360 Development Team
  *
+ * Changelog v1.0.2 (08 Mar 2026):
+ * - Fix: SELECT en order_status_history y order_notes envolcádas en try/catch (tablas no existen en DB real)
+ * - Fix: INSERT en order_status_history y order_notes también envueltos en try/catch para no bloquear actualización de estado
+ * - Fix: Alias SQL 'on' reemplazado por 'on2' (palabra reservada en MySQL)
+ *
  * Changelog v1.0.1 (08 Mar 2026):
- * - Fix: Query items usaba p.title (no existe) → p.name; is_main → is_primary
+ * - Fix: Query items usaba p.title → p.name; is_main → is_primary
  * - Fix: Badge de pago leía payment_status (NULL) → ahora lee payment_type
  * - Fix: Totales (shipping_cost, discount_amount) ahora se leen del JSON en campo notes
- * - Fix: Nombre del producto usa oi.product_name como fallback si el producto fue eliminado
  */
 // Obtener ID del pedido
 $order_id = $_GET['id'] ?? null;
@@ -63,25 +67,27 @@ try {
     $items_stmt->execute([$order_id]);
     $order_items = $items_stmt->fetchAll();
     
-    // Obtener historial de estado
-    $history_stmt = $pdo->prepare("
-        SELECT * FROM order_status_history 
-        WHERE order_id = ? 
-        ORDER BY created_at DESC
-    ");
-    $history_stmt->execute([$order_id]);
-    $status_history = $history_stmt->fetchAll();
-    
-    // Obtener notas
-    $notes_stmt = $pdo->prepare("
-        SELECT on.*, CONCAT(u.first_name, ' ', u.last_name) as admin_name
-        FROM order_notes on
-        LEFT JOIN users u ON on.admin_id = u.id
-        WHERE on.order_id = ?
-        ORDER BY on.created_at DESC
-    ");
-    $notes_stmt->execute([$order_id]);
-    $order_notes = $notes_stmt->fetchAll();
+    // Obtener historial de estado (tabla puede no existir)
+    $status_history = [];
+    try {
+        $history_stmt = $pdo->prepare("SELECT * FROM order_status_history WHERE order_id = ? ORDER BY created_at DESC");
+        $history_stmt->execute([$order_id]);
+        $status_history = $history_stmt->fetchAll();
+    } catch (Exception $e) { /* tabla no disponible */ }
+
+    // Obtener notas (tabla puede no existir)
+    $order_notes = [];
+    try {
+        $notes_stmt = $pdo->prepare("
+            SELECT on2.*, CONCAT(u.first_name, ' ', u.last_name) as admin_name
+            FROM order_notes on2
+            LEFT JOIN users u ON on2.admin_id = u.id
+            WHERE on2.order_id = ?
+            ORDER BY on2.created_at DESC
+        ");
+        $notes_stmt->execute([$order_id]);
+        $order_notes = $notes_stmt->fetchAll();
+    } catch (Exception $e) { /* tabla no disponible */ }
     
 } catch (PDOException $e) {
     $_SESSION['error'] = 'Error al cargar pedido: ' . $e->getMessage();
@@ -109,20 +115,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         $update_stmt = $pdo->prepare("UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?");
         $update_stmt->execute([$new_status, $order_id]);
         
-        // Registrar historial
-        $history_stmt = $pdo->prepare("
-            INSERT INTO order_status_history (order_id, old_status, new_status, admin_id, note, created_at)
-            VALUES (?, ?, ?, ?, ?, NOW())
-        ");
-        $history_stmt->execute([$order_id, $order['status'], $new_status, $_SESSION['user_id'], $note]);
-        
-        // Agregar nota si se proporcionó
-        if ($note) {
-            $note_stmt = $pdo->prepare("
-                INSERT INTO order_notes (order_id, admin_id, note, created_at)
-                VALUES (?, ?, ?, NOW())
+        // Registrar historial (si la tabla existe)
+        try {
+            $history_stmt = $pdo->prepare("
+                INSERT INTO order_status_history (order_id, old_status, new_status, admin_id, note, created_at)
+                VALUES (?, ?, ?, ?, ?, NOW())
             ");
-            $note_stmt->execute([$order_id, $_SESSION['user_id'], $note]);
+            $history_stmt->execute([$order_id, $order['status'], $new_status, $_SESSION['user_id'], $note]);
+        } catch (Exception $histEx) { /* tabla no disponible */ }
+        
+        // Agregar nota si se proporcionó (si la tabla existe)
+        if ($note) {
+            try {
+                $note_stmt = $pdo->prepare("
+                    INSERT INTO order_notes (order_id, admin_id, note, created_at)
+                    VALUES (?, ?, ?, NOW())
+                ");
+                $note_stmt->execute([$order_id, $_SESSION['user_id'], $note]);
+            } catch (Exception $noteEx) { /* tabla no disponible */ }
         }
         
         $pdo->commit();
@@ -155,11 +165,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_note'])) {
             throw new Exception('La nota no puede estar vacía');
         }
         
-        $note_stmt = $pdo->prepare("
-            INSERT INTO order_notes (order_id, admin_id, note, created_at)
-            VALUES (?, ?, ?, NOW())
-        ");
-        $note_stmt->execute([$order_id, $_SESSION['user_id'], $note]);
+        try {
+            $note_stmt = $pdo->prepare("
+                INSERT INTO order_notes (order_id, admin_id, note, created_at)
+                VALUES (?, ?, ?, NOW())
+            ");
+            $note_stmt->execute([$order_id, $_SESSION['user_id'], $note]);
+        } catch (Exception $noteEx) {
+            throw new Exception('La tabla de notas no está disponible en esta instalación');
+        }
         
         $_SESSION['success'] = 'Nota agregada correctamente';
         header("Location: order_view.php?id=$order_id");
