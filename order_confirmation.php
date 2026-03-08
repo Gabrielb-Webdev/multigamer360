@@ -23,74 +23,71 @@ if (isset($_SESSION['completed_order'])) {
         $order_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($order_data) {
-            // Obtener items de la orden (la imagen ya está guardada en order_items)
-            $stmt = $pdo->prepare("
-                SELECT oi.* 
-                FROM order_items oi 
-                WHERE oi.order_id = ?
-            ");
+            // Obtener items de la orden
+            $stmt = $pdo->prepare("SELECT oi.* FROM order_items oi WHERE oi.order_id = ?");
             $stmt->execute([$order_data['id']]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Reconstruir estructura de orden
+            // Parsear notes JSON para recuperar datos extra
+            $notes = json_decode($order_data['notes'] ?? '{}', true) ?: [];
+
+            // Reconstruir nombre del cliente desde customer_name
+            $customer_name_parts = explode(' ', $order_data['customer_name'] ?? '', 2);
+            $customer_first = $customer_name_parts[0] ?? '';
+            $customer_last  = $customer_name_parts[1] ?? '';
+
+            // Mapear payment_type a method slug
+            $payment_type_map = [
+                'presential' => 'local',
+                'online'     => 'online',
+                'cod'        => 'cod',
+            ];
+            $payment_method_slug = $payment_type_map[$order_data['payment_type'] ?? ''] ?? 'local';
+            $payment_name = $notes['payment_name'] ?? ucfirst($order_data['payment_type'] ?? 'Pago en local');
+
+            $subtotal      = $notes['subtotal'] ?? $order_data['total_amount'];
+            $shipping_cost = $notes['shipping_cost'] ?? 0;
+            $shipping_name = $notes['shipping_name'] ?? ($order_data['delivery_type'] === 'pickup_store' ? 'Retiro en tienda' : 'Envío');
+            $coupon_discount = $notes['coupon_discount'] ?? 0;
+
             $order = [
                 'order_id' => $order_data['order_number'],
-                'date' => $order_data['created_at'],
+                'date'     => $order_data['created_at'],
                 'customer' => [
-                    'first_name' => $order_data['customer_first_name'],
-                    'last_name' => $order_data['customer_last_name'],
-                    'email' => $order_data['customer_email'],
-                    'phone' => $order_data['customer_phone'],
-                    'address' => $order_data['shipping_address'],
-                    'city' => $order_data['shipping_city'],
-                    'province' => $order_data['shipping_province'],
-                    'zip_code' => $order_data['shipping_postal_code']
+                    'first_name' => $customer_first,
+                    'last_name'  => $customer_last,
+                    'email'      => $order_data['customer_email'],
+                    'phone'      => $order_data['customer_phone'],
+                    'address'    => $order_data['delivery_type'] === 'pickup_store' ? '' : $order_data['shipping_address'],
                 ],
                 'shipping' => [
-                    'name' => $order_data['shipping_method'],
-                    'cost' => $order_data['shipping_cost']
+                    'name' => $shipping_name,
+                    'cost' => $shipping_cost,
                 ],
                 'payment' => [
-                    'method' => strtolower(str_replace(' ', '', $order_data['payment_method'])),
-                    'name' => $order_data['payment_method']
+                    'method' => $payment_method_slug,
+                    'name'   => $payment_name,
                 ],
                 'items' => array_map(function ($item) {
-                    // DEBUG: Ver qué trae cada item
-                    error_log("DEBUG ORDER ITEM - product_name: {$item['product_name']}, image_url from DB: " . ($item['image_url'] ?? 'NULL'));
-                    
-                    // Construir ruta completa de la imagen
-                    $image_path = 'uploads/products/default.jpg'; // Default
-                    if (!empty($item['image_url'])) {
-                        // Si ya tiene la ruta completa, usarla
-                        if (strpos($item['image_url'], 'uploads/products/') === 0) {
-                            $image_path = $item['image_url'];
-                        } else {
-                            // Si solo es el nombre del archivo, agregar la ruta
-                            $image_path = 'uploads/products/' . $item['image_url'];
-                        }
-                    }
-                    
-                    error_log("DEBUG ORDER ITEM - Final image path: $image_path");
-                    
                     return [
-                        'id' => $item['product_id'],
-                        'name' => $item['product_name'],
+                        'id'       => $item['product_id'],
+                        'name'     => $item['product_name'],
                         'quantity' => $item['quantity'],
-                        'price' => $item['price'],
-                        'total' => $item['subtotal'],
-                        'image' => $image_path
+                        'price'    => $item['price'],
+                        'total'    => $item['subtotal'],
+                        'image'    => 'uploads/products/default.jpg',
                     ];
                 }, $items),
                 'totals' => [
-                    'subtotal' => $order_data['subtotal'],
-                    'coupon_discount' => $order_data['discount_amount'],
-                    'shipping' => $order_data['shipping_cost'],
-                    'total' => $order_data['total_amount']
+                    'subtotal'        => $subtotal,
+                    'coupon_discount' => $coupon_discount,
+                    'shipping'        => $shipping_cost,
+                    'total'           => $order_data['total_amount'],
                 ],
-                'coupon' => $order_data['discount_amount'] > 0 ? [
-                    'code' => 'DESCUENTO',
-                    'discount_amount' => $order_data['discount_amount']
-                ] : null
+                'coupon' => $coupon_discount > 0 ? [
+                    'code'            => $notes['coupon_code'] ?? 'DESCUENTO',
+                    'discount_amount' => $coupon_discount,
+                ] : null,
             ];
         }
     } catch (PDOException $e) {

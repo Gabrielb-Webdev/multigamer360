@@ -37,8 +37,8 @@ try {
     
     // Obtener items del pedido
     $items_stmt = $pdo->prepare("
-        SELECT oi.*, p.title as product_title, p.sku, p.image_url,
-               (SELECT filename FROM product_images pi WHERE pi.product_id = p.id AND pi.is_main = 1 LIMIT 1) as product_image
+        SELECT oi.*, p.name as product_title, p.sku,
+               (SELECT filename FROM product_images pi WHERE pi.product_id = p.id AND pi.is_primary = 1 LIMIT 1) as product_image
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
         WHERE oi.order_id = ?
@@ -220,12 +220,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_note'])) {
                         <p class="mb-0"><strong>Pago:</strong> 
                             <?php
                             $payment_config = [
-                                'pending' => ['class' => 'bg-warning text-dark', 'text' => 'Pendiente'],
-                                'paid' => ['class' => 'bg-success', 'text' => 'Pagado'],
-                                'failed' => ['class' => 'bg-danger', 'text' => 'Fallido'],
-                                'refunded' => ['class' => 'bg-secondary', 'text' => 'Reembolsado']
+                                'presential' => ['class' => 'bg-primary', 'text' => 'Pago en Local'],
+                                'online'     => ['class' => 'bg-info text-dark', 'text' => 'Pago Online'],
+                                'cod'        => ['class' => 'bg-warning text-dark', 'text' => 'Contra Entrega'],
                             ];
-                            $payment_info = $payment_config[$order['payment_status']] ?? ['class' => 'bg-secondary', 'text' => ucfirst($order['payment_status'])];
+                            $payment_info = $payment_config[$order['payment_type']] ?? ['class' => 'bg-secondary', 'text' => ucfirst($order['payment_type'] ?? 'N/D')];
                             ?>
                             <span class="badge <?php echo $payment_info['class']; ?>">
                                 <?php echo $payment_info['text']; ?>
@@ -266,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_note'])) {
                                     <div class="d-flex align-items-center">
                                         <?php if ($item['product_image']): ?>
                                         <img src="../uploads/products/<?php echo $item['product_image']; ?>" 
-                                             alt="<?php echo htmlspecialchars($item['product_title']); ?>"
+                                             alt="<?php echo htmlspecialchars($item['product_name']); ?>"
                                              class="img-thumbnail me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                         <?php else: ?>
                                         <div class="bg-light d-flex align-items-center justify-content-center me-3" 
@@ -275,10 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_note'])) {
                                         </div>
                                         <?php endif; ?>
                                         <div>
-                                            <strong><?php echo htmlspecialchars($item['product_title'] ?? 'Producto eliminado'); ?></strong>
-                                            <?php if (!$item['product_title']): ?>
-                                                <br><small class="text-danger">Este producto ya no existe</small>
-                                            <?php endif; ?>
+                                            <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['product_name']); ?></strong>
                                         </div>
                                     </div>
                                 </td>
@@ -300,18 +296,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_note'])) {
                                 <th colspan="4" class="text-end">Subtotal:</th>
                                 <th>$<?php echo number_format($subtotal); ?></th>
                             </tr>
-                            <?php if ($order['shipping_cost'] > 0): ?>
+                            <?php
+                                $order_notes_data = json_decode($order['notes'] ?? '{}', true) ?: [];
+                                $order_shipping_cost = $order_notes_data['shipping_cost'] ?? 0;
+                                $order_coupon_discount = $order_notes_data['coupon_discount'] ?? 0;
+                            ?>
+                            <?php if ($order_shipping_cost > 0): ?>
                             <tr>
-                                <th colspan="4" class="text-end">Envío:</th>
-                                <th>$<?php echo number_format($order['shipping_cost']); ?></th>
+                                <th colspan="4" class="text-end">Envío (<?php echo htmlspecialchars($order_notes_data['shipping_name'] ?? ''); ?>):</th>
+                                <th>$<?php echo number_format($order_shipping_cost); ?></th>
                             </tr>
                             <?php endif; ?>
-                            <?php if ($order['discount_amount'] > 0): ?>
+                            <?php if ($order_coupon_discount > 0): ?>
                             <tr>
-                                <th colspan="4" class="text-end">Descuento:</th>
-                                <th class="text-success">-$<?php echo number_format($order['discount_amount']); ?></th>
+                                <th colspan="4" class="text-end">Descuento<?php if (!empty($order_notes_data['coupon_code'])): ?> (<?php echo htmlspecialchars($order_notes_data['coupon_code']); ?>)<?php endif; ?>:</th>
+                                <th class="text-success">-$<?php echo number_format($order_coupon_discount); ?></th>
                             </tr>
-                            <?php endif; ?>
+                            <?php endif ?>
                             <tr class="table-active">
                                 <th colspan="4" class="text-end">Total:</th>
                                 <th class="fs-5">$<?php echo number_format($order['total_amount']); ?></th>

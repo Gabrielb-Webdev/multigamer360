@@ -26,7 +26,7 @@ $where_conditions = ['1=1'];
 $params = [];
 
 if ($search) {
-    $where_conditions[] = "(o.order_number LIKE ? OR o.customer_email LIKE ? OR CONCAT(o.customer_first_name, ' ', o.customer_last_name) LIKE ?)";
+    $where_conditions[] = "(o.order_number LIKE ? OR o.customer_email LIKE ? OR o.customer_name LIKE ?)";
     $search_term = "%$search%";
     $params[] = $search_term;
     $params[] = $search_term;
@@ -39,7 +39,7 @@ if ($status) {
 }
 
 if ($payment_status) {
-    $where_conditions[] = "o.payment_status = ?";
+    $where_conditions[] = "o.payment_type = ?";
     $params[] = $payment_status;
 }
 
@@ -201,13 +201,12 @@ try {
             </div>
             
             <div class="col-md-2">
-                <label for="payment_status" class="form-label">Pago</label>
+                <label for="payment_status" class="form-label">Tipo de Pago</label>
                 <select class="form-select" id="payment_status" name="payment_status">
                     <option value="">Todos</option>
-                    <option value="pending" <?php echo $payment_status === 'pending' ? 'selected' : ''; ?>>Pendiente</option>
-                    <option value="paid" <?php echo $payment_status === 'paid' ? 'selected' : ''; ?>>Pagado</option>
-                    <option value="failed" <?php echo $payment_status === 'failed' ? 'selected' : ''; ?>>Fallido</option>
-                    <option value="refunded" <?php echo $payment_status === 'refunded' ? 'selected' : ''; ?>>Reembolsado</option>
+                    <option value="presential" <?php echo $payment_status === 'presential' ? 'selected' : ''; ?>>Pago en Local</option>
+                    <option value="online" <?php echo $payment_status === 'online' ? 'selected' : ''; ?>>Pago Online</option>
+                    <option value="cod" <?php echo $payment_status === 'cod' ? 'selected' : ''; ?>>Contra Entrega</option>
                 </select>
             </div>
             
@@ -359,12 +358,12 @@ try {
                             <td>
                                 <?php
                                 $payment_config = [
-                                    'pending' => ['class' => 'bg-warning text-dark', 'text' => 'Pendiente'],
-                                    'paid' => ['class' => 'bg-success', 'text' => 'Pagado'],
-                                    'failed' => ['class' => 'bg-danger', 'text' => 'Fallido'],
-                                    'refunded' => ['class' => 'bg-secondary', 'text' => 'Reembolsado']
+                                    'presential' => ['class' => 'bg-primary', 'text' => 'En Local'],
+                                    'online'     => ['class' => 'bg-info text-dark', 'text' => 'Online'],
+                                    'cod'        => ['class' => 'bg-warning text-dark', 'text' => 'Contra Entrega'],
+                                    'pending'    => ['class' => 'bg-secondary', 'text' => 'Pendiente'],
                                 ];
-                                $payment_info = $payment_config[$order['payment_status']] ?? ['class' => 'bg-secondary', 'text' => ucfirst($order['payment_status'])];
+                                $payment_info = $payment_config[$order['payment_type']] ?? ['class' => 'bg-secondary', 'text' => ucfirst($order['payment_type'] ?? 'N/D')];
                                 ?>
                                 <span class="badge <?php echo $payment_info['class']; ?>">
                                     <?php echo $payment_info['text']; ?>
