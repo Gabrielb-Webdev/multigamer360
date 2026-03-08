@@ -3,11 +3,15 @@
  * =====================================================
  * MULTIGAMER360 ADMIN - GESTIÓN DE PEDIDOS
  * =====================================================
- * Version: 1.0.2
+ * Version: 1.0.3
  * Fecha última modificación: 08 Mar 2026
  *
  * Descripción: Listado y filtrado de pedidos en el panel de administración
  * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.3 (08 Mar 2026):
+ * - Fix CRÍTICO: fetch usaba AdminPanel.csrfToken (undefined) → 403 Token CSRF inválido
+ * - Corregido a window.csrfToken que es lo que expone footer.php
  *
  * Changelog v1.0.2 (08 Mar 2026):
  * - UX: Columna ESTADO reemplazada por <select> inline con colores por estado
@@ -562,12 +566,12 @@ function updateOrderStatus(selectEl) {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': AdminPanel.csrfToken
+            'X-CSRF-Token': window.csrfToken
         },
         body: JSON.stringify({
             id: orderId,
             status: status,
-            csrf_token: AdminPanel.csrfToken
+            csrf_token: window.csrfToken
         })
     })
     .then(r => r.json())
@@ -620,12 +624,12 @@ function bulkUpdateStatus(status) {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': AdminPanel.csrfToken
+                'X-CSRF-Token': window.csrfToken
             },
             body: JSON.stringify({ 
                 ids: ids, 
                 status: status,
-                csrf_token: AdminPanel.csrfToken
+                csrf_token: window.csrfToken
             })
         })
         .then(response => response.json())
