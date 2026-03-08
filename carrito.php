@@ -760,7 +760,7 @@ function applyCoupon() {
                 `<i class="fas fa-check-circle me-1"></i><strong>${data.coupon.name}</strong> — Descuento: <strong>${discountFormatted} ${currentCurrency}</strong>`);
 
             // Recalcular totales con descuento
-            recalculateWithCoupon(discountAmount, currentCurrency);
+            recalculateWithCoupon(discountAmount, currentCurrency, cartTotal);
         } else {
             btn.textContent = 'Aplicar';
             showCouponFeedback('error', `<i class="fas fa-times-circle me-1"></i>${data.message}`);
@@ -800,7 +800,7 @@ function showCouponFeedback(type, html) {
     el.innerHTML = html;
 }
 
-function recalculateWithCoupon(discountAmount, currency) {
+function recalculateWithCoupon(discountAmount, currency, subtotal) {
     // Insertar o actualizar fila de descuento en el resumen
     const totalSection = document.getElementById('totalSection');
     if (!totalSection) return;
@@ -825,20 +825,9 @@ function recalculateWithCoupon(discountAmount, currency) {
         <span class="text-success fw-bold">-$${Math.round(discountAmount).toLocaleString('es-AR')} ${currency}</span>
     `;
 
-    // Recalcular totales con descuento
+    // Obtener costo de envío actual
     const shippingEl = document.getElementById('shippingAmount');
     const shippingCost = shippingEl ? parseInt(shippingEl.textContent.replace(/[$.,]/g,'')) || 0 : 0;
-
-    // Subtotal
-    let subtotal = 0;
-    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(el => {
-        const priceARS = parseFloat(el.dataset.priceArs) || 0;
-        const priceUSD = parseFloat(el.dataset.priceUsd) || 0;
-        const pid = el.dataset.productId;
-        const qty = parseInt(document.querySelector(`input[onchange*="updateQuantity(${pid}"]`)?.value || 1);
-        const price = currency === 'USD' ? (priceUSD > 0 ? priceUSD : priceARS / 1000) : priceARS;
-        subtotal += price * qty;
-    });
 
     const totalFinal = subtotal - discountAmount + (currency === 'ARS' ? shippingCost : 0);
     const totalEl = document.getElementById('totalAmount');
