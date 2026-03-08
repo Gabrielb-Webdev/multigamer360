@@ -57,7 +57,7 @@ $shippingCost = $_SESSION['shipping_cost'] ?? 0;
 $shippingName = $_SESSION['shipping_name'] ?? 'No especificado';
 $postalCode = $_SESSION['postal_code'] ?? '';
 
-if (empty($shippingMethod)) {
+if ($shippingMethod === null || $shippingMethod === '') {
     $_SESSION['checkout_error'] = "Método de envío no seleccionado.";
     header('Location: carrito.php');
     exit();
@@ -269,41 +269,50 @@ try {
         $payment_gateway = 'manual';
     }
     
-    // Insertar orden principal con campos de Argentina
+    // Construir shipping_address combinado
+    if ($delivery_type === 'pickup_store') {
+        $shipping_address_full = 'Retiro en tienda' . ($postalCode ? ' - CP: ' . $postalCode : '');
+    } else {
+        $shipping_address_full = $address . ', ' . $city . ', ' . $province . ' - CP: ' . $zipCode;
+    }
+
+    // Guardar datos extra en notes (subtotal, descuentos, envío, método de pago)
+    $notes_data = [
+        'payment_name'    => $payment_name,
+        'subtotal'        => $subtotal,
+        'shipping_cost'   => $shippingCost,
+        'shipping_name'   => $shippingName,
+        'coupon_discount' => $coupon_discount,
+    ];
+    if ($coupon_data) {
+        $notes_data['coupon_code'] = $coupon_data['code'];
+    }
+    $notes_json = json_encode($notes_data);
+
+    // Insertar orden principal con columnas reales de la BD
     $stmt = $pdo->prepare("
         INSERT INTO orders (
-            order_number, user_id, 
-            customer_first_name, customer_last_name, customer_email, customer_phone,
-            shipping_address, shipping_city, shipping_province, shipping_postal_code,
-            shipping_method, shipping_cost,
-            delivery_type, payment_type, payment_gateway, payment_method, payment_status,
-            subtotal, discount_amount, total_amount,
+            order_number, user_id,
+            customer_name, customer_email, customer_phone,
+            shipping_address, total_amount, notes,
+            delivery_type, payment_type, payment_gateway,
             reservation_code, reservation_expires, payment_deadline,
             status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
     
     $stmt->execute([
         $order_id,
         $user_id,
-        $firstName,
-        $lastName,
+        $firstName . ' ' . $lastName,
         $email,
         $phone,
-        $address ?: null,
-        $city ?: null,
-        $province ?: null,
-        $postalCode,
-        $shippingName,
-        $shippingCost,
+        $shipping_address_full,
+        $total,
+        $notes_json,
         $delivery_type,
         $payment_type,
         $payment_gateway,
-        $payment_name,
-        'pending',
-        $subtotal,
-        $coupon_discount + $transfer_discount,
-        $total,
         $reservation_code,
         $reservation_expires,
         $payment_deadline,
@@ -314,8 +323,8 @@ try {
     
     // Insertar items de la orden Y DESCONTAR STOCK
     $stmt_insert_item = $pdo->prepare("
-        INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal, image_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal)
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
     
     $stmt_update_stock = $pdo->prepare("
@@ -343,9 +352,8 @@ try {
             throw new Exception("Stock insuficiente para: " . $item['name'] . " (Disponible: {$product_check['stock_quantity']}, Solicitado: {$item['quantity']})");
         }
         
-        // Insertar item de orden (con imagen)
-        $image_to_save = $item['image'] ?? null;
-        error_log("DEBUG CHECKOUT - Guardando item: {$item['name']}, image: " . ($image_to_save ?? 'NULL'));
+        // Insertar item de orden
+        error_log("DEBUG CHECKOUT - Guardando item: {$item['name']}, precio: {$item['price']}, cantidad: {$item['quantity']}");
         
         $stmt_insert_item->execute([
             $inserted_order_id,
@@ -353,8 +361,7 @@ try {
             $item['name'],
             $item['quantity'],
             $item['price'],
-            $item['total'],
-            $image_to_save  // Guardar la imagen
+            $item['total']
         ]);
         
         // Descontar stock
