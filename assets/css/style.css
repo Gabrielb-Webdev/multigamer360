@@ -215,7 +215,9 @@ body.navbar-only {
 }
 
 /* Asegurar que el row dentro de la navbar ocupe todo el ancho */
-.main-nav .row {
+/* Solo aplica al row DIRECTO del nav, NO a los rows internos del mega-menu */
+.main-nav > .container-fluid > .navbar-collapse > .row,
+.main-nav > .container-fluid > .collapse > .row {
     width: 100% !important;
     margin: 0 !important;
     max-width: none !important;
@@ -376,12 +378,39 @@ body.navbar-only {
     padding: 0;
 }
 
-.dropdown-menu-large .row {
-    margin: 0;
+/* Restaurar márgenes del grid de Bootstrap para que col-md-* funcione correctamente */
+.dropdown-menu-large .container .row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 .dropdown-menu-large .col-md-3 {
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Columnas de CONSOLAS (col-md-4) también necesitan padding */
+.dropdown-menu-large .col-md-4 {
+    padding: 0.5rem 1rem;
+}
+
+/* Separador visual entre columnas */
+.dropdown-menu-large .col-md-3:not(:last-child),
+.dropdown-menu-large .col-md-4:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Forzar display block en items del mega-menu */
+.dropdown-menu-large .dropdown-item {
+    display: block !important;
+    width: 100% !important;
+}
+
+/* Forzar display block en headers del mega-menu */
+.dropdown-menu-large .dropdown-header {
+    display: block !important;
 }
 
 /* Asegurar que el dropdown funcione con Bootstrap */
