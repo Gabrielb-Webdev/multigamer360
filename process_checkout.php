@@ -21,9 +21,15 @@ if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
 
 // Verificar que sea una petición POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    error_log("ERROR: Not a POST request");
     header('Location: checkout.php');
     exit();
 }
+
+error_log("=== PROCESS CHECKOUT STARTED ===");
+error_log("POST data received: " . print_r($_POST, true));
+error_log("Session cart: " . print_r($_SESSION['cart'] ?? [], true));
+error_log("Session shipping: method=" . ($_SESSION['shipping_method'] ?? 'none') . ", cost=" . ($_SESSION['shipping_cost'] ?? 0));
 
 // Validar datos requeridos
 $required_fields = ['firstName', 'lastName', 'email', 'phone', 'paymentMethod'];
@@ -31,6 +37,8 @@ $required_fields = ['firstName', 'lastName', 'email', 'phone', 'paymentMethod'];
 foreach ($required_fields as $field) {
     if (!isset($_POST[$field]) || empty(trim($_POST[$field]))) {
         $_SESSION['checkout_error'] = "Todos los campos requeridos deben ser completados.";
+        error_log("ERROR: Missing required field: $field");
+        error_log("Field value: " . ($_POST[$field] ?? 'NOT_SET'));
         header('Location: checkout.php');
         exit();
     }
@@ -87,30 +95,39 @@ if (in_array($shippingMethod, $delivery_methods)) {
 }
 
 // =====================================================
-// VALIDAR MÉTODO DE PAGO ARGENTINA
+// VALIDAR MÉTODO DE PAGO
 // =====================================================
 $pickup_methods = ['0', '2207']; // multigamer360, puntoRetiro
 $delivery_type = in_array($shippingMethod, $pickup_methods) ? 'pickup_store' : 'shipping';
 
-// Obtener métodos válidos desde configuración
-$availableMethods = $paymentHelper->getAvailablePaymentMethods($delivery_type);
-$validMethodKeys = array_column($availableMethods, 'method_key');
+// Métodos de pago válidos según tipo de entrega
+$valid_payment_methods = [];
 
-if (!in_array($paymentMethod, $validMethodKeys)) {
+if ($delivery_type === 'pickup_store') {
+    // Para retiro en tienda: solo pago local
+    $valid_payment_methods = ['local'];
+} else {
+    // Para envío a domicilio: online y contra reembolso
+    $valid_payment_methods = ['online', 'cod'];
+}
+
+// Validar que el método seleccionado sea válido
+if (!in_array($paymentMethod, $valid_payment_methods)) {
     $_SESSION['checkout_error'] = "Método de pago no válido para el tipo de envío seleccionado.";
+    error_log("Invalid payment method: $paymentMethod for delivery type: $delivery_type");
     header('Location: checkout.php');
     exit();
 }
 
-// Obtener nombre del método seleccionado
-$selectedMethod = null;
-foreach ($availableMethods as $method) {
-    if ($method['method_key'] === $paymentMethod) {
-        $selectedMethod = $method;
-        break;
-    }
-}
-$payment_name = $selectedMethod ? $selectedMethod['method_name'] : 'Desconocido';
+// Mapear método a nombre legible
+$payment_names = [
+    'local' => 'Pago en el local',
+    'online' => 'Pago online',
+    'cod' => 'Contra reembolso'
+];
+$payment_name = $payment_names[$paymentMethod] ?? 'Desconocido';
+
+error_log("Payment validated: Method=$paymentMethod, Name=$payment_name, Delivery=$delivery_type");
 
 // =====================================================
 // OBTENER PRODUCTOS DE LA BASE DE DATOS
@@ -207,14 +224,8 @@ if (isset($_SESSION['applied_coupon'])) {
 
 $subtotal_with_discount = $subtotal - $coupon_discount;
 
-// Aplicar descuento por transferencia bancaria (5% OFF)
+// No hay descuentos adicionales por método de pago en esta versión simplificada
 $transfer_discount = 0;
-if ($paymentMethod === 'bank_transfer') {
-    $methodConfig = json_decode($selectedMethod['config_json'], true);
-    if (isset($methodConfig['discount_percentage'])) {
-        $transfer_discount = ($subtotal_with_discount * $methodConfig['discount_percentage']) / 100;
-    }
-}
 
 $subtotal_after_all_discounts = $subtotal_with_discount - $transfer_discount;
 $total = $subtotal_after_all_discounts + $shippingCost;
@@ -232,36 +243,28 @@ try {
     // Iniciar transacción
     $pdo->beginTransaction();
     
-    // Generar código de reserva si es pago presencial
+    // Generar código de reserva si es pago presencial (en el local)
     $reservation_code = null;
     $reservation_expires = null;
-    if (strpos($paymentMethod, 'presential') !== false) {
+    if ($paymentMethod === 'local') {
         $reservation_code = $paymentHelper->generateReservationCode();
         $reservation_expires = $paymentHelper->calculateReservationExpiry();
     }
     
-    // Calcular deadline de pago para transferencia
+    // No hay deadline de pago en esta versión simplificada
     $payment_deadline = null;
-    if ($paymentMethod === 'bank_transfer') {
-        $methodConfig = json_decode($selectedMethod['config_json'], true);
-        $hours = $methodConfig['deadline_hours'] ?? 48;
-        $payment_deadline = date('Y-m-d H:i:s', strtotime("+{$hours} hours"));
-    }
     
-    // Determinar payment_type y payment_gateway
+    // Determinar payment_type y payment_gateway según método simple
     $payment_type = 'pending';
     $payment_gateway = null;
     
-    if ($paymentMethod === 'mercadopago_online') {
-        $payment_type = 'online';
-        $payment_gateway = 'mercadopago';
-    } elseif ($paymentMethod === 'bank_transfer') {
-        $payment_type = 'bank_transfer';
-        $payment_gateway = 'manual';
-    } elseif (strpos($paymentMethod, 'presential') !== false) {
+    if ($paymentMethod === 'local') {
         $payment_type = 'presential';
         $payment_gateway = 'store';
-    } elseif ($paymentMethod === 'cash_on_delivery') {
+    } elseif ($paymentMethod === 'online') {
+        $payment_type = 'online';
+        $payment_gateway = 'mercadopago';
+    } elseif ($paymentMethod === 'cod') {
         $payment_type = 'cod';
         $payment_gateway = 'manual';
     }
@@ -391,19 +394,28 @@ try {
     // Confirmar transacción
     $pdo->commit();
     
-    // Guardar transacción en tabla payment_transactions
-    $paymentHelper->saveTransaction([
-        'order_id' => $inserted_order_id,
-        'gateway' => $payment_gateway,
-        'amount' => $total,
-        'status' => 'pending',
-        'payment_method' => $paymentMethod,
-        'payer_email' => $email,
-        'payer_name' => $firstName . ' ' . $lastName,
-        'transaction_id' => null,
-        'currency' => 'ARS',
-        'installments' => 1
-    ]);
+    error_log("✅ ORDER CREATED SUCCESSFULLY - Order ID: $order_id, DB ID: $inserted_order_id");
+    error_log("Order totals - Subtotal: $subtotal, Shipping: $shippingCost, Total: $total");
+    
+    // Guardar transacción en tabla payment_transactions (opcional - no bloquear si falla)
+    try {
+        $paymentHelper->saveTransaction([
+            'order_id' => $inserted_order_id,
+            'gateway' => $payment_gateway,
+            'amount' => $total,
+            'status' => 'pending',
+            'payment_method' => $paymentMethod,
+            'payer_email' => $email,
+            'payer_name' => $firstName . ' ' . $lastName,
+            'transaction_id' => null,
+            'currency' => 'ARS',
+            'installments' => 1
+        ]);
+        error_log("Transaction record saved");
+    } catch (Exception $e) {
+        error_log("Warning: Could not save transaction record: " . $e->getMessage());
+        // No bloquear el checkout si esto falla
+    }
     
     // Crear datos de la orden para mostrar en confirmación
     $order_data = [
@@ -456,12 +468,12 @@ try {
     $_SESSION['completed_order'] = $order_data;
     
     // =====================================================
-    // PROCESAR SEGÚN MÉTODO DE PAGO ARGENTINA
+    // PROCESAR SEGÚN MÉTODO DE PAGO
     // =====================================================
     
-    // 1️⃣ MERCADO PAGO - Redirigir a proceso de pago online
-    if ($paymentMethod === 'mercadopago_online') {
-        // Limpiar carrito ANTES de ir a Mercado Pago
+    // 1️⃣ PAGO ONLINE - Redirigir a proceso de pago (Mercado Pago, etc)
+    if ($paymentMethod === 'online') {
+        // Limpiar carrito ANTES de ir al gateway de pago
         $_SESSION['cart'] = [];
         if ($user_id) {
             $stmt_delete_cart = $pdo->prepare("DELETE FROM cart_sessions WHERE user_id = ?");
@@ -480,27 +492,21 @@ try {
         exit();
     }
     
-    // 2️⃣ TRANSFERENCIA BANCARIA - Enviar email con datos bancarios
-    if ($paymentMethod === 'bank_transfer') {
-        $paymentHelper->sendPaymentEmail('bank_transfer', [
-            'order_id' => $order_id,
-            'customer_name' => $firstName . ' ' . $lastName,
-            'customer_email' => $email,
-            'total_amount' => $total,
-            'payment_deadline' => $payment_deadline
-        ]);
-    }
-    
-    // 3️⃣ PAGO PRESENCIAL - Enviar email con código de reserva
-    if (strpos($paymentMethod, 'presential') !== false && $reservation_code) {
-        $paymentHelper->sendPaymentEmail('reservation', [
-            'order_id' => $order_id,
-            'customer_name' => $firstName . ' ' . $lastName,
-            'customer_email' => $email,
-            'reservation_code' => $reservation_code,
-            'reservation_expires' => $reservation_expires,
-            'total_amount' => $total
-        ]);
+    // 2️⃣ PAGO EN LOCAL - Enviar email con código de reserva
+    if ($paymentMethod === 'local' && $reservation_code) {
+        try {
+            $paymentHelper->sendPaymentEmail('reservation', [
+                'order_id' => $order_id,
+                'customer_name' => $firstName . ' ' . $lastName,
+                'customer_email' => $email,
+                'reservation_code' => $reservation_code,
+                'reservation_expires' => $reservation_expires,
+                'total_amount' => $total
+            ]);
+        } catch (Exception $e) {
+            error_log("No se pudo enviar email de reserva: " . $e->getMessage());
+            // No bloquear el proceso si falla el email
+        }
     }
     
     // Limpiar carrito de la sesión

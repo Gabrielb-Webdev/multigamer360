@@ -1490,9 +1490,14 @@ function formatCVV(input) {
 
 // Validación del formulario
 document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    console.log('=== FORM SUBMIT TRIGGERED ===');
+    console.log('selectedPayment:', selectedPayment);
+    console.log('paymentMethod hidden field:', document.getElementById('paymentMethod')?.value);
+    
     if (!selectedPayment) {
         e.preventDefault();
         alert('Por favor selecciona un método de pago');
+        console.error('SUBMIT BLOCKED: No payment method selected');
         return;
     }
     
@@ -1502,22 +1507,22 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         if (!selectedOnlineMethod) {
             e.preventDefault();
             alert('Por favor selecciona un método de pago online específico');
+            console.error('SUBMIT BLOCKED: No online payment method selected');
             return;
         }
     }
     
+    console.log('✅ FORM VALIDATION PASSED - Submitting...');
+    console.log('Form data being sent:', {
+        firstName: document.getElementById('firstName')?.value,
+        lastName: document.getElementById('lastName')?.value,
+        email: document.getElementById('email')?.value,
+        phone: document.getElementById('phone')?.value,
+        paymentMethod: document.getElementById('paymentMethod')?.value
+    });
+    
     // Si seleccionó pago local, NO requiere especificar método ahora
     // Se decide en el momento del retiro en el local
-    /*
-    if (selectedPayment === 'local') {
-        const selectedLocalMethod = document.querySelector('input[name="localPaymentMethod"]:checked');
-        if (!selectedLocalMethod) {
-            e.preventDefault();
-            alert('Por favor selecciona cómo vas a pagar en el local');
-            return;
-        }
-    }
-    */
 });
 
 // Inicializar cuando carga la página
