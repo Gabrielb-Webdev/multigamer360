@@ -203,8 +203,6 @@ include 'includes/header.php';
                                 <span class="badge bg-<?php echo getStatusColor($order['status']); ?> status-badge">
                                     <?php echo getStatusText($order['status']); ?>
                                 </span>
-                                </small>
-                                <?php endif; ?>
                             </td>
                             <td>
                                 <span class="item-count">
