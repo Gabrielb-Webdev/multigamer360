@@ -421,11 +421,12 @@ input[type="number"] {
                         </div>
 
                         <div class="mb-0">
-                            <h6 class="text-white"><i class="fas fa-ticket-alt me-2"></i>¿Quieres usar el valor de crédito? Coloca tu CP</h6>
+                            <h6 class="text-white"><i class="fas fa-tag me-2"></i>¿Tenés un cupón de descuento? Agregalo acá</h6>
                             <div class="input-group">
-                                <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Código de cupón">
-                                <button class="btn btn-outline-danger" type="button">Aplicar</button>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" id="couponCodeInput" placeholder="Ej: DESCUENTO10" style="text-transform:uppercase;" maxlength="50">
+                                <button class="btn btn-outline-danger" type="button" id="applyCouponBtn" onclick="applyCoupon()">Aplicar</button>
                             </div>
+                            <div id="couponFeedback" class="mt-2" style="display:none;"></div>
                         </div>
                     </div>
                 </div>
@@ -697,6 +698,162 @@ function clearCart() {
             alert('Error al limpiar el carrito');
         });
 }
+
+// ==================== CUPÓN DE DESCUENTO ====================
+
+let appliedCoupon = null;
+
+function applyCoupon() {
+    const input = document.getElementById('couponCodeInput');
+    const btn   = document.getElementById('applyCouponBtn');
+    const feedback = document.getElementById('couponFeedback');
+    const code  = input.value.trim().toUpperCase();
+
+    if (!code) {
+        showCouponFeedback('error', 'Ingresá un código de cupón.');
+        return;
+    }
+
+    // Si ya hay un cupón aplicado con ese código, quitarlo
+    if (appliedCoupon && appliedCoupon.code === code) {
+        removeCoupon();
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+
+    // Obtener total actual del carrito y moneda
+    let cartTotal = 0;
+    const currentCurrency = localStorage.getItem('currency') || 'ARS';
+    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(el => {
+        const priceARS = parseFloat(el.dataset.priceArs) || 0;
+        const priceUSD = parseFloat(el.dataset.priceUsd) || 0;
+        const pid = el.dataset.productId;
+        const qty = parseInt(document.querySelector(`input[onchange*="updateQuantity(${pid}"]`)?.value || 1);
+        const price = currentCurrency === 'USD' ? (priceUSD > 0 ? priceUSD : priceARS / 1000) : priceARS;
+        cartTotal += price * qty;
+    });
+
+    const formData = new URLSearchParams();
+    formData.append('coupon_code', code);
+    formData.append('cart_total', cartTotal);
+    formData.append('cart_currency', currentCurrency);
+
+    fetch('ajax/validate-coupon.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+            appliedCoupon = data.coupon;
+            appliedCoupon.discount_amount = data.discount_amount;
+            btn.textContent = 'Quitar';
+            input.readOnly = true;
+            input.classList.add('border-success');
+
+            const discountFormatted = '$' + Math.round(data.discount_amount).toLocaleString('es-AR');
+            showCouponFeedback('success',
+                `<i class="fas fa-check-circle me-1"></i><strong>${data.coupon.name}</strong> — Descuento: <strong>${discountFormatted} ${currentCurrency}</strong>`);
+
+            // Recalcular totales con descuento
+            recalculateWithCoupon(data.discount_amount, currentCurrency);
+        } else {
+            btn.textContent = 'Aplicar';
+            showCouponFeedback('error', `<i class="fas fa-times-circle me-1"></i>${data.message}`);
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Aplicar';
+        showCouponFeedback('error', 'Error al verificar el cupón. Intentá nuevamente.');
+    });
+}
+
+function removeCoupon() {
+    appliedCoupon = null;
+    const input = document.getElementById('couponCodeInput');
+    const btn   = document.getElementById('applyCouponBtn');
+    input.value = '';
+    input.readOnly = false;
+    input.classList.remove('border-success');
+    btn.textContent = 'Aplicar';
+    document.getElementById('couponFeedback').style.display = 'none';
+
+    // Quitar fila de descuento del resumen si existe
+    const row = document.getElementById('couponDiscountRow');
+    if (row) row.remove();
+
+    // Recalcular sin descuento
+    const shippingEl = document.getElementById('shippingAmount');
+    const cost = shippingEl ? parseInt(shippingEl.textContent.replace(/[$.,]/g,'')) || 0 : 0;
+    updateShipping(cost);
+}
+
+function showCouponFeedback(type, html) {
+    const el = document.getElementById('couponFeedback');
+    el.style.display = 'block';
+    el.className = 'mt-2 small ' + (type === 'success' ? 'text-success' : 'text-danger');
+    el.innerHTML = html;
+}
+
+function recalculateWithCoupon(discountAmount, currency) {
+    // Insertar o actualizar fila de descuento en el resumen
+    const totalSection = document.getElementById('totalSection');
+    if (!totalSection) return;
+
+    totalSection.style.display = 'block';
+
+    let discountRow = document.getElementById('couponDiscountRow');
+    if (!discountRow) {
+        discountRow = document.createElement('div');
+        discountRow.id = 'couponDiscountRow';
+        discountRow.className = 'd-flex justify-content-between align-items-center mb-2';
+        // Insertar antes del separator de envío
+        const shippingRow = document.querySelector('#totalSection .border-bottom');
+        if (shippingRow) {
+            shippingRow.parentNode.insertBefore(discountRow, shippingRow);
+        } else {
+            totalSection.prepend(discountRow);
+        }
+    }
+    discountRow.innerHTML = `
+        <span class="text-success"><i class="fas fa-tag me-1"></i>Descuento (${appliedCoupon.code}):</span>
+        <span class="text-success fw-bold">-$${Math.round(discountAmount).toLocaleString('es-AR')} ${currency}</span>
+    `;
+
+    // Recalcular totales con descuento
+    const shippingEl = document.getElementById('shippingAmount');
+    const shippingCost = shippingEl ? parseInt(shippingEl.textContent.replace(/[$.,]/g,'')) || 0 : 0;
+
+    // Subtotal
+    let subtotal = 0;
+    document.querySelectorAll('.product-price[data-price-ars][data-price-usd]').forEach(el => {
+        const priceARS = parseFloat(el.dataset.priceArs) || 0;
+        const priceUSD = parseFloat(el.dataset.priceUsd) || 0;
+        const pid = el.dataset.productId;
+        const qty = parseInt(document.querySelector(`input[onchange*="updateQuantity(${pid}"]`)?.value || 1);
+        const price = currency === 'USD' ? (priceUSD > 0 ? priceUSD : priceARS / 1000) : priceARS;
+        subtotal += price * qty;
+    });
+
+    const totalFinal = subtotal - discountAmount + (currency === 'ARS' ? shippingCost : 0);
+    const totalEl = document.getElementById('totalAmount');
+    if (totalEl) {
+        if (currency === 'USD') {
+            totalEl.innerHTML = shippingCost > 0
+                ? `<span class="fs-6">$${Math.round(totalFinal).toLocaleString('es-AR')} USD + $${shippingCost.toLocaleString('es-AR')} ARS</span>`
+                : `<span class="fs-6">$${Math.round(totalFinal).toLocaleString('es-AR')} USD</span>`;
+        } else {
+            totalEl.textContent = '$' + Math.round(totalFinal).toLocaleString('es-AR');
+        }
+    }
+}
+
+// ==================== FIN CUPÓN ====================
 
 // ==================== FUNCIONES DE ENVÍO (DEFINIDAS PRIMERO) ====================
 
