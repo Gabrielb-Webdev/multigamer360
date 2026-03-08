@@ -50,7 +50,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT oi.id, oi.product_id, oi.product_name, oi.quantity, oi.price, oi.subtotal as total,
                p.name as product_title,
-               pi.filename as product_image
+               pi.image_url as product_image
         FROM order_items oi
         LEFT JOIN products p ON oi.product_id = p.id
         LEFT JOIN product_images pi ON pi.product_id = oi.product_id AND pi.is_primary = 1
