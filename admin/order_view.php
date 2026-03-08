@@ -1,4 +1,20 @@
 <?php
+/**
+ * =====================================================
+ * MULTIGAMER360 ADMIN - DETALLE DE PEDIDO
+ * =====================================================
+ * Version: 1.0.1
+ * Fecha última modificación: 08 Mar 2026
+ *
+ * Descripción: Vista detalle de un pedido individual en el panel de administración
+ * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.1 (08 Mar 2026):
+ * - Fix: Query items usaba p.title (no existe) → p.name; is_main → is_primary
+ * - Fix: Badge de pago leía payment_status (NULL) → ahora lee payment_type
+ * - Fix: Totales (shipping_cost, discount_amount) ahora se leen del JSON en campo notes
+ * - Fix: Nombre del producto usa oi.product_name como fallback si el producto fue eliminado
+ */
 // Obtener ID del pedido
 $order_id = $_GET['id'] ?? null;
 if (!$order_id) {

@@ -1,4 +1,23 @@
 <?php
+/**
+ * =====================================================
+ * MULTIGAMER360 - CONFIRMACIÓN DE ORDEN
+ * =====================================================
+ * Version: 1.0.2
+ * Fecha última modificación: 08 Mar 2026
+ *
+ * Descripción: Muestra la confirmación de compra tras completar el checkout
+ * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.2 (08 Mar 2026):
+ * - Fix: Carga desde DB usaba columnas inexistentes (customer_first_name, shipping_city, payment_method, etc.)
+ * - Fix: Ahora parsea campo 'notes' (JSON) para recuperar shipping_cost, shipping_name, coupon_discount
+ * - Fix: Mapeo de payment_type (presential/online/cod) a nombre legible
+ * - UX: Mejoras visuales generales (header animado, botones y layout refinados)
+ *
+ * Changelog v1.0.1 (07 Mar 2026):
+ * - Versión inicial con estilos v3.5
+ */
 // Solo iniciar sesión si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -105,8 +124,8 @@ require_once 'includes/header.php';
 ?>
 
 <style>
-    /* Order Confirmation Styles - Version 3.5 */
-    /* Updated: 2025-10-28 - Increased card width, fixed email overflow, added spacing */
+    /* Order Confirmation Styles - Version 1.0.2 */
+    /* Updated: 08 Mar 2026 - Fix DB column names, UX improvements */
 
     .confirmation-page {
         background-color: var(--bg-dark);
@@ -564,7 +583,7 @@ require_once 'includes/header.php';
         }
     }
 
-    /* End of Order Confirmation Styles v3.1 */
+    /* End of Order Confirmation Styles v1.0.2 */
 </style>
 
 <main class="confirmation-page">

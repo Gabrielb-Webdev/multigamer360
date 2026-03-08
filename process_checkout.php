@@ -1,4 +1,29 @@
 <?php
+/**
+ * =====================================================
+ * MULTIGAMER360 - PROCESAMIENTO DE CHECKOUT
+ * =====================================================
+ * Version: 1.0.3
+ * Fecha última modificación: 08 Mar 2026
+ *
+ * Descripción: Procesa el formulario POST del checkout y crea la orden en BD
+ * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.3 (08 Mar 2026):
+ * - Fix CRÍTICO: empty('0') devuelve true en PHP - corregido para método de envío '0' (Multigamer360)
+ * - Fix CRÍTICO: INSERT orders usaba columnas inexistentes (customer_first_name, shipping_city, etc.)
+ * - Fix CRÍTICO: INSERT order_items usaba columna image_url que no existe en la BD real
+ * - INSERT orders ahora usa columnas reales: customer_name, shipping_address, total_amount, notes (JSON)
+ * - Datos extra (subtotal, shipping_cost, coupon_discount) guardados como JSON en campo notes
+ *
+ * Changelog v1.0.2 (08 Mar 2026):
+ * - Fix: Reemplazado getAvailablePaymentMethods() por array hardcodeado (payment_methods_config no existe)
+ * - Fix: saveTransaction() y sendPaymentEmail() envueltos en try-catch para no bloquear checkout
+ * - Agregados logs de debug extensivos con error_log()
+ *
+ * Changelog v1.0.1 (07 Mar 2026):
+ * - Fix: Campo paymentMethod (era confirmedPaymentMethod) - mismatch con checkout.php
+ */
 // Solo iniciar sesión si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

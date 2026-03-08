@@ -1,4 +1,20 @@
 <?php
+/**
+ * =====================================================
+ * MULTIGAMER360 ADMIN - GESTIÓN DE PEDIDOS
+ * =====================================================
+ * Version: 1.0.1
+ * Fecha última modificación: 08 Mar 2026
+ *
+ * Descripción: Listado y filtrado de pedidos en el panel de administración
+ * Autor: MultiGamer360 Development Team
+ *
+ * Changelog v1.0.1 (08 Mar 2026):
+ * - Fix: Búsqueda usaba CONCAT(customer_first_name, customer_last_name) - columnas inexistentes
+ * - Fix: Filtro 'Pago' filtraba por payment_status (no existe) → corregido a payment_type
+ * - Fix: Dropdown 'Pago' tenía opciones pending/paid/failed → ahora presential/online/cod
+ * - Fix: Badge de pago en tabla leía payment_status (NULL) → ahora lee payment_type con labels correctos
+ */
 $page_title = 'Gestión de Pedidos';
 $page_actions = '<button class="btn btn-outline-primary" onclick="exportOrders()"><i class="fas fa-download"></i> Exportar</button>';
 
