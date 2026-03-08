@@ -161,6 +161,17 @@ $postal_code = $_SESSION['postal_code'] ?? '';
 
 $total_with_shipping = $cart_total + $shipping_cost;
 
+// Leer cupón aplicado desde sesión
+$coupon_discount_amount = 0;
+$applied_coupon_data = null;
+if (!empty($_SESSION['applied_coupon'])) {
+    $applied_coupon_data = $_SESSION['applied_coupon'];
+    $coupon_discount_amount = floatval($applied_coupon_data['discount_amount'] ?? 0);
+    if ($coupon_discount_amount < 0) $coupon_discount_amount = 0;
+}
+$final_total = $total_with_shipping - $coupon_discount_amount;
+if ($final_total < 0) $final_total = 0;
+
 // =====================================================
 // INCLUIR HEADER
 // =====================================================
@@ -735,6 +746,12 @@ select.form-control option {
                             <span>Subtotal:</span>
                             <span>$<?php echo number_format($cart_total, 0, ',', '.'); ?></span>
                         </div>
+                        <?php if ($coupon_discount_amount > 0): ?>
+                        <div class="total-line" style="color: #28a745;">
+                            <span>Descuento (<?php echo htmlspecialchars($applied_coupon_data['code']); ?>):</span>
+                            <span>-$<?php echo number_format($coupon_discount_amount, 0, ',', '.'); ?></span>
+                        </div>
+                        <?php endif; ?>
                         <div class="total-line">
                             <span>Envío (<?php echo htmlspecialchars($shipping_name); ?>):</span>
                             <span>
@@ -753,7 +770,7 @@ select.form-control option {
                         <?php endif; ?>
                         <div class="total-line final">
                             <span>Total:</span>
-                            <span>$<?php echo number_format($total_with_shipping, 0, ',', '.'); ?></span>
+                            <span>$<?php echo number_format($final_total, 0, ',', '.'); ?></span>
                         </div>
                     </div>
                 </div>
