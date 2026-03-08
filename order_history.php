@@ -180,7 +180,6 @@ include 'includes/header.php';
                             <th>Pedido #</th>
                             <th>Fecha</th>
                             <th>Estado</th>
-                            <th>Items</th>
                             <th>Total</th>
                             <th>Acciones</th>
                         </tr>
@@ -189,7 +188,7 @@ include 'includes/header.php';
                         <?php if (empty($orders)): ?>
                         <!-- Estado vacío -->
                         <tr>
-                            <td colspan="7">
+                            <td colspan="6">
                                 <div class="empty-state">
                                     <div class="empty-icon">
                                         <i class="fas fa-shopping-cart"></i>
@@ -232,12 +231,6 @@ include 'includes/header.php';
                             <td>
                                 <span class="badge bg-<?php echo getStatusColor($order['status']); ?> status-badge">
                                     <?php echo getStatusText($order['status']); ?>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="item-count">
-                                    <?php echo $order['item_count']; ?> 
-                                    <?php echo $order['item_count'] == 1 ? 'producto' : 'productos'; ?>
                                 </span>
                             </td>
                             <td>
