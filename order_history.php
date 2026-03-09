@@ -188,6 +188,14 @@ include 'includes/header.php';
         <div class="orders-table-container">
             <div class="table-responsive">
                 <table class="table orders-table">
+                    <colgroup>
+                        <col class="col-img">
+                        <col>
+                        <col>
+                        <col>
+                        <col>
+                        <col>
+                    </colgroup>
                     <thead>
                         <tr>
                             <th class="order-img-th"></th>
@@ -566,13 +574,19 @@ include 'includes/header.php';
 }
 
 /* Miniaturas de productos en la tabla de pedidos */
+.orders-table col.col-img {
+    width: 110px;
+}
+
 .order-img-th {
-    width: 90px;
-    min-width: 90px;
+    width: 110px;
+    min-width: 110px;
     padding: 20px 8px 20px 20px !important;
 }
 
 .order-thumb-cell {
+    width: 110px;
+    min-width: 110px;
     padding: 12px 8px 12px 20px !important;
 }
 
