@@ -272,22 +272,58 @@ function handlePut() {
         return;
     }
 
+    // Migración preventiva: si la columna status es ENUM restrictivo, convertir a VARCHAR
+    // Esto solo afecta la estructura si es necesario, y es idempotente
+    try {
+        $col_info = $pdo->query("SHOW COLUMNS FROM orders LIKE 'status'")->fetch(PDO::FETCH_ASSOC);
+        if ($col_info && strpos($col_info['Type'], 'enum') !== false) {
+            $pdo->exec("ALTER TABLE orders MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'pending'");
+        }
+    } catch (Exception $e) {
+        // Si falla la migración, continuar igual — el UPDATE directo puede funcionar
+        error_log('Orders status migration failed: ' . $e->getMessage());
+    }
+
     // Actualizar un pedido individual
     if (!empty($input['id'])) {
+        $order_id = intval($input['id']);
+
+        // Verificar que el pedido existe antes de actualizar
+        $exists_stmt = $pdo->prepare("SELECT id, status FROM orders WHERE id = ?");
+        $exists_stmt->execute([$order_id]);
+        $existing = $exists_stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$existing) {
+            echo json_encode(['success' => false, 'message' => "Pedido #$order_id no encontrado en la BD"]);
+            return;
+        }
+
+        $old_status = $existing['status'];
+
+        // Si ya tiene el estado solicitado, no es necesario actualizar
+        if ($old_status === $new_status) {
+            echo json_encode(['success' => true, 'message' => 'El estado ya era ' . $new_status, 'status' => $new_status]);
+            return;
+        }
+
         $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-        $stmt->execute([$new_status, $input['id']]);
+        $stmt->execute([$new_status, $order_id]);
         $affected = $stmt->rowCount();
 
         // Verificar el estado real en la BD después del UPDATE
         $check = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
-        $check->execute([$input['id']]);
+        $check->execute([$order_id]);
         $actual_status = $check->fetchColumn();
 
         if ($actual_status === $new_status) {
             echo json_encode(['success' => true, 'message' => 'Estado actualizado correctamente', 'status' => $actual_status]);
         } else {
-            error_log("Order status update failed - id={$input['id']}, requested=$new_status, actual=$actual_status, affected=$affected");
-            echo json_encode(['success' => false, 'message' => "No se pudo cambiar el estado. BD tiene: $actual_status"]);
+            error_log("Order status update failed - id=$order_id, old=$old_status, requested=$new_status, actual=$actual_status, affected=$affected");
+            echo json_encode([
+                'success' => false,
+                'message' => "No se pudo guardar el estado '$new_status'. La BD sigue con: '$actual_status'. Puede ser una restricción del tipo de columna.",
+                'debug'   => ['id' => $order_id, 'old' => $old_status, 'requested' => $new_status, 'actual' => $actual_status, 'affected' => $affected]
+            ]);
         }
         return;
     }
