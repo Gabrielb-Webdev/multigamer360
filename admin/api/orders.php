@@ -259,7 +259,14 @@ function handlePut() {
         echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
         return;
     }
-    
+
+    // Auto-migración: asegurar que updated_at exista en orders
+    try {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+    } catch (Exception $migEx) {
+        error_log("Auto-migration updated_at: " . $migEx->getMessage());
+    }
+
     try {
         $pdo->beginTransaction();
         
@@ -290,7 +297,8 @@ function handlePut() {
             throw new Exception('No hay campos para actualizar');
         }
         
-        $update_fields[] = "updated_at = NOW()";
+        // updated_at se actualiza automáticamente por ON UPDATE CURRENT_TIMESTAMP
+        // No se incluye explícitamente para evitar errores si la columna no existe
         
         // Actualizar pedidos
         $placeholders = str_repeat('?,', count($order_ids) - 1) . '?';
