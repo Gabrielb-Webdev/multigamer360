@@ -568,7 +568,8 @@ include 'includes/header.php';
 /* Miniaturas de productos en la tabla de pedidos */
 .order-img-th {
     width: 90px;
-    padding-left: 20px !important;
+    min-width: 90px;
+    padding: 20px 8px 20px 20px !important;
 }
 
 .order-thumb-cell {
