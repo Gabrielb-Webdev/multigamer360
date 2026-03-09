@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateOrderStatus(selectEl) {
     const orderId = selectEl.dataset.orderId;
     const status  = selectEl.value;
-    const prevValue = selectEl.dataset.prev || selectEl.value;
+    const prevValue = selectEl.dataset.prev !== undefined ? selectEl.dataset.prev : status;
 
     selectEl.disabled = true;
 
@@ -569,7 +569,7 @@ function updateOrderStatus(selectEl) {
             'X-CSRF-Token': window.csrfToken
         },
         body: JSON.stringify({
-            id: orderId,
+            id: parseInt(orderId, 10),
             status: status,
             csrf_token: window.csrfToken
         })
@@ -578,8 +578,10 @@ function updateOrderStatus(selectEl) {
     .then(data => {
         selectEl.disabled = false;
         if (data.success) {
-            selectEl.dataset.prev = status;
-            // Colorear el select según el estado
+            // Usar el estado confirmado por la BD (data.status) si está disponible
+            const confirmedStatus = data.status || status;
+            selectEl.value = confirmedStatus;
+            selectEl.dataset.prev = confirmedStatus;
             const colors = {
                 pending:    'bg-warning text-dark',
                 processing: 'bg-info text-white',
@@ -588,7 +590,7 @@ function updateOrderStatus(selectEl) {
                 completed:  'bg-success text-white',
                 cancelled:  'bg-danger text-white'
             };
-            selectEl.className = 'form-select form-select-sm status-select ' + (colors[status] || '');
+            selectEl.className = 'form-select form-select-sm status-select ' + (colors[confirmedStatus] || '');
             Utils.showToast('Estado actualizado', 'success');
         } else {
             selectEl.value = prevValue;

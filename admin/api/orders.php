@@ -245,136 +245,65 @@ function handleGet() {
 
 function handlePut() {
     global $pdo;
-    
+
     if (!hasPermission('orders', 'update')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Sin permisos para actualizar pedidos']);
         return;
     }
-    
+
     $input = json_decode(file_get_contents('php://input'), true);
-    
+
     if (!verifyCSRFToken($input['csrf_token'] ?? '')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
         return;
     }
 
-    // Auto-migración: asegurar que updated_at exista en orders
-    try {
-        $pdo->exec("ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
-    } catch (Exception $migEx) {
-        error_log("Auto-migration updated_at: " . $migEx->getMessage());
+    $new_status = $input['status'] ?? null;
+    if (!$new_status) {
+        echo json_encode(['success' => false, 'message' => 'Estado requerido']);
+        return;
     }
 
-    try {
-        $pdo->beginTransaction();
-        
-        if (!empty($input['id'])) {
-            // Actualizar un pedido
-            $order_id = $input['id'];
-            $order_ids = [$order_id];
-        } elseif (!empty($input['ids']) && is_array($input['ids'])) {
-            // Actualizar múltiples pedidos
-            $order_ids = $input['ids'];
-        } else {
-            throw new Exception('ID(s) de pedido requerido(s)');
-        }
-        
-        // Campos permitidos para actualización (solo columnas que existen en la BD)
-        $allowed_fields = ['status', 'notes'];
-        $update_fields = [];
-        $params = [];
-        
-        foreach ($allowed_fields as $field) {
-            if (array_key_exists($field, $input)) {
-                $update_fields[] = "$field = ?";
-                $params[] = $input[$field];
-            }
-        }
-        
-        if (empty($update_fields)) {
-            throw new Exception('No hay campos para actualizar');
-        }
-        
-        // updated_at se actualiza automáticamente por ON UPDATE CURRENT_TIMESTAMP
-        // No se incluye explícitamente para evitar errores si la columna no existe
-        
-        // Actualizar pedidos
-        $placeholders = str_repeat('?,', count($order_ids) - 1) . '?';
-        $params = array_merge($params, $order_ids);
-        
-        $sql = "UPDATE orders SET " . implode(', ', $update_fields) . " WHERE id IN ($placeholders)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        
-        // Registrar historial de estado si se cambió el estado (solo si la tabla existe)
-        if (isset($input['status'])) {
-            try {
-                foreach ($order_ids as $order_id) {
-                    $old_status_stmt = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
-                    $old_status_stmt->execute([$order_id]);
-                    $old_status = $old_status_stmt->fetchColumn();
-                    
-                    if ($old_status && $old_status !== $input['status']) {
-                        $history_stmt = $pdo->prepare("
-                            INSERT INTO order_status_history (order_id, old_status, new_status, admin_id, note, created_at)
-                            VALUES (?, ?, ?, ?, ?, NOW())
-                        ");
-                        $history_stmt->execute([
-                            $order_id,
-                            $old_status,
-                            $input['status'],
-                            $_SESSION['user_id'],
-                            $input['note'] ?? ''
-                        ]);
-                    }
-                }
-            } catch (Exception $historyEx) {
-                // La tabla order_status_history no existe — ignorar, no bloquear la actualización
-                error_log("order_status_history no disponible: " . $historyEx->getMessage());
-            }
-        }
-        
-        // Agregar nota si se especifica (solo si la tabla existe)
-        if (!empty($input['note'])) {
-            try {
-                foreach ($order_ids as $order_id) {
-                    $note_stmt = $pdo->prepare("
-                        INSERT INTO order_notes (order_id, admin_id, note, created_at)
-                        VALUES (?, ?, ?, NOW())
-                    ");
-                    $note_stmt->execute([$order_id, $_SESSION['user_id'], $input['note']]);
-                }
-            } catch (Exception $noteEx) {
-                // La tabla order_notes no existe — ignorar
-                error_log("order_notes no disponible: " . $noteEx->getMessage());
-            }
-        }
-        
-        // Notificación por email — ignorar si falla
-        if (!empty($input['send_notification']) && isset($input['status'])) {
-            try {
-                foreach ($order_ids as $order_id) {
-                    sendOrderStatusNotification($order_id, $input['status']);
-                }
-            } catch (Exception $notifEx) {
-                error_log("Error enviando notificación: " . $notifEx->getMessage());
-            }
-        }
-        
-        $pdo->commit();
-        
-        $count = count($order_ids);
-        echo json_encode([
-            'success' => true,
-            'message' => "Se " . ($count === 1 ? 'actualizó' : 'actualizaron') . " $count pedido" . ($count === 1 ? '' : 's') . " correctamente"
-        ]);
-        
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        throw $e;
+    $valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
+    if (!in_array($new_status, $valid_statuses)) {
+        echo json_encode(['success' => false, 'message' => 'Estado no válido: ' . $new_status]);
+        return;
     }
+
+    // Actualizar un pedido individual
+    if (!empty($input['id'])) {
+        $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        $stmt->execute([$new_status, $input['id']]);
+        $affected = $stmt->rowCount();
+
+        // Verificar el estado real en la BD después del UPDATE
+        $check = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
+        $check->execute([$input['id']]);
+        $actual_status = $check->fetchColumn();
+
+        if ($actual_status === $new_status) {
+            echo json_encode(['success' => true, 'message' => 'Estado actualizado correctamente', 'status' => $actual_status]);
+        } else {
+            error_log("Order status update failed - id={$input['id']}, requested=$new_status, actual=$actual_status, affected=$affected");
+            echo json_encode(['success' => false, 'message' => "No se pudo cambiar el estado. BD tiene: $actual_status"]);
+        }
+        return;
+    }
+
+    // Actualizar múltiples pedidos
+    if (!empty($input['ids']) && is_array($input['ids'])) {
+        $placeholders = str_repeat('?,', count($input['ids']) - 1) . '?';
+        $params = array_merge([$new_status], $input['ids']);
+        $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id IN ($placeholders)");
+        $stmt->execute($params);
+        $count = count($input['ids']);
+        echo json_encode(['success' => true, 'message' => "$count pedido(s) actualizado(s) correctamente"]);
+        return;
+    }
+
+    echo json_encode(['success' => false, 'message' => 'ID de pedido requerido']);
 }
 
 function handleDelete() {
