@@ -189,16 +189,16 @@ include 'includes/header.php';
             <div class="table-responsive">
                 <table class="table orders-table">
                     <colgroup>
-                        <col style="width:110px">
-                        <col style="width:220px">
-                        <col style="width:140px">
-                        <col style="width:150px">
-                        <col style="width:160px">
+                        <col class="col-img">
+                        <col>
+                        <col>
+                        <col>
+                        <col>
                         <col>
                     </colgroup>
                     <thead>
                         <tr>
-                            <th class="order-img-th"></th>
+                            <th class="order-img-th">&nbsp;</th>
                             <th>Pedido #</th>
                             <th>Fecha</th>
                             <th>Estado</th>
@@ -430,8 +430,6 @@ include 'includes/header.php';
 .orders-table {
     margin: 0;
     background: transparent;
-    table-layout: fixed;
-    width: 100%;
 }
 
 .orders-table thead th {
@@ -576,6 +574,10 @@ include 'includes/header.php';
 }
 
 /* Miniaturas de productos en la tabla de pedidos */
+.orders-table col.col-img {
+    width: 110px;
+}
+
 .order-img-th {
     width: 110px;
     min-width: 110px;
