@@ -45,7 +45,7 @@ try {
     }
     
     // Verificar que el pedido puede ser cancelado
-    if (!in_array($order['status'], ['pending', 'processing'])) {
+    if (in_array($order['status'], ['shipped', 'delivered', 'cancelled'])) {
         echo json_encode(['success' => false, 'message' => 'Este pedido no puede ser cancelado']);
         exit;
     }

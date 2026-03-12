@@ -276,7 +276,7 @@ include 'includes/header.php';
                                         <i class="fas fa-redo"></i>
                                     </button>
                                     <?php endif; ?>
-                                    <?php if (in_array($order['status'], ['pending', 'processing'])): ?>
+                                    <?php if (!in_array($order['status'], ['shipped', 'delivered', 'cancelled'])): ?>
                                     <button class="btn btn-sm btn-outline-danger ms-1" 
                                             onclick="cancelOrder(<?php echo $order['id']; ?>)"
                                             title="Cancelar pedido">
