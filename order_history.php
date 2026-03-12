@@ -198,7 +198,7 @@ include 'includes/header.php';
                     </colgroup>
                     <thead>
                         <tr>
-                            <th class="order-img-th">IMG</th>
+                            <th class="order-img-th"></th>
                             <th>Pedido #</th>
                             <th>Fecha</th>
                             <th>Estado</th>
@@ -430,6 +430,8 @@ include 'includes/header.php';
 .orders-table {
     margin: 0;
     background: transparent;
+    table-layout: fixed;
+    width: 100%;
 }
 
 .orders-table thead th {
@@ -579,15 +581,12 @@ include 'includes/header.php';
 }
 
 .order-img-th {
-    width: 110px;
-    min-width: 110px;
-    padding: 20px 8px 20px 20px !important;
+    padding: 20px 8px !important;
 }
 
 .order-thumb-cell {
-    width: 110px;
-    min-width: 110px;
-    padding: 12px 8px 12px 20px !important;
+    padding: 12px 8px !important;
+    vertical-align: middle;
 }
 
 .order-thumbnails {
