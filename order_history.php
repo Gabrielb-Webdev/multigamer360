@@ -198,7 +198,7 @@ include 'includes/header.php';
                     </colgroup>
                     <thead>
                         <tr>
-                            <th class="order-img-th"></th>
+                            <th class="order-img-th">IMG</th>
                             <th>Pedido #</th>
                             <th>Fecha</th>
                             <th>Estado</th>
