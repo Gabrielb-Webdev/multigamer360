@@ -188,22 +188,14 @@ include 'includes/header.php';
         <div class="orders-table-container">
             <div class="table-responsive">
                 <table class="table orders-table">
-                    <colgroup>
-                        <col class="col-img">
-                        <col>
-                        <col>
-                        <col>
-                        <col>
-                        <col>
-                    </colgroup>
                     <thead>
                         <tr>
-                            <th class="order-img-th">IMG</th>
-                            <th>Pedido #</th>
-                            <th>Fecha</th>
-                            <th>Estado</th>
-                            <th>Total</th>
-                            <th>Acciones</th>
+                            <th class="col-img">IMG</th>
+                            <th class="col-pedido">Pedido #</th>
+                            <th class="col-fecha">Fecha</th>
+                            <th class="col-estado">Estado</th>
+                            <th class="col-total">Total</th>
+                            <th class="col-acciones">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody">
@@ -236,26 +228,26 @@ include 'includes/header.php';
                         <!-- Lista de pedidos -->
                         <?php foreach ($orders as $order): ?>
                         <tr class="order-row" data-status="<?php echo $order['status']; ?>">
-                            <td class="order-thumb-cell">
+                            <td class="col-img">
                                 <?php echo renderOrderThumbnails($order['product_imgs'] ?? ''); ?>
                             </td>
-                            <td>
+                            <td class="col-pedido">
                                 <div class="order-number">
                                     <strong>#<?php echo htmlspecialchars($order['order_number']); ?></strong>
                                 </div>
                             </td>
-                            <td>
+                            <td class="col-fecha">
                                 <div class="order-date">
                                     <strong><?php echo date('d/m/Y', strtotime($order['created_at'])); ?></strong>
-                                    <br><small class="text-muted"><?php echo date('H:i', strtotime($order['created_at'])); ?></small>
+                                    <br><small><?php echo date('H:i', strtotime($order['created_at'])); ?></small>
                                 </div>
                             </td>
-                            <td>
+                            <td class="col-estado">
                                 <span class="badge bg-<?php echo getStatusColor($order['status']); ?> status-badge">
                                     <?php echo getStatusText($order['status']); ?>
                                 </span>
                             </td>
-                            <td>
+                            <td class="col-total">
                                 <?php
                                     $order_notes_parsed = json_decode($order['notes'] ?? '{}', true) ?: [];
                                     $order_currency = $order_notes_parsed['currency'] ?? 'ARS';
@@ -270,7 +262,7 @@ include 'includes/header.php';
                                 <strong class="order-total"><?php echo $display_total; ?></strong>
                                 <br><small class="order-total-alt"><?php echo $alt_total; ?></small>
                             </td>
-                            <td>
+                            <td class="col-acciones">
                                 <div class="order-actions">
                                     <a href="order_detail.php?id=<?php echo $order['id']; ?>"
                                        class="btn btn-sm btn-outline-primary"
@@ -308,14 +300,14 @@ include 'includes/header.php';
 /* ESTILOS PARA HISTORIAL DE PEDIDOS */
 /* ===================================================== */
 
-/* Encabezado */
+/* Encabezado general */
 .order-history-header {
     background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
     border-radius: 15px;
     padding: 30px;
     border: 2px solid #8B0000;
-    box-shadow: 0 8px 25px rgba(139, 0, 0, 0.3), 
-                0 0 20px rgba(139, 0, 0, 0.1);
+    box-shadow: 0 8px 25px rgba(139, 0, 0, 0.3), 0 0 20px rgba(139, 0, 0, 0.1);
+    animation: slideInDown 0.8s ease forwards;
 }
 
 .order-title {
@@ -334,18 +326,9 @@ include 'includes/header.php';
 }
 
 @keyframes pulse {
-    0% { 
-        transform: scale(1); 
-        color: #8B0000;
-    }
-    50% { 
-        transform: scale(1.05); 
-        color: #DC143C;
-    }
-    100% { 
-        transform: scale(1);
-        color: #8B0000;
-    }
+    0%   { transform: scale(1);    color: #8B0000; }
+    50%  { transform: scale(1.05); color: #DC143C; }
+    100% { transform: scale(1);    color: #8B0000; }
 }
 
 .order-subtitle {
@@ -386,14 +369,15 @@ include 'includes/header.php';
     letter-spacing: 0.5px;
 }
 
-/* Sección de pedidos */
+/* Contenedor principal de pedidos */
 .orders-section {
     background: linear-gradient(145deg, #1a1a1a, #000000);
     border-radius: 15px;
     overflow: hidden;
-    box-shadow: 0 8px 25px rgba(139, 0, 0, 0.2),
-                0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 25px rgba(139, 0, 0, 0.2), 0 4px 15px rgba(0, 0, 0, 0.3);
     border: 2px solid #8B0000;
+    animation: slideInUp 0.8s ease 0.3s forwards;
+    opacity: 0;
 }
 
 .orders-table-header {
@@ -422,7 +406,12 @@ include 'includes/header.php';
     background: #000;
 }
 
-/* Tabla */
+.table-filters .form-select option {
+    background: #1a1a1a;
+    color: white;
+}
+
+/* ── TABLA ── */
 .orders-table-container {
     padding: 0;
 }
@@ -430,72 +419,86 @@ include 'includes/header.php';
 .orders-table {
     margin: 0;
     background: transparent;
-    table-layout: fixed;
     width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
 }
 
+/* Anchos de columna */
+.orders-table th.col-img,
+.orders-table td.col-img     { width: 90px;  min-width: 90px;  max-width: 90px; }
+.orders-table th.col-pedido,
+.orders-table td.col-pedido  { width: auto; }
+.orders-table th.col-fecha,
+.orders-table td.col-fecha   { width: 130px; min-width: 110px; }
+.orders-table th.col-estado,
+.orders-table td.col-estado  { width: 150px; min-width: 130px; }
+.orders-table th.col-total,
+.orders-table td.col-total   { width: 160px; min-width: 140px; }
+.orders-table th.col-acciones,
+.orders-table td.col-acciones{ width: 130px; min-width: 110px; }
+
+/* Celda de cabecera */
 .orders-table thead th {
     background: #000000;
     color: white;
     border: none;
     font-weight: 600;
-    padding: 20px 30px;
+    padding: 16px 15px;
     border-bottom: 3px solid #8B0000;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
+/* Celda de dato — mismo padding horizontal que el th */
 .orders-table tbody td {
     border: none;
-    padding: 20px 30px;
+    padding: 16px 15px;
     border-bottom: 1px solid #2a2a2a;
     vertical-align: middle;
     color: white !important;
     background: #0d0d0d;
 }
 
-.orders-table tbody td strong,
-.orders-table tbody td small,
-.orders-table tbody td span:not(.badge),
-.orders-table tbody td div {
-    color: inherit;
+/* Fila hover */
+.order-row {
+    transition: background 0.3s ease;
+    position: relative;
+    background: #0d0d0d !important;
 }
 
-.orders-table tbody tr.order-row {
-    background: #0d0d0d;
+.order-row:hover td {
+    background: #1a0505 !important;
 }
 
-.orders-table .order-row:hover td {
-    background: #1a0505;
-    transition: all 0.3s ease;
-}
-
-.orders-table .order-row:hover {
-    background: #1a0505;
-    transition: all 0.3s ease;
-}
-
+/* Textos internos */
 .order-number strong {
     color: #DC143C !important;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
 }
 
 .order-date strong {
     color: #ffffff !important;
+    font-size: 0.95rem;
 }
 
 .order-date small {
     color: #aaaaaa !important;
 }
 
+/* Badges de estado */
 .status-badge {
-    font-size: 0.85rem;
-    padding: 8px 16px;
+    font-size: 0.8rem;
+    padding: 7px 14px;
     border-radius: 20px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .status-badge.bg-warning {
@@ -520,14 +523,10 @@ include 'includes/header.php';
     background: linear-gradient(45deg, #8B0000, #DC143C) !important;
 }
 
-.item-count {
-    color: #cccccc;
-    font-size: 0.9rem;
-}
-
+/* Total */
 .order-total {
     color: #DC143C;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     display: block;
 }
@@ -538,16 +537,18 @@ include 'includes/header.php';
     font-weight: 400;
 }
 
+/* Acciones */
 .order-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+    flex-wrap: nowrap;
 }
 
 .order-actions .btn {
     border-radius: 8px;
     transition: all 0.3s ease;
-    padding: 8px 12px;
+    padding: 7px 11px;
     border-width: 2px;
 }
 
@@ -575,55 +576,23 @@ include 'includes/header.php';
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
-/* Miniaturas de productos en la tabla de pedidos */
-.orders-table col.col-img {
-    width: 110px;
-}
-
-.order-img-th {
-    padding: 20px 8px !important;
-}
-
-.order-thumb-cell {
-    padding: 12px 8px !important;
-    vertical-align: middle;
-}
-
+/* Miniaturas */
 .order-thumbnails {
-    width: 74px;
-    height: 74px;
+    width: 70px;
+    height: 70px;
     border-radius: 8px;
     overflow: hidden;
     display: grid;
     gap: 2px;
     background: #1a1a1a;
     border: 1px solid #333;
-    flex-shrink: 0;
 }
 
-.order-thumbnails.count-1 {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-}
-
-.order-thumbnails.count-2 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-}
-
-.order-thumbnails.count-3 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-}
-
-.order-thumbnails.count-3 .thumb-item:first-child {
-    grid-column: 1 / -1;
-}
-
-.order-thumbnails.count-4 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-}
+.order-thumbnails.count-1 { grid-template-columns: 1fr;      grid-template-rows: 1fr; }
+.order-thumbnails.count-2 { grid-template-columns: 1fr 1fr;  grid-template-rows: 1fr; }
+.order-thumbnails.count-3 { grid-template-columns: 1fr 1fr;  grid-template-rows: 1fr 1fr; }
+.order-thumbnails.count-3 .thumb-item:first-child { grid-column: 1 / -1; }
+.order-thumbnails.count-4 { grid-template-columns: 1fr 1fr;  grid-template-rows: 1fr 1fr; }
 
 .thumb-item {
     overflow: hidden;
@@ -631,8 +600,6 @@ include 'includes/header.php';
     align-items: center;
     justify-content: center;
     background: #111;
-    font-size: 0.75rem;
-    color: #555;
 }
 
 .thumb-item img {
@@ -643,8 +610,8 @@ include 'includes/header.php';
 }
 
 .order-thumb-placeholder {
-    width: 74px;
-    height: 74px;
+    width: 70px;
+    height: 70px;
     border-radius: 8px;
     background: #1a1a1a;
     border: 1px solid #333;
@@ -715,120 +682,47 @@ include 'includes/header.php';
 
 .empty-actions .btn-outline-primary:hover {
     background: #8B0000;
-    border-color: #8B0000;
     color: white;
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(139, 0, 0, 0.3);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .order-title {
-        font-size: 2rem;
-    }
-    
-    .order-stats {
-        justify-content: center;
-        margin-top: 20px;
-    }
-    
-    .orders-table-header .row {
-        text-align: center;
-    }
-    
-    .table-filters {
-        margin-top: 15px;
-    }
-    
-    .empty-actions .btn {
-        display: block;
-        margin: 10px 0;
-        width: 100%;
-    }
-    
-    .empty-actions .btn.ms-3 {
-        margin-left: 0 !important;
-    }
-    
-    .orders-table thead th,
-    .orders-table tbody td {
-        padding: 15px 10px;
-        font-size: 0.9rem;
-    }
-    
-    .order-actions {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .order-actions .btn {
-        width: 100%;
-        margin: 0;
-    }
-}
-
-/* Animaciones mejoradas */
-.order-history-header {
-    animation: slideInDown 0.8s ease forwards;
-}
-
-.orders-section {
-    animation: slideInUp 0.8s ease 0.3s forwards;
-    opacity: 0;
-}
-
+/* Animaciones */
 @keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-40px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Efectos hover adicionales */
-.order-row {
-    transition: all 0.3s ease;
-    position: relative;
-    background: #0d0d0d !important;
-}
+/* Responsive */
+@media (max-width: 768px) {
+    .order-title { font-size: 1.8rem; }
 
-.order-row::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    background: linear-gradient(90deg, #8B0000, transparent);
-    transition: width 0.3s ease;
-    z-index: 1;
-}
+    .order-stats { justify-content: center; margin-top: 20px; }
 
-.order-row:hover::before {
-    width: 4px;
-}
+    .orders-table-header .row { text-align: center; }
 
-/* Mejorar filtros */
-.table-filters .form-select option {
-    background: #1a1a1a;
-/* Mejorar filtros */
-.table-filters .form-select option {
-    background: #1a1a1a;
-    color: white;
+    .table-filters { margin-top: 15px; }
+
+    .orders-table thead th,
+    .orders-table tbody td { padding: 12px 8px; font-size: 0.85rem; }
+
+    .orders-table th.col-img,
+    .orders-table td.col-img { width: 60px; min-width: 60px; max-width: 60px; }
+
+    .order-thumbnails,
+    .order-thumb-placeholder { width: 50px; height: 50px; }
+
+    .order-actions { flex-direction: column; gap: 4px; }
+
+    .order-actions .btn { width: 100%; margin: 0; }
+
+    .empty-actions .btn { display: block; margin: 10px 0; width: 100%; }
+    .empty-actions .btn.ms-3 { margin-left: 0 !important; }
 }
 </style>
 
