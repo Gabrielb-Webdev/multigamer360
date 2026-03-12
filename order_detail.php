@@ -120,7 +120,7 @@ function getStatusColorDetail($status) {
         case 'shipped':    return 'primary';
         case 'delivered':  return 'success';
         case 'cancelled':  return 'danger';
-        default:           return 'secondary';
+        default:           return 'warning';
     }
 }
 
@@ -131,7 +131,7 @@ function getStatusTextDetail($status) {
         case 'shipped':    return 'Enviado';
         case 'delivered':  return 'Entregado';
         case 'cancelled':  return 'Cancelado';
-        default:           return 'Desconocido';
+        default:           return 'Pendiente';
     }
 }
 
